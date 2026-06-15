@@ -9,22 +9,20 @@ import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
 
 /// 页面六：选择伞/亭子后播放对应动画
-/// 阶段 A — bodyVideo（伞 / 仓）：蒙版1 + 文案 + 方向按钮（后端驱动）
-/// 阶段 B — postChoiceVideo（伞结束 / 仓结束）：第 3 秒蒙版2 + "正在生成报告" → 播完进报告
-enum _VideoPhase { body, ending, finished }
+/// 阶段 1 — bodyVideo（伞 / 仓）：纯视频 + 蒙版1 + 文案，无按钮
+/// 阶段 2 — 方向选择：左/中/右 按钮，后端驱动检测
+/// 阶段 3 — endingVideo（伞结束 / 仓结束）：第 3 秒蒙版2 + "正在生成报告" → 播完进报告
+enum _PagePhase { bodyVideo, directionChoice, endingVideo, finished }
 
 class _DirectionOption {
   const _DirectionOption({required this.label, required this.key});
-
   final String label;
   final String key;
 }
 
 class PageSixView extends StatefulWidget {
   final VoidCallback onComplete;
-
   const PageSixView({super.key, required this.onComplete});
-
   @override
   State<PageSixView> createState() => _PageSixViewState();
 }
@@ -37,17 +35,17 @@ class _PageSixViewState extends State<PageSixView> {
   ];
 
   double _maskOpacity = ExperienceMask.guideOpacity;
-  double _promptOpacity = 1;
+  double _promptOpacity = 0;
   double _loadingOpacity = 0;
-  bool _showDirectionChoices = true;
-  double _choicesOpacity = 1;
+  bool _showDirections = false;
+  double _choicesOpacity = 0;
   bool _holdBlackFrame = false;
 
   final ValueNotifier<String?> _highlightedDirection =
       ValueNotifier<String?>(null);
 
   VideoPlayerController? _videoController;
-  _VideoPhase _phase = _VideoPhase.body;
+  _PagePhase _phase = _PagePhase.bodyVideo;
   bool _videoEndHandled = false;
   bool _loadingMaskShown = false;
   bool _exitHandled = false;
@@ -67,32 +65,34 @@ class _PageSixViewState extends State<PageSixView> {
         videoController: _holdBlackFrame ? null : _videoController,
         maskOpacity: _loadingOpacity > 0 ? 0 : _maskOpacity,
         finalMaskOpacity: _loadingOpacity,
-        blockInteraction: !_showDirectionChoices,
+        blockInteraction: !_showDirections,
         overlays: [
-          Positioned(
-            left: 0,
-            right: 0,
-            top: screenSize.height * 0.28,
-            child: Center(
-              child: AnimatedOpacity(
-                opacity: _promptOpacity,
-                duration: ExperienceMask.fadeDuration,
-                child: SizedBox(
-                  width: screenSize.width * 0.85,
-                  child: const Text(
-                    '天要放晴了，在放晴前最后欣赏一下这个景色吧',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
-                      color: Colors.white,
-                      height: 1.6,
+          // 蒙版1 浮现时显示文案
+          if (_promptOpacity > 0)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: screenSize.height * 0.28,
+              child: Center(
+                child: AnimatedOpacity(
+                  opacity: _promptOpacity,
+                  duration: ExperienceMask.fadeDuration,
+                  child: SizedBox(
+                    width: screenSize.width * 0.85,
+                    child: const Text(
+                      '天要放晴了，在放晴前最后欣赏一下这个景色吧',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 26,
+                        color: Colors.white,
+                        height: 1.6,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          if (_showDirectionChoices) _buildDirectionButtons(screenSize),
+          if (_showDirections) _buildDirectionButtons(screenSize),
         ],
         finalMaskChild: const Center(
           child: Column(
@@ -145,7 +145,6 @@ class _PageSixViewState extends State<PageSixView> {
   Future<void> _startVideo(String path) async {
     _detachVideoListener();
     _videoEndHandled = false;
-
     if (mounted) setState(() => _holdBlackFrame = true);
 
     try {
@@ -154,14 +153,11 @@ class _PageSixViewState extends State<PageSixView> {
       _videoController = controller;
       controller.addListener(_onVideoUpdate);
       await controller.play();
-
       for (var i = 0; i < 30; i++) {
         if (!mounted) return;
         final value = controller.value;
         if (value.isPlaying &&
-            value.position > const Duration(milliseconds: 16)) {
-          break;
-        }
+            value.position > const Duration(milliseconds: 16)) break;
         await Future<void>.delayed(const Duration(milliseconds: 16));
       }
     } catch (e) {
@@ -169,7 +165,6 @@ class _PageSixViewState extends State<PageSixView> {
       _scheduleVideoEndFallback();
       return;
     }
-
     if (!mounted) return;
     setState(() => _holdBlackFrame = false);
   }
@@ -186,14 +181,12 @@ class _PageSixViewState extends State<PageSixView> {
   void _onVideoUpdate() {
     if (_videoEndHandled ||
         _videoController == null ||
-        !_videoController!.value.isInitialized) {
-      return;
-    }
+        !_videoController!.value.isInitialized) return;
 
     final value = _videoController!.value;
 
-    // 阶段 B（endingVideo）：第 3 秒触发最终过渡蒙版
-    if (_phase == _VideoPhase.ending &&
+    // 阶段 3（endingVideo）：第 3 秒触发最终过渡蒙版
+    if (_phase == _PagePhase.endingVideo &&
         !_loadingMaskShown &&
         value.position >= const Duration(seconds: 3)) {
       _showFinalTransitionMask();
@@ -208,42 +201,33 @@ class _PageSixViewState extends State<PageSixView> {
 
   void _onCurrentVideoEnded() {
     if (!mounted) return;
-
-    if (_phase == _VideoPhase.body) {
-      _transitionToEndingVideo();
-    } else if (_phase == _VideoPhase.ending) {
-      _phase = _VideoPhase.finished;
-      _finalizeDirectionAndExit();
+    switch (_phase) {
+      case _PagePhase.bodyVideo:
+        // 视频播完 → 显示方向选项
+        _showDirectionPhase();
+      case _PagePhase.endingVideo:
+        _phase = _PagePhase.finished;
+        _finalizeDirectionAndExit();
+      default:
+        break;
     }
   }
 
-  Future<void> _transitionToEndingVideo() async {
-    if (!mounted) return;
-    _phase = _VideoPhase.ending;
-
-    await _startVideo(_branch.postChoiceVideo);
-  }
-
-  void _showFinalTransitionMask() {
-    _loadingMaskShown = true;
-    _detectionTimer?.cancel();
-
+  // ══════════════════════════════════════════════════════════════════
+  // 方向选择阶段：视频播完后弹出左/中/右，后端驱动检测
+  // ══════════════════════════════════════════════════════════════════
+  void _showDirectionPhase() {
     if (!mounted) return;
     setState(() {
-      _loadingOpacity = 1;
-      _promptOpacity = 0;
-      _choicesOpacity = 0;
-      _showDirectionChoices = false;
+      _phase = _PagePhase.directionChoice;
+      _maskOpacity = ExperienceMask.guideOpacity;
+      _promptOpacity = 1;
+      _showDirections = true;
+      _choicesOpacity = 1;
     });
+    _startBackendDetection();
   }
 
-  // ══════════════════════════════════════════════════════════════════
-  // 后端驱动：调用 detectGazeDirection() 获取视线方向
-  // TODO(后端接入): 替换 detectGazeDirection() 为真实后端接口
-  //   接口: GET /api/rain-person/gaze-direction
-  //   返回: {"direction": "中间"}  // 后方 | 中间 | 森林
-  //   当前 mock: 随机返回方向，模拟 2~4 秒检测延迟
-  // ══════════════════════════════════════════════════════════════════
   void _startBackendDetection() {
     _detectionTimer = Timer.periodic(
       const Duration(milliseconds: 800),
@@ -255,7 +239,6 @@ class _PageSixViewState extends State<PageSixView> {
         _pollGazeDirection();
       },
     );
-
     _pollGazeDirection();
   }
 
@@ -266,21 +249,47 @@ class _PageSixViewState extends State<PageSixView> {
       if (mounted && _confirmedDirection == null) {
         _confirmedDirection = direction;
         _highlightedDirection.value = direction;
+        // 高亮确认后稍等 → 进入结尾视频
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) _transitionToEndingVideo();
+        });
       }
-    } catch (_) {
-      // 后端不可用，保持 fallback
-    }
+    } catch (_) {}
+  }
+
+  Future<void> _transitionToEndingVideo() async {
+    if (!mounted) return;
+    _detectionTimer?.cancel();
+    _phase = _PagePhase.endingVideo;
+
+    setState(() {
+      _showDirections = false;
+      _choicesOpacity = 0;
+      _promptOpacity = 0;
+    });
+
+    await _startVideo(_branch.postChoiceVideo);
+  }
+
+  void _showFinalTransitionMask() {
+    _loadingMaskShown = true;
+    _detectionTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _loadingOpacity = 1;
+      _promptOpacity = 0;
+      _choicesOpacity = 0;
+      _showDirections = false;
+    });
   }
 
   void _finalizeDirectionAndExit() {
     if (_exitHandled) return;
     _exitHandled = true;
-
     _detectionTimer?.cancel();
 
-    final direction = _confirmedDirection ?? '中间';
-    BackendService.instance.userData.stageFourGazeDirection = direction;
-
+    BackendService.instance.userData.stageFourGazeDirection =
+        _confirmedDirection ?? '中间';
     BackendService.instance.sendUserData();
 
     if (!mounted) return;
@@ -293,7 +302,11 @@ class _PageSixViewState extends State<PageSixView> {
     await VideoControllerCache.instance.prepare(_branch.postChoiceVideo);
     if (!mounted) return;
 
-    _startBackendDetection();
+    // 阶段 1：播 bodyVideo，带蒙版1 + 文案
+    setState(() {
+      _maskOpacity = ExperienceMask.guideOpacity;
+      _promptOpacity = 1;
+    });
     await _startVideo(_branch.bodyVideo);
   }
 

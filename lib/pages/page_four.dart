@@ -187,7 +187,7 @@ class _PageFourViewState extends State<PageFourView> {
     _pollFocusedWords();
 
     // 10 秒后结束
-    _durationTimer = Timer(const Duration(seconds: 10), () {
+    _durationTimer = Timer(const Duration(seconds: 6), () {
       if (!mounted) return;
       _detectionTimer?.cancel();
       _hideWordsAndExitStage();
