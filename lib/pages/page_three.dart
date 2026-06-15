@@ -6,6 +6,7 @@ import '../config/experience_flow.dart';
 import '../utils/video_loader.dart';
 import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
+import '../widgets/gaze_choice_button.dart';
 
 class PageThreeView extends StatefulWidget {
   final VoidCallback onComplete;
@@ -19,8 +20,9 @@ class PageThreeView extends StatefulWidget {
 class _PageThreeViewState extends State<PageThreeView> {
   double _maskOpacity = 0;
   double _promptOpacity = 0;
-  double _loadingOpacity = 0;
-  String _loadingText = '正在识别你的微表情…';
+  bool _showButtons = false;
+  double _buttonsOpacity = 0;
+  String? _highlightedExpression;
   String? _confirmedExpression;
 
   VideoPlayerController? _videoController;
@@ -29,6 +31,8 @@ class _PageThreeViewState extends State<PageThreeView> {
 
   Timer? _detectionTimer;
   Timer? _timeoutTimer;
+
+  static const List<String> _expressions = ['皱眉', '抿嘴', '皱眉+抿嘴'];
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +43,7 @@ class _PageThreeViewState extends State<PageThreeView> {
       body: FullScreenVideoStack(
         videoController: _videoController,
         maskOpacity: _maskOpacity,
-        blockInteraction: true,
+        blockInteraction: !_showButtons,
         overlays: [
           Positioned(
             left: 0,
@@ -64,41 +68,30 @@ class _PageThreeViewState extends State<PageThreeView> {
               ),
             ),
           ),
-          // AU 自动检测中提示
-          if (_loadingOpacity > 0)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: screenSize.height * 0.35,
-              child: Center(
-                child: AnimatedOpacity(
-                  opacity: _loadingOpacity,
-                  duration: ExperienceMask.fadeDuration,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white70,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _loadingText,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          if (_showButtons) _buildButtons(screenSize),
         ],
+      ),
+    );
+  }
+
+  Widget _buildButtons(Size screenSize) {
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: screenSize.height * 0.22,
+      child: AnimatedOpacity(
+        opacity: _buttonsOpacity,
+        duration: ExperienceMask.fadeDuration,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: _expressions.map((label) {
+            return GazeChoiceButton(
+              label: label,
+              highlighted: _highlightedExpression == label,
+              minWidth: screenSize.width * 0.28,
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -145,54 +138,61 @@ class _PageThreeViewState extends State<PageThreeView> {
       _promptOpacity = 1;
     });
 
-    // 5 秒后开始 AU 自动检测
+    // 5 秒文案展示后，显示按钮并开始后端检测
     Future.delayed(const Duration(seconds: 5), () {
       if (!mounted || _confirmedExpression != null) return;
       setState(() {
         _promptOpacity = 0;
-        _loadingOpacity = 1;
+        _showButtons = true;
+        _buttonsOpacity = 1;
       });
-      _startAutoDetection();
+      _startBackendDetection();
     });
   }
 
-  /// 自动 AU 表情检测（摄像头 → 后端 → 结果）
-  /// 15 秒内未返回则使用模拟结果作为 fallback
-  void _startAutoDetection() {
-    _timeoutTimer = Timer(const Duration(seconds: 15), () async {
+  // ══════════════════════════════════════════════════════════════════
+  // 后端驱动：按钮选择由服务器返回的 AU 检测结果决定
+  // TODO(后端接入): 替换 detectExpression() 为真实后端接口
+  //   接口: GET /api/rain-person/detect-expression
+  //   返回: {"expression": "皱眉"}  // 皱眉 | 抿嘴 | 皱眉+抿嘴 | unknown
+  //   当前 mock: 随机选择一个表情，模拟 2~4 秒处理延迟
+  // ══════════════════════════════════════════════════════════════════
+  void _startBackendDetection() {
+    _timeoutTimer = Timer(const Duration(seconds: 15), () {
       if (!mounted || _confirmedExpression != null) return;
-      final expr = await BackendService.instance.detectExpression();
-      if (mounted && _confirmedExpression == null) {
-        _onDetectionResult(expr);
-      }
+      _onDetectionComplete(_fallbackExpression());
     });
 
-    // 轮询检测结果
-    _detectionTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
-      if (!mounted || _confirmedExpression != null) {
-        timer.cancel();
-        return;
-      }
-      _runDetection();
-    });
+    // 模拟逐帧检测：每 800ms 轮询一次后端
+    _detectionTimer = Timer.periodic(
+      const Duration(milliseconds: 800),
+      (timer) {
+        if (!mounted || _confirmedExpression != null) {
+          timer.cancel();
+          return;
+        }
+        _pollDetection();
+      },
+    );
 
     // 首次立即检测
-    _runDetection();
+    _pollDetection();
   }
 
-  Future<void> _runDetection() async {
+  Future<void> _pollDetection() async {
     if (!mounted || _confirmedExpression != null) return;
     try {
-      final expression = await BackendService.instance.detectExpression();
-      if (expression != 'unknown' && mounted && _confirmedExpression == null) {
-        _onDetectionResult(expression);
+      // TODO(后端接入): 此处实际调用后端 AU 检测接口
+      final result = await BackendService.instance.detectExpression();
+      if (result != 'unknown' && mounted && _confirmedExpression == null) {
+        _onDetectionComplete(result);
       }
     } catch (_) {
       // 后端不可用，等待 timeout fallback
     }
   }
 
-  void _onDetectionResult(String expression) {
+  void _onDetectionComplete(String expression) {
     if (!mounted || _confirmedExpression != null) return;
     _detectionTimer?.cancel();
     _timeoutTimer?.cancel();
@@ -202,22 +202,27 @@ class _PageThreeViewState extends State<PageThreeView> {
 
     setState(() {
       _confirmedExpression = normalized;
-      _loadingOpacity = 0;
+      _highlightedExpression = normalized;
     });
 
-    // TODO(后端接入-实时视线流): 此阶段视线追踪可用于校对 AU 结果
-    // 保留 gaze 轨迹数据写入 userData 的能力，以备后续与 AU 结果交叉验证
-
-    Future.delayed(const Duration(milliseconds: 350), () {
+    // 确认后短暂停顿，让用户看到高亮结果
+    Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) _transitionToNextPage();
     });
+  }
+
+  String _fallbackExpression() {
+    // 超时兜底：从三个选项中随机取一个
+    return ExperienceFlow.normalizeExpression(
+      _expressions[DateTime.now().millisecondsSinceEpoch % _expressions.length],
+    );
   }
 
   void _transitionToNextPage() {
     setState(() {
       _maskOpacity = 0;
       _promptOpacity = 0;
-      _loadingOpacity = 0;
+      _buttonsOpacity = 0;
     });
     Future.delayed(const Duration(milliseconds: 350), () {
       if (mounted) widget.onComplete();
