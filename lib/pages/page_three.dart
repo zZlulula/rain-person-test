@@ -8,11 +8,19 @@ import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
 
+/// 页面三：入场动画 + AU 表情检测
+///
+/// 流程：
+///   1. 播放"入场动画.mp4"
+///   2. 动画结束 → 蒙版1（黑色 45%）+ 文案"你遇到了一位朋友…"（5s）
+///   3. 三个按钮浮现（皱眉 / 抿嘴 / 皱眉+抿嘴）
+///   4. 后端 detectExpression() 返回检测结果 → 对应按钮高亮 1.5s
+///   5. 蒙版淡出 → 进入页面四
+///
+/// 按钮选择由后端 AU（Action Unit）检测结果驱动，非用户自主点击。
 class PageThreeView extends StatefulWidget {
   final VoidCallback onComplete;
-
   const PageThreeView({super.key, required this.onComplete});
-
   @override
   State<PageThreeView> createState() => _PageThreeViewState();
 }
@@ -32,12 +40,12 @@ class _PageThreeViewState extends State<PageThreeView> {
   Timer? _detectionTimer;
   Timer? _timeoutTimer;
 
+  /// AU 表情选项（后端返回这三个值之一）
   static const List<String> _expressions = ['皱眉', '抿嘴', '皱眉+抿嘴'];
 
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: FullScreenVideoStack(
@@ -46,9 +54,7 @@ class _PageThreeViewState extends State<PageThreeView> {
         blockInteraction: !_showButtons,
         overlays: [
           Positioned(
-            left: 0,
-            right: 0,
-            top: screenSize.height * 0.32,
+            left: 0, right: 0, top: screenSize.height * 0.32,
             child: Center(
               child: AnimatedOpacity(
                 opacity: _promptOpacity,
@@ -58,11 +64,7 @@ class _PageThreeViewState extends State<PageThreeView> {
                   child: const Text(
                     '你遇到了一位朋友，想象你在和他解释你的烦恼',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
-                      color: Colors.white,
-                      height: 1.6,
-                    ),
+                    style: TextStyle(fontSize: 26, color: Colors.white, height: 1.6),
                   ),
                 ),
               ),
@@ -74,11 +76,10 @@ class _PageThreeViewState extends State<PageThreeView> {
     );
   }
 
+  /// 三个 AU 表情按钮，高亮由后端返回值决定
   Widget _buildButtons(Size screenSize) {
     return Positioned(
-      left: 16,
-      right: 16,
-      bottom: screenSize.height * 0.22,
+      left: 16, right: 16, bottom: screenSize.height * 0.22,
       child: AnimatedOpacity(
         opacity: _buttonsOpacity,
         duration: ExperienceMask.fadeDuration,
@@ -95,6 +96,8 @@ class _PageThreeViewState extends State<PageThreeView> {
       ),
     );
   }
+
+  // ── 入场动画 ─────────────────────────────────────────────
 
   Future<void> _initVideo(String assetPath) async {
     if (_currentVideoPath != null) {
@@ -115,10 +118,9 @@ class _PageThreeViewState extends State<PageThreeView> {
     }
   }
 
+  /// Windows video_player 不可靠，用 position ≥ duration - 200ms 判断结束
   void _onVideoUpdate() {
-    if (_videoController == null || !_videoController!.value.isInitialized) {
-      return;
-    }
+    if (_videoController == null || !_videoController!.value.isInitialized) return;
     if (_videoFinished) return;
     final pos = _videoController!.value.position;
     final dur = _videoController!.value.duration;
@@ -150,48 +152,33 @@ class _PageThreeViewState extends State<PageThreeView> {
     });
   }
 
-  // ══════════════════════════════════════════════════════════════════
-  // 后端驱动：按钮选择由服务器返回的 AU 检测结果决定
-  // TODO(后端接入): 替换 detectExpression() 为真实后端接口
-  //   接口: GET /api/rain-person/detect-expression
-  //   返回: {"expression": "皱眉"}  // 皱眉 | 抿嘴 | 皱眉+抿嘴 | unknown
-  //   当前 mock: 随机选择一个表情，模拟 2~4 秒处理延迟
-  // ══════════════════════════════════════════════════════════════════
+  // ── 后端 AU 检测 ────────────────────────────────────────
+
   void _startBackendDetection() {
     _timeoutTimer = Timer(const Duration(seconds: 15), () {
       if (!mounted || _confirmedExpression != null) return;
       _onDetectionComplete(_fallbackExpression());
     });
 
-    // 模拟逐帧检测：每 800ms 轮询一次后端
-    _detectionTimer = Timer.periodic(
-      const Duration(milliseconds: 800),
-      (timer) {
-        if (!mounted || _confirmedExpression != null) {
-          timer.cancel();
-          return;
-        }
-        _pollDetection();
-      },
-    );
-
-    // 首次立即检测
+    _detectionTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
+      if (!mounted || _confirmedExpression != null) { timer.cancel(); return; }
+      _pollDetection();
+    });
     _pollDetection();
   }
 
   Future<void> _pollDetection() async {
     if (!mounted || _confirmedExpression != null) return;
     try {
-      // TODO(后端接入): 此处实际调用后端 AU 检测接口
+      // TODO(后端接入): GET /api/rain-person/detect-expression → {"expression": "皱眉"}
       final result = await BackendService.instance.detectExpression();
       if (result != 'unknown' && mounted && _confirmedExpression == null) {
         _onDetectionComplete(result);
       }
-    } catch (_) {
-      // 后端不可用，等待 timeout fallback
-    }
+    } catch (_) {}
   }
 
+  /// 检测到表情 → 高亮按钮 1.5s → 进入下一页
   void _onDetectionComplete(String expression) {
     if (!mounted || _confirmedExpression != null) return;
     _detectionTimer?.cancel();
@@ -205,14 +192,13 @@ class _PageThreeViewState extends State<PageThreeView> {
       _highlightedExpression = normalized;
     });
 
-    // 确认后停顿 1.5 秒，让用户看清选中的按钮
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) _transitionToNextPage();
     });
   }
 
+  /// 15s 超时兜底
   String _fallbackExpression() {
-    // 超时兜底：从三个选项中随机取一个
     return ExperienceFlow.normalizeExpression(
       _expressions[DateTime.now().millisecondsSinceEpoch % _expressions.length],
     );
@@ -220,9 +206,7 @@ class _PageThreeViewState extends State<PageThreeView> {
 
   void _transitionToNextPage() {
     setState(() {
-      _maskOpacity = 0;
-      _promptOpacity = 0;
-      _buttonsOpacity = 0;
+      _maskOpacity = 0; _promptOpacity = 0; _buttonsOpacity = 0;
     });
     Future.delayed(ExperienceMask.fadeDuration, () {
       if (mounted) widget.onComplete();

@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+/// 页面二：准备页（眼动标定）
+///
+/// 流程：
+///   1. 提示文案"放松自己…"（3s 后淡入，持续 3s）
+///   2. 提示文案"看着红点，现在开始标定"（3s 后淡入，持续 3s）
+///   3. 屏幕四角 + 中心依次出现红点，每点 2s（标定流程）
+///   4. 标定完成 → 自动进入页面三
+///
+/// 后端接入后由 POST /api/rain-person/calibration/complete 确认标定结果。
 class PageTwoView extends StatefulWidget {
   final VoidCallback onComplete;
 
@@ -11,11 +20,13 @@ class PageTwoView extends StatefulWidget {
 }
 
 class _PageTwoViewState extends State<PageTwoView> {
+  // 各 UI 元素的透明度状态
   double _promptOpacity = 0;
   double _calibrationOpacity = 0;
   double _redDotOpacity = 0;
   double _buttonOpacity = 0;
 
+  /// 标定点位置（相对屏幕 0~1），四角 + 中心
   final List<Offset> _calibrationPoints = const [
     Offset(0.1, 0.1),
     Offset(0.9, 0.1),
@@ -33,6 +44,7 @@ class _PageTwoViewState extends State<PageTwoView> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // 第一条提示文案："放松自己…"
           Positioned(
             left: 0,
             right: 0,
@@ -56,6 +68,7 @@ class _PageTwoViewState extends State<PageTwoView> {
               ),
             ),
           ),
+          // 第二条提示文案："看着红点…"
           if (_calibrationOpacity > 0)
             Positioned(
               left: 0,
@@ -67,14 +80,12 @@ class _PageTwoViewState extends State<PageTwoView> {
                   duration: const Duration(seconds: 1),
                   child: Text(
                     '看着红点，现在开始标定',
-                    style: TextStyle(
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(fontSize: 22, color: Colors.white),
                   ),
                 ),
               ),
             ),
+          // 标定红点（随 _currentCalibrationIndex 移动）
           if (_redDotOpacity > 0)
             AnimatedPositioned(
               duration: const Duration(milliseconds: 300),
@@ -112,7 +123,7 @@ class _PageTwoViewState extends State<PageTwoView> {
                 ),
               ),
             ),
-          // 标定完成后显示确认提示，自动进入下一页
+          // 标定完成后显示"标定完成"
           if (_buttonOpacity > 0)
             Positioned(
               left: 0,
@@ -123,8 +134,10 @@ class _PageTwoViewState extends State<PageTwoView> {
                   opacity: _buttonOpacity,
                   duration: const Duration(milliseconds: 300),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 48,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.blue,
                       borderRadius: BorderRadius.circular(12),
@@ -146,6 +159,7 @@ class _PageTwoViewState extends State<PageTwoView> {
     );
   }
 
+  /// 启动标定序列：文案1 → 文案2 → 红点
   void _startSequence() {
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
@@ -170,6 +184,7 @@ class _PageTwoViewState extends State<PageTwoView> {
     });
   }
 
+  /// 逐点移动红点，每点停留 2s
   void _advanceCalibration() {
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
@@ -182,19 +197,17 @@ class _PageTwoViewState extends State<PageTwoView> {
     });
   }
 
+  /// 标定结束：显示"标定完成" → 1s 后自动进入下一页
   void _finishCalibration() {
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
-      setState(() {
-        _redDotOpacity = 0;
-      });
-      // 标定完成后显示确认按钮并自动过渡到下一页
+      setState(() => _redDotOpacity = 0);
+
       Future.delayed(const Duration(milliseconds: 500), () {
         if (!mounted) return;
         setState(() => _buttonOpacity = 1);
         // TODO(后端接入): 标定完成后调用后端确认
         //   POST /api/rain-person/calibration/complete
-        //   当前自动进入下一页
         Future.delayed(const Duration(seconds: 1), () {
           if (mounted) _transitionToNextPage();
         });
@@ -202,6 +215,7 @@ class _PageTwoViewState extends State<PageTwoView> {
     });
   }
 
+  /// 淡出所有元素后进入页面三
   void _transitionToNextPage() {
     setState(() {
       _promptOpacity = 0;

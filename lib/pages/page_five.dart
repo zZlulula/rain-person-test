@@ -10,11 +10,20 @@ import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
 
+/// 页面五：分支选择页（伞 / 亭子）
+///
+/// 流程：
+///   1. 播放"仓和伞.mp4"引导动画
+///   2. 动画结束 → 蒙版1 + 文案"放松好了吗…"（3s）
+///   3. 两个按钮浮现（伞 / 亭子）
+///   4. 后端 detectShelterChoice() 返回选择 → 对应按钮高亮 1.2s
+///   5. 播放对应选择动画（选择伞.mp4 / 选择仓.mp4）
+///   6. 蒙版淡出 → 进入页面六
+///
+/// 选择由后端视线检测结果驱动。
 class PageFiveView extends StatefulWidget {
   final VoidCallback onComplete;
-
   const PageFiveView({super.key, required this.onComplete});
-
   @override
   State<PageFiveView> createState() => _PageFiveViewState();
 }
@@ -43,7 +52,6 @@ class _PageFiveViewState extends State<PageFiveView> {
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: FullScreenVideoStack(
@@ -52,9 +60,7 @@ class _PageFiveViewState extends State<PageFiveView> {
         blockInteraction: !_showChoices,
         overlays: [
           Positioned(
-            left: 0,
-            right: 0,
-            top: screenSize.height * 0.3,
+            left: 0, right: 0, top: screenSize.height * 0.3,
             child: Center(
               child: AnimatedOpacity(
                 opacity: _promptOpacity,
@@ -64,28 +70,22 @@ class _PageFiveViewState extends State<PageFiveView> {
                   child: const Text(
                     '放松好了吗？场景还在下雨，你的前方出现了一把伞和一个小亭子，你想选哪个？（看着你想选的选项）',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.white,
-                      height: 1.6,
-                    ),
+                    style: TextStyle(fontSize: 24, color: Colors.white, height: 1.6),
                   ),
                 ),
               ),
             ),
           ),
-          if (_showChoices && _choicesOpacity > 0)
-            _buildChoiceButtons(screenSize),
+          if (_showChoices && _choicesOpacity > 0) _buildChoiceButtons(screenSize),
         ],
       ),
     );
   }
 
+  /// 伞 / 亭子 两个选项按钮
   Widget _buildChoiceButtons(Size screenSize) {
     return Positioned(
-      bottom: 80,
-      left: 0,
-      right: 0,
+      bottom: 80, left: 0, right: 0,
       child: AnimatedOpacity(
         opacity: _choicesOpacity,
         duration: ExperienceMask.fadeDuration,
@@ -115,10 +115,11 @@ class _PageFiveViewState extends State<PageFiveView> {
     );
   }
 
+  // ── 引导动画 ───────────────────────────────────────────
+
   Future<void> _initVideo() async {
     try {
-      _videoController =
-          await VideoControllerCache.instance.acquireForPlay(_videoPath);
+      _videoController = await VideoControllerCache.instance.acquireForPlay(_videoPath);
       _currentVideoPath = _videoPath;
       if (!mounted) return;
       await _videoController!.setLooping(false);
@@ -128,10 +129,7 @@ class _PageFiveViewState extends State<PageFiveView> {
       for (var i = 0; i < 30; i++) {
         if (!mounted) return;
         final value = _videoController!.value;
-        if (value.isPlaying &&
-            value.position > const Duration(milliseconds: 16)) {
-          break;
-        }
+        if (value.isPlaying && value.position > const Duration(milliseconds: 16)) break;
         await Future<void>.delayed(const Duration(milliseconds: 16));
       }
     } catch (e) {
@@ -139,20 +137,14 @@ class _PageFiveViewState extends State<PageFiveView> {
       await _onIntroVideoComplete();
       return;
     }
-
     if (!mounted) return;
     setState(() => _holdBlackFrame = false);
   }
 
   void _onIntroVideoUpdate() {
-    if (_videoController == null || !_videoController!.value.isInitialized) {
-      return;
-    }
+    if (_videoController == null || !_videoController!.value.isInitialized) return;
     if (_introVideoFinished) return;
-
-    if (_videoController!.value.isCompleted) {
-      _onIntroVideoComplete();
-    }
+    if (_videoController!.value.isCompleted) _onIntroVideoComplete();
   }
 
   Future<void> _onIntroVideoComplete() async {
@@ -174,59 +166,45 @@ class _PageFiveViewState extends State<PageFiveView> {
       _promptOpacity = 1;
     });
 
+    // 3s 文案后显示选择按钮
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
-      setState(() {
-        _showChoices = true;
-        _choicesOpacity = 1;
-      });
+      setState(() { _showChoices = true; _choicesOpacity = 1; });
       _startBackendDetection();
     });
   }
 
-  // ══════════════════════════════════════════════════════════════════
-  // 后端驱动：调用 detectShelterChoice() 获取伞/亭子选择
-  // TODO(后端接入): 替换 detectShelterChoice() 为真实后端接口
-  //   接口: GET /api/rain-person/shelter-choice
-  //   返回: {"choice": "umbrella"}  // umbrella | pavilion
-  //   当前 mock: 随机选择，2~4 秒延迟模拟检测时间
-  // ══════════════════════════════════════════════════════════════════
+  // ── 后端选择检测 ───────────────────────────────────────
+
   void _startBackendDetection() {
     _timeoutTimer = Timer(const Duration(seconds: 15), () {
       if (!mounted || _confirmedChoice != null) return;
-      _confirmChoice(ShelterChoice.umbrella); // fallback
+      _confirmChoice(ShelterChoice.umbrella);
     });
 
-    _detectionTimer = Timer.periodic(
-      const Duration(milliseconds: 800),
-      (timer) {
-        if (!mounted || _confirmedChoice != null) {
-          timer.cancel();
-          return;
-        }
-        _pollShelterChoice();
-      },
-    );
-
+    _detectionTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
+      if (!mounted || _confirmedChoice != null) { timer.cancel(); return; }
+      _pollShelterChoice();
+    });
     _pollShelterChoice();
   }
 
   Future<void> _pollShelterChoice() async {
     if (!mounted || _confirmedChoice != null) return;
     try {
+      // TODO(后端接入): GET /api/rain-person/shelter-choice → {"choice": "umbrella"}
       final choice = await BackendService.instance.detectShelterChoice();
       if (mounted && _confirmedChoice == null) {
         _highlightedChoice.value = choice;
-        // 高亮 1.2s 让用户看清 → 确认
+        // 高亮 1.2s 后确认
         Future.delayed(const Duration(milliseconds: 1200), () {
           if (mounted && _confirmedChoice == null) _confirmChoice(choice);
         });
       }
-    } catch (_) {
-      // 后端不可用，等待 timeout fallback
-    }
+    } catch (_) {}
   }
 
+  /// 确认选择 → 播放对应动画（选择伞 / 选择仓）
   void _confirmChoice(ShelterChoice choice) {
     if (!mounted || _confirmedChoice != null) return;
     _detectionTimer?.cancel();
@@ -236,13 +214,8 @@ class _PageFiveViewState extends State<PageFiveView> {
 
     BackendService.instance.userData.stageThreeChoice = choice;
 
-    setState(() {
-      _showChoices = false;
-      _choicesOpacity = 0;
-      _promptOpacity = 0;
-    });
+    setState(() { _showChoices = false; _choicesOpacity = 0; _promptOpacity = 0; });
 
-    // 停顿 1.2 秒，让用户看清选中的选项
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) _playSelectionVideo(choice);
     });
@@ -263,8 +236,7 @@ class _PageFiveViewState extends State<PageFiveView> {
     if (!mounted) return;
 
     try {
-      final controller =
-          await createAssetVideoController(branch.selectionVideo);
+      final controller = await createAssetVideoController(branch.selectionVideo);
       _videoController = controller;
       _currentVideoPath = branch.selectionVideo;
       await controller.initialize();
@@ -283,9 +255,7 @@ class _PageFiveViewState extends State<PageFiveView> {
   void _onSelectionVideoUpdate() {
     if (_selectionVideoFinished ||
         _videoController == null ||
-        !_videoController!.value.isInitialized) {
-      return;
-    }
+        !_videoController!.value.isInitialized) return;
     if (_videoController!.value.isCompleted) {
       _selectionVideoFinished = true;
       _videoController?.removeListener(_onSelectionVideoUpdate);
@@ -302,10 +272,7 @@ class _PageFiveViewState extends State<PageFiveView> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _initVideo();
-  }
+  void initState() { super.initState(); _initVideo(); }
 
   @override
   void dispose() {

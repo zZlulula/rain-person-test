@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+/// 页面一：首页
+///
+/// 居中显示标题"雨中人"，下方"开始"按钮。
+/// 点击 → 进入页面二（准备页）。
 class PageOneView extends StatefulWidget {
   final VoidCallback onStart;
 
@@ -10,6 +14,7 @@ class PageOneView extends StatefulWidget {
 }
 
 class _PageOneViewState extends State<PageOneView> {
+  /// 防连点：按钮点击后锁定，避免重复触发
   bool _isActionLocked = false;
 
   @override
@@ -20,6 +25,7 @@ class _PageOneViewState extends State<PageOneView> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // 标题"雨中人"，居中偏上
           Positioned(
             left: 0,
             right: 0,
@@ -36,6 +42,7 @@ class _PageOneViewState extends State<PageOneView> {
               ),
             ),
           ),
+          // "开始"按钮，标题下方
           Positioned(
             left: 0,
             right: 0,

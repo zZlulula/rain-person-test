@@ -10,11 +10,19 @@ import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
 
+/// 页面四：词汇观察页
+///
+/// 流程：
+///   1. 播放"下雨了.mp4"（循环），同时播放雨声音频
+///   2. 蒙版1 + 分支文案淡入（根据阶段1 AU 结果动态生成，5s）
+///   3. 6 个词汇以六边形布局浮现，后端 detectFocusedWords() 返回 Top2
+///      被选中的两个词高亮，6s 后进入下一阶段
+///   4. 蒙版淡出 → 预加载页面五视频 → 进入页面五
+///
+/// 词汇 + 心率变异率均由后端驱动。
 class PageFourView extends StatefulWidget {
   final VoidCallback onComplete;
-
   const PageFourView({super.key, required this.onComplete});
-
   @override
   State<PageFourView> createState() => _PageFourViewState();
 }
@@ -24,9 +32,9 @@ class _PageFourViewState extends State<PageFourView> {
   double _promptOpacity = 0;
   bool _showWords = false;
   double _wordsOpacity = 0;
-  final ValueNotifier<Set<String>> _highlightedWords =
-      ValueNotifier<Set<String>>({});
+  final ValueNotifier<Set<String>> _highlightedWords = ValueNotifier<Set<String>>({});
 
+  /// 六边形布局的 6 个词汇
   final List<String> _words = ['听歌', '发呆', '娱乐', '游戏', '家人', '朋友'];
 
   Timer? _durationTimer;
@@ -34,8 +42,11 @@ class _PageFourViewState extends State<PageFourView> {
   VideoPlayerController? _videoController;
   String? _currentVideoPath;
 
+  /// 根据阶段1 AU 结果生成的引导文案
   late final String _stageOnePromptText;
   String get _promptText => _stageOnePromptText;
+
+  // ── 六边形布局计算 ─────────────────────────────────────
 
   double _wordRadius(Size screenSize) {
     final base = min(screenSize.width, screenSize.height);
@@ -57,7 +68,6 @@ class _PageFourViewState extends State<PageFourView> {
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: FullScreenVideoStack(
@@ -66,9 +76,7 @@ class _PageFourViewState extends State<PageFourView> {
         blockInteraction: !_showWords,
         overlays: [
           Positioned(
-            left: 0,
-            right: 0,
-            top: screenSize.height * 0.35,
+            left: 0, right: 0, top: screenSize.height * 0.35,
             child: Center(
               child: AnimatedOpacity(
                 opacity: _promptOpacity,
@@ -78,18 +86,13 @@ class _PageFourViewState extends State<PageFourView> {
                   child: Text(
                     _promptText,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      color: Colors.white,
-                      height: 1.6,
-                    ),
+                    style: const TextStyle(fontSize: 24, color: Colors.white, height: 1.6),
                   ),
                 ),
               ),
             ),
           ),
-          if (_showWords && _wordsOpacity > 0)
-            ..._buildHexagonalWords(screenSize),
+          if (_showWords && _wordsOpacity > 0) ..._buildHexagonalWords(screenSize),
         ],
       ),
     );
@@ -97,13 +100,11 @@ class _PageFourViewState extends State<PageFourView> {
 
   List<Widget> _buildHexagonalWords(Size screenSize) {
     final widgets = <Widget>[];
-
     for (int i = 0; i < _words.length; i++) {
       final offset = _wordOffset(i, screenSize);
       widgets.add(
         Positioned(
-          left: offset.dx,
-          top: offset.dy,
+          left: offset.dx, top: offset.dy,
           child: Opacity(
             opacity: _wordsOpacity,
             child: ValueListenableBuilder<Set<String>>(
@@ -119,9 +120,10 @@ class _PageFourViewState extends State<PageFourView> {
         ),
       );
     }
-
     return widgets;
   }
+
+  // ── 视频 + 音频 ────────────────────────────────────────
 
   Future<bool> _initVideo(String assetPath) async {
     if (_currentVideoPath != null) {
@@ -133,7 +135,7 @@ class _PageFourViewState extends State<PageFourView> {
       await _videoController!.initialize();
       if (!mounted) return false;
       setState(() {});
-      await _videoController!.setLooping(true);
+      await _videoController!.setLooping(true); // 下雨视频循环播放
       await _videoController!.play();
       return true;
     } catch (e) {
@@ -145,6 +147,7 @@ class _PageFourViewState extends State<PageFourView> {
   Future<void> _startStageOne() async {
     await _initVideo('assets/videos/下雨了.mp4');
     if (!mounted) return;
+    // 播放雨声音频（循环）
     await AudioService.instance.playBgm('assets/audios/rain.mp3', volume: 0.4);
 
     setState(() {
@@ -152,41 +155,24 @@ class _PageFourViewState extends State<PageFourView> {
       _promptOpacity = 1;
     });
 
+    // 5s 文案 → 六边形词汇浮现
     Future.delayed(const Duration(seconds: 5), () {
       if (!mounted) return;
-      setState(() {
-        _promptOpacity = 0;
-        _showWords = true;
-        _wordsOpacity = 1;
-      });
+      setState(() { _promptOpacity = 0; _showWords = true; _wordsOpacity = 1; });
       _startBackendDetection();
     });
   }
 
-  // ══════════════════════════════════════════════════════════════════
-  // 后端驱动：调用 detectFocusedWords() 获取注视最多的两个词
-  // TODO(后端接入): 替换 detectFocusedWords() 为真实后端接口
-  //   接口: GET /api/rain-person/focused-words
-  //   返回: {"words": ["游戏", "娱乐"]}
-  //   当前 mock: 随机返回两个词
-  // ══════════════════════════════════════════════════════════════════
-  void _startBackendDetection() {
-    // 轮询后端检测结果，每 800ms 一次
-    _detectionTimer = Timer.periodic(
-      const Duration(milliseconds: 800),
-      (timer) {
-        if (!mounted) {
-          timer.cancel();
-          return;
-        }
-        _pollFocusedWords();
-      },
-    );
+  // ── 后端词汇检测 ───────────────────────────────────────
 
-    // 立即首次检测
+  void _startBackendDetection() {
+    _detectionTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
+      if (!mounted) { timer.cancel(); return; }
+      _pollFocusedWords();
+    });
     _pollFocusedWords();
 
-    // 10 秒后结束
+    // 6s 后结束词汇展示
     _durationTimer = Timer(const Duration(seconds: 6), () {
       if (!mounted) return;
       _detectionTimer?.cancel();
@@ -197,6 +183,7 @@ class _PageFourViewState extends State<PageFourView> {
   Future<void> _pollFocusedWords() async {
     if (!mounted) return;
     try {
+      // TODO(后端接入): GET /api/rain-person/focused-words → {"words": ["游戏","娱乐"]}
       final words = await BackendService.instance.detectFocusedWords();
       if (words.isNotEmpty && mounted) {
         final newHighlighted = Set<String>.from(words);
@@ -204,36 +191,30 @@ class _PageFourViewState extends State<PageFourView> {
           _highlightedWords.value = newHighlighted;
         }
       }
-    } catch (_) {
-      // 后端不可用，保持当前状态
-    }
+    } catch (_) {}
   }
 
-  bool _setEquals(Set<String> a, Set<String> b) {
-    if (a.length != b.length) return false;
-    return a.containsAll(b);
-  }
+  bool _setEquals(Set<String> a, Set<String> b) =>
+      a.length == b.length && a.containsAll(b);
 
   void _hideWordsAndExitStage() {
     if (!mounted) return;
-    setState(() {
-      _showWords = false;
-      _wordsOpacity = 0;
-      _promptOpacity = 0;
-    });
+    setState(() { _showWords = false; _wordsOpacity = 0; _promptOpacity = 0; });
     _finalizeWordSelection();
   }
 
+  /// 保存后端返回的 Top2 词汇 + 心率变异率
   Future<void> _finalizeWordSelection() async {
     final topTwo = _highlightedWords.value.toList();
+    // TODO(后端接入): GET /api/rain-person/heart-rate → {"variability": "高"}
     final heartRate = await BackendService.instance.getHeartRateVariability();
 
     BackendService.instance.userData.stageTwoWords = topTwo;
     BackendService.instance.userData.stageTwoHeartRate = heartRate;
 
     if (!mounted) return;
-
     setState(() => _maskOpacity = 0);
+    // 预加载页面五视频
     await VideoControllerCache.instance.prepare('assets/videos/仓和伞.mp4');
     if (!mounted) return;
     Future.delayed(ExperienceMask.fadeDuration, () {
