@@ -8,7 +8,7 @@ import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
 
-/// 页面六：① 播 body→ending 两段视频 ② 弹出左/中/右 ③ "正在生成报告"→报告
+/// 页面六：body 视频 → 结束视频（与左中右选项同步播放）→ 最终过渡 → 报告
 class _DirectionOption {
   const _DirectionOption({required this.label, required this.key});
   final String label;
@@ -30,37 +30,22 @@ class _PageSixViewState extends State<PageSixView> {
   ];
 
   double _maskOpacity = ExperienceMask.guideOpacity;
-  double _promptOpacity = 1;
+  double _promptOpacity = 0;
   double _loadingOpacity = 0;
   bool _showDirections = false;
   double _choicesOpacity = 0;
-  bool _holdBlackFrame = false;
+  bool _holdBlackFrame = true;
 
-  final ValueNotifier<String?> _highlightedDirection =
-      ValueNotifier<String?>(null);
+  final ValueNotifier<String?> _highlightedDirection = ValueNotifier<String?>(null);
 
   VideoPlayerController? _videoController;
-  bool _videoEndHandled = false;
   bool _exitHandled = false;
-  int _videoIndex = 0; // 0=bodyVideo, 1=endingVideo, 2=done
 
   Timer? _detectionTimer;
   Timer? _videoEndTimer;
   String? _confirmedDirection;
 
   late StageThreeBranch _branch;
-
-  // 用定时器而非监听器触发视频结束（Windows video_player 监听不可靠）
-  void _scheduleVideoEnd(Duration duration) {
-    _videoEndTimer?.cancel();
-    final delay = duration > const Duration(milliseconds: 500)
-        ? duration
-        : const Duration(seconds: 10);
-    _videoEndTimer = Timer(delay, () {
-      if (!mounted) return;
-      _onVideoFinished();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +96,7 @@ class _PageSixViewState extends State<PageSixView> {
     return Positioned(
       left: 16, right: 16, bottom: screenSize.height * 0.14,
       child: AnimatedOpacity(
-        opacity: _choicesOpacity, duration: ExperienceMask.fadeDuration,
+        opacity: _choicesOpacity, duration: const Duration(milliseconds: 300),
         child: ValueListenableBuilder<String?>(
           valueListenable: _highlightedDirection,
           builder: (context, highlighted, _) {
@@ -131,86 +116,76 @@ class _PageSixViewState extends State<PageSixView> {
     );
   }
 
-  // ── 视频播放（定时器触发结束，不依赖播放器回调）───────────
-
-  void _onVideoFinished() {
-    if (!mounted || _videoEndHandled) return;
-    _videoEndHandled = true;
-    _videoEndTimer?.cancel();
-    if (_videoController != null) {
-      _videoController!.removeListener(_onVideoUpdate);
-    }
-
-    if (_videoIndex == 0) {
-      _videoIndex = 1;
-      setState(() => _holdBlackFrame = true);
-      _startVideo(_branch.postChoiceVideo);
-    } else {
-      _videoIndex = 2;
-      _showDirectionPhase();
-    }
-  }
-
-  void _onVideoUpdate() {
-    // 保留 listener 作为辅助，但不做主要结束判断
-    if (_videoEndHandled) return;
-    final controller = _videoController;
-    if (controller == null || !controller.value.isInitialized) return;
-    // 如果播放器确实报告了完成，提前触发
-    if (controller.value.isCompleted) {
-      _onVideoFinished();
-    }
-  }
+  // ── 视频播放 ────────────────────────────────────────────
 
   Future<void> _startVideo(String path) async {
-    _videoEndHandled = false;
-    _videoEndTimer?.cancel();
-
     try {
       final controller = await VideoControllerCache.instance.acquireForPlay(path);
       _videoController = controller;
-      controller.addListener(_onVideoUpdate);
-      await controller.play();
       if (!mounted) return;
       setState(() => _holdBlackFrame = false);
-
-      // 等待播放器报告初始化完成，拿到真实时长
-      Duration dur = Duration.zero;
-      for (var i = 0; i < 50; i++) {
-        if (!mounted) return;
-        final value = controller.value;
-        if (value.isInitialized && value.duration > Duration.zero) {
-          dur = value.duration;
-        }
-        if (value.isPlaying &&
-            value.position > const Duration(milliseconds: 16)) break;
-        await Future<void>.delayed(const Duration(milliseconds: 16));
-      }
-
-      // 用视频时长 - 200ms 作为结束触发时间
-      if (dur > const Duration(milliseconds: 500)) {
-        _scheduleVideoEnd(dur - const Duration(milliseconds: 200));
-      } else {
-        // 拿不到时长，用 10 秒兜底
-        _scheduleVideoEnd(const Duration(seconds: 10));
-      }
+      await controller.play();
     } catch (e) {
       debugPrint('Video start failed ($path): $e');
-      if (!mounted) return;
-      _onVideoFinished();
     }
   }
 
-  // ── 方向选择 ────────────────────────────────────────────
-
-  void _showDirectionPhase() {
-    if (!mounted) return;
-    setState(() {
-      _showDirections = true;
-      _choicesOpacity = 1;
-    });
-    _startBackendDetection();
+  Future<Duration> _getDuration(String path) async {
+    try {
+      final controller = await VideoControllerCache.instance.prepare(path);
+      return controller.value.duration > Duration.zero
+          ? controller.value.duration
+          : const Duration(seconds: 10);
+    } catch (_) {
+      return const Duration(seconds: 10);
+    }
   }
+
+  // ── 主流程 ──────────────────────────────────────────────
+
+  Future<void> _bootstrap() async {
+    _branch = ExperienceFlow.stageThreeBranchFromUserData();
+
+    // 预加载
+    final bodyDur = await _getDuration(_branch.bodyVideo);
+    final endingDur = await _getDuration(_branch.postChoiceVideo);
+
+    // 1. 播 bodyVideo（纯画面），1.5s 后显示文案
+    await _startVideo(_branch.bodyVideo);
+    if (!mounted) return;
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _promptOpacity = 1);
+    });
+
+    // 2. bodyVideo 播完 → 切到 endingVideo
+    _videoEndTimer = Timer(bodyDur, () async {
+      if (!mounted) return;
+      setState(() { _holdBlackFrame = true; _promptOpacity = 0; });
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await _startEndingPhase(endingDur);
+    });
+  }
+
+  Future<void> _startEndingPhase(Duration endingDur) async {
+    if (!mounted) return;
+    // 播结束视频
+    await _startVideo(_branch.postChoiceVideo);
+
+    // 0.5s 后浮现左中右选项（与视频同步）
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      setState(() { _showDirections = true; _choicesOpacity = 1; });
+      _startBackendDetection();
+    });
+
+    // 视频结束 → 最终过渡
+    _videoEndTimer = Timer(endingDur, () {
+      if (!mounted || _exitHandled) return;
+      _transitionToReport();
+    });
+  }
+
+  // ── 方向检测（后端驱动）────────────────────────────────
 
   void _startBackendDetection() {
     _detectionTimer?.cancel();
@@ -229,11 +204,13 @@ class _PageSixViewState extends State<PageSixView> {
         _confirmedDirection = direction;
         _highlightedDirection.value = direction;
         Future.delayed(const Duration(milliseconds: 1200), () {
-          if (mounted) _transitionToReport();
+          if (mounted) setState(() { _choicesOpacity = 0; });
         });
       }
     } catch (_) {}
   }
+
+  // ── 最终过渡 ────────────────────────────────────────────
 
   void _transitionToReport() {
     if (_exitHandled || !mounted) return;
@@ -255,14 +232,6 @@ class _PageSixViewState extends State<PageSixView> {
     });
   }
 
-  Future<void> _bootstrap() async {
-    _branch = ExperienceFlow.stageThreeBranchFromUserData();
-    await VideoControllerCache.instance.prepare(_branch.bodyVideo);
-    await VideoControllerCache.instance.prepare(_branch.postChoiceVideo);
-    if (!mounted) return;
-    _startVideo(_branch.bodyVideo);
-  }
-
   @override
   void initState() { super.initState(); _bootstrap(); }
 
@@ -270,7 +239,6 @@ class _PageSixViewState extends State<PageSixView> {
   void dispose() {
     _detectionTimer?.cancel();
     _videoEndTimer?.cancel();
-    _videoController?.removeListener(_onVideoUpdate);
     _videoController?.pause();
     _highlightedDirection.dispose();
     super.dispose();
