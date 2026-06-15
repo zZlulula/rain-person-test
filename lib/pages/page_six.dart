@@ -125,7 +125,11 @@ class _PageSixViewState extends State<PageSixView> {
     if (_videoEndHandled) return;
     final controller = _videoController;
     if (controller == null || !controller.value.isInitialized) return;
-    if (controller.value.isCompleted) {
+
+    final pos = controller.value.position;
+    final dur = controller.value.duration;
+    // Windows 下 isCompleted 不可靠，用位置判断
+    if (dur > Duration.zero && pos >= dur - const Duration(milliseconds: 200)) {
       _videoEndHandled = true;
       _videoController?.removeListener(_onVideoUpdate);
       _videoTimeout?.cancel();
@@ -174,8 +178,10 @@ class _PageSixViewState extends State<PageSixView> {
         _onVideoFinished();
       });
 
-      // 如果视频已经播完（极短视频）
-      if (controller.value.isCompleted) {
+      // 极短视频：检查是否已接近结尾
+      final pos = controller.value.position;
+      final dur = controller.value.duration;
+      if (dur > Duration.zero && pos >= dur - const Duration(milliseconds: 300)) {
         _videoEndHandled = true;
         controller.removeListener(_onVideoUpdate);
         _videoTimeout?.cancel();
