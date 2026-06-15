@@ -441,19 +441,14 @@ class AudioService {
       if (_currentBgm == assetPath && _bgmPlayer.playing) {
         return;
       }
+      await _bgmPlayer.setAsset(assetPath);
       await _bgmPlayer.setLoopMode(LoopMode.one);
       await _bgmPlayer.setVolume(_isMuted ? 0 : volume);
-      final localPath = await resolveAssetToLocalPath(assetPath);
-      if (localPath == assetPath) {
-        await _bgmPlayer.setAsset(assetPath);
-      } else {
-        await _bgmPlayer.setFilePath(localPath);
-      }
       _currentBgm = assetPath;
       await _bgmPlayer.play();
     } catch (e) {
       _currentBgm = null;
-      debugPrint('Audio play failed (资源未放入或格式不支持): $e');
+      debugPrint('Audio play failed: $e');
     }
   }
 

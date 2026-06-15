@@ -145,7 +145,7 @@ class _PageFourViewState extends State<PageFourView> {
   Future<void> _startStageOne() async {
     await _initVideo('assets/videos/下雨了.mp4');
     if (!mounted) return;
-    AudioService.instance.playBgm('assets/audios/rain.mp3', volume: 0.4);
+    await AudioService.instance.playBgm('assets/audios/rain.mp3', volume: 0.4);
 
     setState(() {
       _maskOpacity = ExperienceMask.guideOpacity;
