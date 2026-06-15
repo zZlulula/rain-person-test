@@ -45,10 +45,29 @@ class _PageSixViewState extends State<PageSixView> {
   int _videoIndex = 0; // 0=bodyVideo, 1=endingVideo, 2=done
 
   Timer? _detectionTimer;
-  Timer? _videoTimeout;
+  Timer? _videoEndTimer;
   String? _confirmedDirection;
 
   late StageThreeBranch _branch;
+
+  // 用定时器而非监听器触发视频结束（Windows video_player 监听不可靠）
+  void _scheduleVideoEnd(Duration duration) {
+    _videoEndTimer?.cancel();
+    if (duration > const Duration(milliseconds: 500)) {
+      _videoEndTimer = Timer(duration, () {
+        if (!mounted || _videoEndHandled) return;
+        _videoEndHandled = true;
+        _onVideoFinished();
+      });
+    } else {
+      // 无法获取有效时长，10 秒兜底
+      _videoEndTimer = Timer(const Duration(seconds: 10), () {
+        if (!mounted || _videoEndHandled) return;
+        _videoEndHandled = true;
+        _onVideoFinished();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,79 +138,73 @@ class _PageSixViewState extends State<PageSixView> {
     );
   }
 
-  // ── 视频播放（带超时兜底）────────────────────────────────
-
-  void _onVideoUpdate() {
-    if (_videoEndHandled) return;
-    final controller = _videoController;
-    if (controller == null || !controller.value.isInitialized) return;
-
-    final pos = controller.value.position;
-    final dur = controller.value.duration;
-    // Windows 下 isCompleted 不可靠，用位置判断
-    if (dur > Duration.zero && pos >= dur - const Duration(milliseconds: 200)) {
-      _videoEndHandled = true;
-      _videoController?.removeListener(_onVideoUpdate);
-      _videoTimeout?.cancel();
-      _onVideoFinished();
-    }
-  }
+  // ── 视频播放（定时器触发结束，不依赖播放器回调）───────────
 
   void _onVideoFinished() {
-    if (!mounted) return;
+    if (!mounted || _videoEndHandled) return;
+    _videoEndHandled = true;
+    _videoEndTimer?.cancel();
+    if (_videoController != null) {
+      _videoController!.removeListener(_onVideoUpdate);
+    }
+
     if (_videoIndex == 0) {
-      // bodyVideo 结束 → 播 endingVideo
       _videoIndex = 1;
       setState(() => _holdBlackFrame = true);
       _startVideo(_branch.postChoiceVideo);
     } else {
-      // endingVideo 结束 → 显示方向选项
       _videoIndex = 2;
       _showDirectionPhase();
     }
   }
 
+  void _onVideoUpdate() {
+    // 保留 listener 作为辅助，但不做主要结束判断
+    if (_videoEndHandled) return;
+    final controller = _videoController;
+    if (controller == null || !controller.value.isInitialized) return;
+    // 如果播放器确实报告了完成，提前触发
+    if (controller.value.isCompleted) {
+      _onVideoFinished();
+    }
+  }
+
   Future<void> _startVideo(String path) async {
     _videoEndHandled = false;
-    _videoTimeout?.cancel();
+    _videoEndTimer?.cancel();
 
     try {
       final controller = await VideoControllerCache.instance.acquireForPlay(path);
       _videoController = controller;
       controller.addListener(_onVideoUpdate);
+      await controller.play();
       if (!mounted) return;
       setState(() => _holdBlackFrame = false);
 
-      // 等待视频开始播放
-      for (var i = 0; i < 30; i++) {
+      // 等待播放器报告初始化完成，拿到真实时长
+      Duration dur = Duration.zero;
+      for (var i = 0; i < 50; i++) {
         if (!mounted) return;
-        if (controller.value.isPlaying &&
-            controller.value.position > const Duration(milliseconds: 16)) break;
+        final value = controller.value;
+        if (value.isInitialized && value.duration > Duration.zero) {
+          dur = value.duration;
+        }
+        if (value.isPlaying &&
+            value.position > const Duration(milliseconds: 16)) break;
         await Future<void>.delayed(const Duration(milliseconds: 16));
       }
 
-      // 超时兜底：最长等 30 秒（视频总不会比这更长）
-      _videoTimeout = Timer(const Duration(seconds: 30), () {
-        if (!mounted || _videoEndHandled) return;
-        _videoEndHandled = true;
-        _videoController?.removeListener(_onVideoUpdate);
-        _onVideoFinished();
-      });
-
-      // 极短视频：检查是否已接近结尾
-      final pos = controller.value.position;
-      final dur = controller.value.duration;
-      if (dur > Duration.zero && pos >= dur - const Duration(milliseconds: 300)) {
-        _videoEndHandled = true;
-        controller.removeListener(_onVideoUpdate);
-        _videoTimeout?.cancel();
-        _onVideoFinished();
+      // 用视频时长 - 200ms 作为结束触发时间
+      if (dur > const Duration(milliseconds: 500)) {
+        _scheduleVideoEnd(dur - const Duration(milliseconds: 200));
+      } else {
+        // 拿不到时长，用 10 秒兜底
+        _scheduleVideoEnd(const Duration(seconds: 10));
       }
     } catch (e) {
       debugPrint('Video start failed ($path): $e');
       if (!mounted) return;
-      _videoEndHandled = true;
-      _onVideoFinished(); // 失败了跳过继续
+      _onVideoFinished();
     }
   }
 
@@ -263,7 +276,7 @@ class _PageSixViewState extends State<PageSixView> {
   @override
   void dispose() {
     _detectionTimer?.cancel();
-    _videoTimeout?.cancel();
+    _videoEndTimer?.cancel();
     _videoController?.removeListener(_onVideoUpdate);
     _videoController?.pause();
     _highlightedDirection.dispose();
