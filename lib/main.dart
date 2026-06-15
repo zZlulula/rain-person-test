@@ -13,6 +13,11 @@ import 'pages/page_five.dart';
 import 'pages/page_six.dart';
 import 'pages/report_page.dart';
 
+/// 雨中人心理测试 — 应用入口
+///
+/// 启动时预加载媒体资源 + 字体，然后运行 MaterialApp。
+/// 整体流程：首页 → 准备(标定) → 入场动画 → 词汇观察 →
+///           分支选择(伞/亭子) → 结尾动画 → 报告 → 重新体验
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Future.wait([
@@ -22,6 +27,7 @@ Future<void> main() async {
   runApp(const RainPersonApp());
 }
 
+/// MaterialApp 根组件，配置中文主题 + 字体
 class RainPersonApp extends StatelessWidget {
   const RainPersonApp({super.key});
 
@@ -39,24 +45,33 @@ class RainPersonApp extends StatelessWidget {
   }
 }
 
+/// 页面枚举，对应整体流程的 7 个页面
 enum Page { page1, page2, page3, page4, page5, page6, report }
 
+/// 第五阶段选择结果：伞 / 亭子
 enum ShelterChoice { umbrella, pavilion }
 
+// ══════════════════════════════════════════════════════════════════
+// 数据模型
+// ══════════════════════════════════════════════════════════════════
+
+/// 视线坐标（归一化 0~1，相对屏幕左上角）
 class GazePosition {
   final double x;
   final double y;
   GazePosition(this.x, this.y);
 }
 
+/// 用户在四个阶段中累积的选择数据，最终用于生成报告
 class UserSelectionData {
-  String? stageOneExpression;
-  List<String> stageTwoWords = [];
-  String? stageTwoHeartRate;
-  ShelterChoice? stageThreeChoice;
-  String? stageFourGazeDirection;
+  // ── 阶段结果 ──
+  String? stageOneExpression; // AU 表情（皱眉/抿嘴/皱眉+抿嘴）
+  List<String> stageTwoWords = []; // Top2 注视词汇
+  String? stageTwoHeartRate; // 心率变异率（高/低）
+  ShelterChoice? stageThreeChoice; // 伞/亭子
+  String? stageFourGazeDirection; // 视线方向（后方/中间/森林）
 
-  // 实时追踪数据
+  // ── 实时追踪数据 ──
   Map<String, int> stageTwoWordDurations = {};
   String? stageTwoFocusedWord;
   DateTime? stageTwoWordStartTime;
@@ -68,6 +83,7 @@ class UserSelectionData {
   String? stageFourFocusedDirection;
   DateTime? stageFourDirectionStartTime;
 
+  /// 重置所有数据（"重新体验"时调用）
   void reset() {
     stageOneExpression = null;
     stageTwoWords = [];
@@ -84,43 +100,46 @@ class UserSelectionData {
     stageFourDirectionStartTime = null;
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'stageOneExpression': stageOneExpression,
-      'stageTwoWords': stageTwoWords,
-      'stageTwoHeartRate': stageTwoHeartRate,
-      'stageThreeChoice': stageThreeChoice?.name,
-      'stageFourGazeDirection': stageFourGazeDirection,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'stageOneExpression': stageOneExpression,
+        'stageTwoWords': stageTwoWords,
+        'stageTwoHeartRate': stageTwoHeartRate,
+        'stageThreeChoice': stageThreeChoice?.name,
+        'stageFourGazeDirection': stageFourGazeDirection,
+      };
 }
 
+// ══════════════════════════════════════════════════════════════════
+// 后端服务（Mock 模式）
+//
+// 当前所有接口返回模拟数据，后端就绪后替换 TODO(后端接入) 标记的方法。
+// 替换策略：去掉 throw UnimplementedError()，取消注释真实接口调用即可。
+// ══════════════════════════════════════════════════════════════════
 class BackendService {
   static final BackendService instance = BackendService._();
   BackendService._();
 
   static final Random _random = Random();
-
   final UserSelectionData _userData = UserSelectionData();
   UserSelectionData get userData => _userData;
 
-  // TODO(后端接入-实时视线流): 当前为本地模拟轨迹，接入后请替换为 WebSocket 或轮询
-  // 建议方案:
-  //   1. WebSocket: wss://your-domain.com/ws/gaze-stream
-  //   2. 或轮询:    GET /api/rain-person/gaze-stream
-  // 返回格式: {"x": 0.45, "y": 0.62}  // 相对屏幕左上角的 0~1 归一化坐标
-  // 调用频率: 建议 100ms~200ms
+  /// Mock 网络延迟
+  static const double _mockDelaySeconds = 2.5;
+  int _detectExpressionCallCount = 0;
+
+  // ── 实时视线流（本地模拟，接入 WebSocket 后替换）─────────
+
   Timer? _gazeTimer;
   GazePosition _currentGaze = GazePosition(0.5, 0.5);
   final List<Offset> _gazeTargets = [];
   int _currentGazeTargetIndex = 0;
 
+  // TODO(后端接入-实时视线流): 接入 WebSocket 或轮询后替换
   void startRealTimeGazeTracking({List<Offset>? targets}) {
     _gazeTargets.clear();
     if (targets != null && targets.isNotEmpty) {
       _gazeTargets.addAll(targets);
     } else {
-      // 默认模拟轨迹
       _gazeTargets.addAll([
         const Offset(0.3, 0.4),
         const Offset(0.7, 0.4),
@@ -131,7 +150,7 @@ class BackendService {
     }
     _currentGazeTargetIndex = 0;
     _gazeTimer?.cancel();
-    _gazeTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
+    _gazeTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
       _simulateGazeMovement();
     });
   }
@@ -141,10 +160,9 @@ class BackendService {
     _gazeTimer = null;
   }
 
-  GazePosition getCurrentGaze() {
-    return _currentGaze;
-  }
+  GazePosition getCurrentGaze() => _currentGaze;
 
+  /// 模拟视线在目标点之间平滑移动
   void _simulateGazeMovement() {
     if (_gazeTargets.isEmpty) return;
     final target = _gazeTargets[_currentGazeTargetIndex % _gazeTargets.length];
@@ -154,112 +172,74 @@ class BackendService {
       (target.dx + noiseX).clamp(0.0, 1.0),
       (target.dy + noiseY).clamp(0.0, 1.0),
     );
-    // 二选一页面（伞/亭子）需在同一选项上停留更久，才能累计确认
+    // 二选一页面降低切换频率，模拟专注注视
     final switchChance = _gazeTargets.length <= 2 ? 0.03 : 0.15;
-    if (_random.nextDouble() < switchChance) {
-      _currentGazeTargetIndex++;
-    }
+    if (_random.nextDouble() < switchChance) _currentGazeTargetIndex++;
   }
 
-  // TODO(后端接入): 提交用户全量数据
-  // 接口: POST /api/rain-person/submit
-  // 请求体: {
-  //   "stageOneExpression": "皱眉",
-  //   "stageTwoWords": ["游戏", "娱乐"],
-  //   "stageTwoHeartRate": "高",
-  //   "stageThreeChoice": "umbrella",
-  //   "stageFourGazeDirection": "中间"
-  // }
-  // 返回: {"success": true}
+  // ── 业务接口（每个方法对应一个后端 endpoint）────────────
+
+  /// 提交用户全量数据
+  /// POST /api/rain-person/submit
   Future<void> sendUserData() async {
     try {
-      final data = _userData.toJson();
-      await _postRequest('/api/rain-person/submit', data);
+      await _postRequest('/api/rain-person/submit', _userData.toJson());
     } catch (e) {
       debugPrint('Failed to send user data: $e');
     }
   }
 
-  // TODO(后端接入): 获取报告数据（若后端直接生成报告，可替代本地 _generateMockReport）
-  // 接口: GET /api/rain-person/report
-  // 返回: {
-  //   "summary": "总述文案（60~100字）",
-  //   "stages": [
-  //     {"stage": "第1阶段", "type": "负面情绪偏高", "summary": "..."},
-  //     {"stage": "第2阶段", "type": "倾向转移压力", "summary": "..."},
-  //     {"stage": "第3阶段", "type": "倾向于先解决问题，理性倾向者", "summary": "..."},
-  //     {"stage": "第4阶段", "type": "倾向于行动，了解前方的路对你而言是重要的", "summary": "..."}
-  //   ]
-  // }
+  /// 获取报告数据（后端生成时替代本地 _generateMockReport）
+  /// GET /api/rain-person/report
   Future<Map<String, dynamic>> fetchReport() async {
     try {
       return await _getResponse('/api/rain-person/report');
     } catch (e) {
-      debugPrint('Failed to fetch report: $e');
       return _generateMockReport();
     }
   }
 
-  // TODO(后端接入): 开始眼动标定
-  // 接口: POST /api/rain-person/calibration/start
-  // 请求体: {}
-  // 返回: {"success": true}
+  /// 开始眼动标定
+  /// POST /api/rain-person/calibration/start
   Future<void> startCalibration() async {
     await _postRequest('/api/rain-person/calibration/start', {});
   }
 
-  // TODO(后端接入): 完成眼动标定
-  // 接口: POST /api/rain-person/calibration/complete
-  // 请求体: {}
-  // 返回: {"success": true}
+  /// 完成眼动标定
+  /// POST /api/rain-person/calibration/complete
   Future<void> completeCalibration() async {
     await _postRequest('/api/rain-person/calibration/complete', {});
   }
 
-  // TODO(后端接入): AU表情检测
-  // 接口: GET /api/rain-person/detect-expression
-  // 返回: {"expression": "皱眉"}  // 可选值: "皱眉" | "抿嘴" | "皱眉+抿嘴" | "unknown"
-  // Mock: 前几次返回 unknown（模拟处理中），之后返回随机表情
+  // ── 阶段1：AU 表情检测（页面三）────────────────────────
+
+  /// AU 微表情检测
+  /// GET /api/rain-person/detect-expression → {"expression": "皱眉"}
+  /// Mock: 前 3 次返回 unknown（模拟处理中），第 4 次起返回结果
   Future<String> detectExpression() async {
     try {
-      // TODO(后端接入): 替换为真实接口调用
-      // final response = await _getResponse('/api/rain-person/detect-expression');
-      // return ExperienceFlow.normalizeExpression(response['expression'] ?? 'unknown');
-      throw UnimplementedError(); // 走 mock
-    } catch (e) {
+      // TODO(后端接入): 替换为真实接口
+      // return ExperienceFlow.normalizeExpression(
+      //   (await _getResponse('/api/rain-person/detect-expression'))['expression'] ?? 'unknown');
+      throw UnimplementedError();
+    } catch (_) {
       _detectExpressionCallCount++;
       await Future.delayed(const Duration(milliseconds: 500));
-      // 模拟逐帧检测：前 3 次返回 unknown（处理中），第 4 次起返回结果
       if (_detectExpressionCallCount < 4) return 'unknown';
       return _randomExpression();
     }
   }
 
-  // TODO(后端接入): 视线分析（一次性汇总结果，目前仅在旧流程中使用）
-  // 接口: GET /api/rain-person/analyze-gaze
-  // 返回: {
-  //   "selectedWords": ["游戏", "娱乐"],
-  //   "choice": "umbrella",          // umbrella | pavilion
-  //   "gazeDirection": "中间"         // 后方 | 中间 | 森林
-  // }
-  Future<Map<String, dynamic>> analyzeGaze() async {
-    try {
-      return await _getResponse('/api/rain-person/analyze-gaze');
-    } catch (e) {
-      debugPrint('Failed to analyze gaze: $e');
-      return _generateMockGazeData();
-    }
-  }
+  // ── 阶段2：词汇注视结果（页面四）───────────────────────
 
-  // TODO(后端接入): 第4阶段 — 词汇注视结果
-  // 接口: GET /api/rain-person/focused-words
-  // 返回: {"words": ["游戏", "娱乐"]}  // 注视时长最长的两个词
-  // Mock: 模拟 1.5~2.5 秒检测延迟
+  /// 注视时长 Top2 词汇
+  /// GET /api/rain-person/focused-words → {"words": ["游戏","娱乐"]}
+  /// Mock: 1.5~2.5s 延迟
   Future<List<String>> detectFocusedWords() async {
     try {
-      // TODO(后端接入): 替换为真实接口调用
+      // TODO(后端接入): 替换为真实接口
       throw UnimplementedError();
-    } catch (e) {
+    } catch (_) {
       await Future.delayed(
         Duration(milliseconds: 1500 + _random.nextInt(1000)),
       );
@@ -272,18 +252,16 @@ class BackendService {
     return (List<String>.from(words)..shuffle()).take(2).toList();
   }
 
-  // TODO(后端接入): 第5阶段 — 伞/亭子选择
-  // 接口: GET /api/rain-person/shelter-choice
-  // 返回: {"choice": "umbrella"}  // umbrella | pavilion
-  // Mock: 模拟 2.5~3.5 秒检测延迟
+  // ── 阶段3：伞 / 亭子选择（页面五）──────────────────────
+
+  /// 伞/亭子选择
+  /// GET /api/rain-person/shelter-choice → {"choice": "umbrella"}
+  /// Mock: 2.5~3.5s 延迟
   Future<ShelterChoice> detectShelterChoice() async {
     try {
-      // TODO(后端接入): 替换为真实接口调用
-      // final response = await _getResponse('/api/rain-person/shelter-choice');
-      // return response['choice'] == 'pavilion' ? ShelterChoice.pavilion : ShelterChoice.umbrella;
+      // TODO(后端接入): 替换为真实接口
       throw UnimplementedError();
-    } catch (e) {
-      // 模拟检测延迟：2.5 ± 0.5 秒
+    } catch (_) {
       await Future.delayed(
         Duration(milliseconds: 2500 + _random.nextInt(1000)),
       );
@@ -291,21 +269,19 @@ class BackendService {
     }
   }
 
-  ShelterChoice _mockShelterChoice() {
-    return ['umbrella', 'pavilion'][_random.nextInt(2)] == 'pavilion'
-        ? ShelterChoice.pavilion
-        : ShelterChoice.umbrella;
-  }
+  ShelterChoice _mockShelterChoice() =>
+      _random.nextInt(2) == 0 ? ShelterChoice.umbrella : ShelterChoice.pavilion;
 
-  // TODO(后端接入): 第6阶段 — 视线方向
-  // 接口: GET /api/rain-person/gaze-direction
-  // 返回: {"direction": "中间"}  // 后方 | 中间 | 森林
-  // Mock: 模拟 2~3 秒检测延迟
+  // ── 阶段4：视线方向（页面六）───────────────────────────
+
+  /// 视线方向检测
+  /// GET /api/rain-person/gaze-direction → {"direction": "中间"}
+  /// Mock: 2~3s 延迟
   Future<String> detectGazeDirection() async {
     try {
-      // TODO(后端接入): 替换为真实接口调用
+      // TODO(后端接入): 替换为真实接口
       throw UnimplementedError();
-    } catch (e) {
+    } catch (_) {
       await Future.delayed(
         Duration(milliseconds: 2000 + _random.nextInt(1000)),
       );
@@ -313,38 +289,40 @@ class BackendService {
     }
   }
 
-  String _mockGazeDirection() {
-    return ['后方', '中间', '森林'][_random.nextInt(3)];
-  }
+  String _mockGazeDirection() =>
+      ['后方', '中间', '森林'][_random.nextInt(3)];
 
-  // TODO(后端接入): 心率变异率
-  // 接口: GET /api/rain-person/heart-rate
-  // 返回: {"variability": "高"}  // 可选值: "高" | "低" | "medium"
+  // ── 阶段2 辅助：心率变异率 ─────────────────────────────
+
+  /// 心率变异率
+  /// GET /api/rain-person/heart-rate → {"variability": "高"}
   Future<String> getHeartRateVariability() async {
     try {
       final response = await _getResponse('/api/rain-person/heart-rate');
       return response['variability'] ?? 'medium';
-    } catch (e) {
-      debugPrint('Failed to get heart rate: $e');
+    } catch (_) {
       return ['高', '低'][_random.nextInt(2)];
     }
   }
 
-  void resetUserData() {
-    _userData.reset();
+  // ── 旧版视线分析（保留兼容）────────────────────────────
+
+  Future<Map<String, dynamic>> analyzeGaze() async {
+    try {
+      return await _getResponse('/api/rain-person/analyze-gaze');
+    } catch (_) {
+      return _generateMockGazeData();
+    }
   }
 
-  Future<Map<String, dynamic>> _postRequest(
-    String endpoint,
-    Map<String, dynamic> data,
-  ) async {
+  void resetUserData() => _userData.reset();
+
+  // ── HTTP 底层 mock ────────────────────────────────────
+
+  Future<Map<String, dynamic>> _postRequest(String endpoint, Map<String, dynamic> data) async {
     await Future.delayed(const Duration(milliseconds: 500));
     return {'success': true};
   }
-
-  /// Mock 后端延迟（秒），模拟真实网络 + 处理时间
-  static const double _mockDelaySeconds = 2.5;
-  int _detectExpressionCallCount = 0;
 
   Future<Map<String, dynamic>> _getResponse(String endpoint) async {
     await Future.delayed(
@@ -353,11 +331,11 @@ class BackendService {
     return {};
   }
 
-  String _randomExpression() {
-    return ExperienceFlow.normalizeExpression(
-      ['抿嘴', '皱眉', '皱眉+抿嘴', 'unknown'][_random.nextInt(4)],
-    );
-  }
+  // ── 随机数据生成 ──────────────────────────────────────
+
+  String _randomExpression() => ExperienceFlow.normalizeExpression(
+        ['抿嘴', '皱眉', '皱眉+抿嘴', 'unknown'][_random.nextInt(4)],
+      );
 
   Map<String, dynamic> _generateMockGazeData() {
     final words = ['听歌', '发呆', '娱乐', '游戏', '家人', '朋友'];
@@ -369,60 +347,35 @@ class BackendService {
     };
   }
 
-  Map<String, dynamic> _generateMockReport() {
-    return {
-      'summary': _generateSummary(),
-      'stages': [
-        {
-          'stage': '第1阶段',
-          'type': _getStageOneType(),
-          'summary': ReportCard.randomSummary(),
-        },
-        {
-          'stage': '第2阶段',
-          'type': _getStageTwoType(),
-          'summary': ReportCard.randomSummary(),
-        },
-        {
-          'stage': '第3阶段',
-          'type': _getStageThreeType(),
-          'summary': ReportCard.randomSummary(),
-        },
-        {
-          'stage': '第4阶段',
-          'type': _getStageFourType(),
-          'summary': ReportCard.randomSummary(),
-        },
-      ],
-    };
-  }
+  Map<String, dynamic> _generateMockReport() => {
+        'summary': _generateSummary(),
+        'stages': [
+          _stageReport('第1阶段', _getStageOneType()),
+          _stageReport('第2阶段', _getStageTwoType()),
+          _stageReport('第3阶段', _getStageThreeType()),
+          _stageReport('第4阶段', _getStageFourType()),
+        ],
+      };
+
+  Map<String, dynamic> _stageReport(String stage, String type) => {
+        'stage': stage,
+        'type': type,
+        'summary': ReportCard.randomSummary(),
+      };
 
   String _generateSummary() => ExperienceFlow.buildSummary(_userData);
-
-  String _getStageOneType() =>
-      ExperienceFlow.stageOneReportType(_userData.stageOneExpression);
-
-  String _getStageTwoType() =>
-      ExperienceFlow.stageTwoReportType(_userData.stageTwoWords);
-
-  String _getStageThreeType() =>
-      ExperienceFlow.stageThreeBranchFromUserData().reportType;
-
-  String _getStageFourType() =>
-      ExperienceFlow.stageFourReportType(_userData.stageFourGazeDirection);
+  String _getStageOneType() => ExperienceFlow.stageOneReportType(_userData.stageOneExpression);
+  String _getStageTwoType() => ExperienceFlow.stageTwoReportType(_userData.stageTwoWords);
+  String _getStageThreeType() => ExperienceFlow.stageThreeBranchFromUserData().reportType;
+  String _getStageFourType() => ExperienceFlow.stageFourReportType(_userData.stageFourGazeDirection);
 }
 
-// TODO(音视频占位-音频): 背景音乐服务
-// 当前为占位实现，放入音频文件后启用：
-// 1. 将音频文件放入 assets/audios/ 目录
-// 2. 在各页面 initState 中调用 AudioService.instance.playBgm('xxx.mp3')
-// 3. 在 dispose 中调用 AudioService.instance.stopBgm()
-// 音频资源路径：
-//   - assets/audios/background.mp3     (全局背景音乐)
-//   - assets/audios/page_three_bgm.mp3 (page_three 背景音乐)
-//   - assets/audios/page_four_bgm.mp3  (page_four 背景音乐)
-//   - assets/audios/page_five_bgm.mp3  (page_five 背景音乐)
-//   - assets/audios/page_six_bgm.mp3   (page_six 背景音乐)
+// ══════════════════════════════════════════════════════════════════
+// 音频服务
+//
+// 使用 just_audio 播放背景音乐，支持循环、暂停、静音。
+// 目前仅在页面四（下雨场景）播放雨声音频。
+// ══════════════════════════════════════════════════════════════════
 class AudioService {
   static final AudioService instance = AudioService._();
   AudioService._();
@@ -432,14 +385,12 @@ class AudioService {
   bool _isMuted = false;
   double _volume = 0.5;
 
-  /// 播放背景音乐（自动循环）
-  /// [assetPath] 示例: 'assets/audios/background.mp3'
+  /// 播放背景音乐（循环）
+  /// [assetPath] 例如 'assets/audios/rain.mp3'
   Future<void> playBgm(String assetPath, {double volume = 0.5}) async {
     try {
       _volume = volume;
-      if (_currentBgm == assetPath && _bgmPlayer.playing) {
-        return;
-      }
+      if (_currentBgm == assetPath && _bgmPlayer.playing) return;
       await _bgmPlayer.setAsset(assetPath);
       await _bgmPlayer.setLoopMode(LoopMode.one);
       await _bgmPlayer.setVolume(_isMuted ? 0 : volume);
@@ -451,36 +402,31 @@ class AudioService {
     }
   }
 
-  /// 暂停背景音乐
   Future<void> pauseBgm() async {
-    try {
-      await _bgmPlayer.pause();
-    } catch (e) {
-      debugPrint('Audio pause failed: $e');
-    }
+    try { await _bgmPlayer.pause(); } catch (_) {}
   }
 
-  /// 停止背景音乐
   Future<void> stopBgm() async {
     try {
       await _bgmPlayer.stop();
       _currentBgm = null;
-    } catch (e) {
-      debugPrint('Audio stop failed: $e');
-    }
+    } catch (_) {}
   }
 
-  /// 设置静音
   Future<void> setMuted(bool muted) async {
     _isMuted = muted;
     await _bgmPlayer.setVolume(muted ? 0 : _volume);
   }
 
-  void dispose() {
-    _bgmPlayer.dispose();
-  }
+  void dispose() => _bgmPlayer.dispose();
 }
 
+// ══════════════════════════════════════════════════════════════════
+// 报告卡片
+//
+// 报告页每个阶段卡片显示的总结文案，从固定池中随机选取。
+// 后端接入后可由 GET /api/rain-person/report 返回的 summary 替换。
+// ══════════════════════════════════════════════════════════════════
 class ReportCard {
   static final Random _random = Random();
 
@@ -497,9 +443,14 @@ class ReportCard {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// 页面导航容器
+//
+// 管理 7 个页面的切换，支持前进、返回（左上角按钮）、重新体验。
+// 使用 AnimatedSwitcher 在页面间做 200ms 淡入淡出过渡。
+// ══════════════════════════════════════════════════════════════════
 class ContentView extends StatefulWidget {
   const ContentView({super.key});
-
   @override
   State<ContentView> createState() => _ContentViewState();
 }
@@ -510,6 +461,7 @@ class _ContentViewState extends State<ContentView> {
   bool _isBackActionLocked = false;
   double _backButtonOpacity = 1;
 
+  /// 前进到指定页面
   void _navigateTo(Page page) {
     setState(() {
       _pageHistory.add(_currentPage);
@@ -517,13 +469,13 @@ class _ContentViewState extends State<ContentView> {
     });
   }
 
+  /// 返回上一页
   void _navigateBack() {
     if (_pageHistory.isEmpty) return;
-    setState(() {
-      _currentPage = _pageHistory.removeLast();
-    });
+    setState(() => _currentPage = _pageHistory.removeLast());
   }
 
+  /// 重新体验：重置数据 + 回到首页
   void _restartFlow() {
     BackendService.instance.resetUserData();
     setState(() {
@@ -538,21 +490,23 @@ class _ContentViewState extends State<ContentView> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // 页面切换带淡入淡出过渡（200ms）
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             switchInCurve: Curves.easeOut,
             switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            transitionBuilder: (child, animation) =>
+                FadeTransition(opacity: animation, child: child),
             child: _buildCurrentPage(),
           ),
+          // 非首页时显示返回按钮
           if (_pageHistory.isNotEmpty) _buildBackButton(),
         ],
       ),
     );
   }
 
+  /// 根据当前页面枚举返回对应页面组件
   Widget _buildCurrentPage() {
     switch (_currentPage) {
       case Page.page1:
@@ -593,10 +547,10 @@ class _ContentViewState extends State<ContentView> {
     }
   }
 
+  /// 左上角返回按钮（带防连点 + 微动画）
   Widget _buildBackButton() {
     return Positioned(
-      top: 12,
-      left: 16,
+      top: 12, left: 16,
       child: AnimatedOpacity(
         opacity: _backButtonOpacity,
         duration: const Duration(milliseconds: 150),
@@ -616,18 +570,14 @@ class _ContentViewState extends State<ContentView> {
                 },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.chevron_left, size: 16, color: Colors.white),
-                const SizedBox(width: 6),
-                const Text(
+                Icon(Icons.chevron_left, size: 16, color: Colors.white),
+                SizedBox(width: 6),
+                Text(
                   '返回',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                 ),
               ],
             ),
