@@ -8,11 +8,7 @@ import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
 
-/// 页面六：选择伞/亭子后播放对应动画
-/// ① 先播 bodyVideo（伞/仓）→ 再播 endingVideo（伞结束/仓结束）
-/// ② 弹出左/中/右 方向选项，后端驱动检测
-/// ③ 蒙版2 "正在生成报告" → 报告页
-
+/// 页面六：① 播 body→ending 两段视频 ② 弹出左/中/右 ③ "正在生成报告"→报告
 class _DirectionOption {
   const _DirectionOption({required this.label, required this.key});
   final String label;
@@ -44,9 +40,12 @@ class _PageSixViewState extends State<PageSixView> {
       ValueNotifier<String?>(null);
 
   VideoPlayerController? _videoController;
+  bool _videoEndHandled = false;
   bool _exitHandled = false;
+  int _videoIndex = 0; // 0=bodyVideo, 1=endingVideo, 2=done
 
   Timer? _detectionTimer;
+  Timer? _videoTimeout;
   String? _confirmedDirection;
 
   late StageThreeBranch _branch;
@@ -54,7 +53,6 @@ class _PageSixViewState extends State<PageSixView> {
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.sizeOf(context);
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: FullScreenVideoStack(
@@ -65,9 +63,7 @@ class _PageSixViewState extends State<PageSixView> {
         overlays: [
           if (_promptOpacity > 0)
             Positioned(
-              left: 0,
-              right: 0,
-              top: screenSize.height * 0.28,
+              left: 0, right: 0, top: screenSize.height * 0.28,
               child: Center(
                 child: AnimatedOpacity(
                   opacity: _promptOpacity,
@@ -77,11 +73,7 @@ class _PageSixViewState extends State<PageSixView> {
                     child: const Text(
                       '天要放晴了，在放晴前最后欣赏一下这个景色吧',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 26,
-                        color: Colors.white,
-                        height: 1.6,
-                      ),
+                      style: TextStyle(fontSize: 26, color: Colors.white, height: 1.6),
                     ),
                   ),
                 ),
@@ -95,10 +87,7 @@ class _PageSixViewState extends State<PageSixView> {
             children: [
               CircularProgressIndicator(color: Colors.white),
               SizedBox(height: 20),
-              Text(
-                '正在生成报告',
-                style: TextStyle(fontSize: 24, color: Colors.white),
-              ),
+              Text('正在生成报告', style: TextStyle(fontSize: 24, color: Colors.white)),
             ],
           ),
         ),
@@ -108,12 +97,9 @@ class _PageSixViewState extends State<PageSixView> {
 
   Widget _buildDirectionButtons(Size screenSize) {
     return Positioned(
-      left: 16,
-      right: 16,
-      bottom: screenSize.height * 0.14,
+      left: 16, right: 16, bottom: screenSize.height * 0.14,
       child: AnimatedOpacity(
-        opacity: _choicesOpacity,
-        duration: ExperienceMask.fadeDuration,
+        opacity: _choicesOpacity, duration: ExperienceMask.fadeDuration,
         child: ValueListenableBuilder<String?>(
           valueListenable: _highlightedDirection,
           builder: (context, highlighted, _) {
@@ -133,74 +119,78 @@ class _PageSixViewState extends State<PageSixView> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 播放单个视频，利用缓存控制器避免重复初始化
-  // ═══════════════════════════════════════════════════════════
-  Future<void> _playVideo(String path) async {
+  // ── 视频播放（带超时兜底）────────────────────────────────
+
+  void _onVideoUpdate() {
+    if (_videoEndHandled) return;
+    final controller = _videoController;
+    if (controller == null || !controller.value.isInitialized) return;
+    if (controller.value.isCompleted) {
+      _videoEndHandled = true;
+      _videoController?.removeListener(_onVideoUpdate);
+      _videoTimeout?.cancel();
+      _onVideoFinished();
+    }
+  }
+
+  void _onVideoFinished() {
+    if (!mounted) return;
+    if (_videoIndex == 0) {
+      // bodyVideo 结束 → 播 endingVideo
+      _videoIndex = 1;
+      setState(() => _holdBlackFrame = true);
+      _startVideo(_branch.postChoiceVideo);
+    } else {
+      // endingVideo 结束 → 显示方向选项
+      _videoIndex = 2;
+      _showDirectionPhase();
+    }
+  }
+
+  Future<void> _startVideo(String path) async {
+    _videoEndHandled = false;
+    _videoTimeout?.cancel();
+
     try {
-      final controller =
-          await VideoControllerCache.instance.acquireForPlay(path);
+      final controller = await VideoControllerCache.instance.acquireForPlay(path);
       _videoController = controller;
+      controller.addListener(_onVideoUpdate);
       if (!mounted) return;
       setState(() => _holdBlackFrame = false);
 
       // 等待视频开始播放
       for (var i = 0; i < 30; i++) {
         if (!mounted) return;
-        final value = controller.value;
-        if (value.isPlaying &&
-            value.position > const Duration(milliseconds: 16)) break;
+        if (controller.value.isPlaying &&
+            controller.value.position > const Duration(milliseconds: 16)) break;
         await Future<void>.delayed(const Duration(milliseconds: 16));
       }
 
-      // 等待视频播放完成
-      await _waitForVideoEnd(controller);
+      // 超时兜底：最长等 30 秒（视频总不会比这更长）
+      _videoTimeout = Timer(const Duration(seconds: 30), () {
+        if (!mounted || _videoEndHandled) return;
+        _videoEndHandled = true;
+        _videoController?.removeListener(_onVideoUpdate);
+        _onVideoFinished();
+      });
+
+      // 如果视频已经播完（极短视频）
+      if (controller.value.isCompleted) {
+        _videoEndHandled = true;
+        controller.removeListener(_onVideoUpdate);
+        _videoTimeout?.cancel();
+        _onVideoFinished();
+      }
     } catch (e) {
       debugPrint('Video start failed ($path): $e');
+      if (!mounted) return;
+      _videoEndHandled = true;
+      _onVideoFinished(); // 失败了跳过继续
     }
   }
 
-  Future<void> _waitForVideoEnd(VideoPlayerController controller) async {
-    final completer = Completer<void>();
-    void listener() {
-      if (!mounted || !controller.value.isInitialized) return;
-      if (controller.value.isCompleted) {
-        controller.removeListener(listener);
-        if (!completer.isCompleted) completer.complete();
-      }
-    }
-    controller.addListener(listener);
-    // 如果已经播完
-    if (controller.value.isCompleted) {
-      controller.removeListener(listener);
-      return;
-    }
-    await completer.future;
-  }
+  // ── 方向选择 ────────────────────────────────────────────
 
-  // ═══════════════════════════════════════════════════════════
-  // 阶段 1：顺序播放 body → ending 两段视频
-  // ═══════════════════════════════════════════════════════════
-  Future<void> _playVideoSequence() async {
-    // bodyVideo（伞/仓）
-    await _playVideo(_branch.bodyVideo);
-
-    // 短暂黑帧过渡 → 视频层自带 250ms 渐入，无缝衔接
-    if (!mounted) return;
-    setState(() => _holdBlackFrame = true);
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-
-    // endingVideo（伞结束/仓结束）
-    await _playVideo(_branch.postChoiceVideo);
-
-    // 两段视频播完 → 进入方向选择
-    if (!mounted) return;
-    _showDirectionPhase();
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 阶段 2：弹出左/中/右，后端驱动检测
-  // ═══════════════════════════════════════════════════════════
   void _showDirectionPhase() {
     if (!mounted) return;
     setState(() {
@@ -211,16 +201,11 @@ class _PageSixViewState extends State<PageSixView> {
   }
 
   void _startBackendDetection() {
-    _detectionTimer = Timer.periodic(
-      const Duration(milliseconds: 800),
-      (timer) {
-        if (!mounted || _confirmedDirection != null) {
-          timer.cancel();
-          return;
-        }
-        _pollGazeDirection();
-      },
-    );
+    _detectionTimer?.cancel();
+    _detectionTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
+      if (!mounted || _confirmedDirection != null) { timer.cancel(); return; }
+      _pollGazeDirection();
+    });
     _pollGazeDirection();
   }
 
@@ -231,7 +216,6 @@ class _PageSixViewState extends State<PageSixView> {
       if (mounted && _confirmedDirection == null) {
         _confirmedDirection = direction;
         _highlightedDirection.value = direction;
-        // 高亮确认 1.2s → 过渡到报告
         Future.delayed(const Duration(milliseconds: 1200), () {
           if (mounted) _transitionToReport();
         });
@@ -239,16 +223,12 @@ class _PageSixViewState extends State<PageSixView> {
     } catch (_) {}
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 阶段 3：蒙版2 "正在生成报告" → 报告页
-  // ═══════════════════════════════════════════════════════════
   void _transitionToReport() {
     if (_exitHandled || !mounted) return;
     _exitHandled = true;
     _detectionTimer?.cancel();
 
-    BackendService.instance.userData.stageFourGazeDirection =
-        _confirmedDirection ?? '中间';
+    BackendService.instance.userData.stageFourGazeDirection = _confirmedDirection ?? '中间';
     BackendService.instance.sendUserData();
 
     setState(() {
@@ -265,24 +245,20 @@ class _PageSixViewState extends State<PageSixView> {
 
   Future<void> _bootstrap() async {
     _branch = ExperienceFlow.stageThreeBranchFromUserData();
-    // 预加载两个视频
     await VideoControllerCache.instance.prepare(_branch.bodyVideo);
     await VideoControllerCache.instance.prepare(_branch.postChoiceVideo);
     if (!mounted) return;
-
-    await _playVideoSequence();
+    _startVideo(_branch.bodyVideo);
   }
 
   @override
-  void initState() {
-    super.initState();
-    _bootstrap();
-  }
+  void initState() { super.initState(); _bootstrap(); }
 
   @override
   void dispose() {
     _detectionTimer?.cancel();
-    _videoController?.removeListener(() {});
+    _videoTimeout?.cancel();
+    _videoController?.removeListener(_onVideoUpdate);
     _videoController?.pause();
     _highlightedDirection.dispose();
     super.dispose();
