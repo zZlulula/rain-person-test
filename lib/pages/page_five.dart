@@ -294,7 +294,7 @@ class _PageFiveViewState extends State<PageFiveView> {
   void _transitionToNextPage() {
     if (!mounted) return;
     setState(() => _maskOpacity = 0);
-    Future.delayed(const Duration(milliseconds: 350), () {
+    Future.delayed(ExperienceMask.fadeDuration, () {
       if (mounted) widget.onComplete();
     });
   }

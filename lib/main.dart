@@ -29,7 +29,7 @@ class RainPersonApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '雨中人',
+      title: '雨中人2',
       debugShowCheckedModeBanner: false,
       locale: AppTheme.locale,
       supportedLocales: const [AppTheme.locale],
@@ -348,7 +348,9 @@ class BackendService {
   int _detectExpressionCallCount = 0;
 
   Future<Map<String, dynamic>> _getResponse(String endpoint) async {
-    await Future.delayed(Duration(milliseconds: (_mockDelaySeconds * 1000).round()));
+    await Future.delayed(
+      Duration(milliseconds: (_mockDelaySeconds * 1000).round()),
+    );
     return {};
   }
 
@@ -404,8 +406,8 @@ class BackendService {
   String _getStageTwoType() =>
       ExperienceFlow.stageTwoReportType(_userData.stageTwoWords);
 
-  String _getStageThreeType() => ExperienceFlow.stageThreeBranchFromUserData()
-      .reportType;
+  String _getStageThreeType() =>
+      ExperienceFlow.stageThreeBranchFromUserData().reportType;
 
   String _getStageFourType() =>
       ExperienceFlow.stageFourReportType(_userData.stageFourGazeDirection);

@@ -224,7 +224,7 @@ class _PageThreeViewState extends State<PageThreeView> {
       _promptOpacity = 0;
       _buttonsOpacity = 0;
     });
-    Future.delayed(const Duration(milliseconds: 350), () {
+    Future.delayed(ExperienceMask.fadeDuration, () {
       if (mounted) widget.onComplete();
     });
   }
