@@ -29,7 +29,7 @@ class RainPersonApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '雨中人2',
+      title: '雨中人',
       debugShowCheckedModeBanner: false,
       locale: AppTheme.locale,
       supportedLocales: const [AppTheme.locale],

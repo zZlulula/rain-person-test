@@ -8,11 +8,10 @@ import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
 
-/// 页面六：选择伞/亭子后播放对应结束动画
-/// - 伞 → 伞结束.mp4
-/// - 亭子 → 仓结束.mp4
-/// 蒙版1 + 文案 + 左中右视线 → 第 3 秒蒙版2 → 播完进报告
-enum _PageSixPhase { gaze, finished }
+/// 页面六：选择伞/亭子后播放对应动画
+/// 阶段 A — bodyVideo（伞 / 仓）：蒙版1 + 文案 + 左中右视线追踪
+/// 阶段 B — postChoiceVideo（伞结束 / 仓结束）：第 3 秒蒙版2 + "正在生成报告" → 播完进报告
+enum _VideoPhase { body, ending, finished }
 
 class _DirectionOption {
   const _DirectionOption({required this.label, required this.key});
@@ -48,8 +47,7 @@ class _PageSixViewState extends State<PageSixView> {
       ValueNotifier<String?>(null);
 
   VideoPlayerController? _videoController;
-  String? _currentVideoPath;
-  _PageSixPhase _phase = _PageSixPhase.gaze;
+  _VideoPhase _phase = _VideoPhase.body;
   bool _videoEndHandled = false;
   bool _loadingMaskShown = false;
   bool _exitHandled = false;
@@ -155,7 +153,6 @@ class _PageSixViewState extends State<PageSixView> {
     try {
       final controller =
           await VideoControllerCache.instance.acquireForPlay(path);
-      _currentVideoPath = path;
       _videoController = controller;
       controller.addListener(_onVideoUpdate);
       await controller.play();
@@ -184,7 +181,7 @@ class _PageSixViewState extends State<PageSixView> {
       if (!mounted || _videoEndHandled) return;
       _videoEndHandled = true;
       _detachVideoListener();
-      _handleVideoEnded();
+      _onCurrentVideoEnded();
     });
   }
 
@@ -197,7 +194,8 @@ class _PageSixViewState extends State<PageSixView> {
 
     final value = _videoController!.value;
 
-    if (_phase == _PageSixPhase.gaze &&
+    // 阶段 B（endingVideo）：第 3 秒触发最终过渡蒙版
+    if (_phase == _VideoPhase.ending &&
         !_loadingMaskShown &&
         value.position >= const Duration(seconds: 3)) {
       _showFinalTransitionMask();
@@ -206,8 +204,29 @@ class _PageSixViewState extends State<PageSixView> {
     if (value.isCompleted) {
       _videoEndHandled = true;
       _detachVideoListener();
-      _handleVideoEnded();
+      _onCurrentVideoEnded();
     }
+  }
+
+  void _onCurrentVideoEnded() {
+    if (!mounted) return;
+
+    if (_phase == _VideoPhase.body) {
+      // 主体视频播完 → 切换到结束视频
+      _transitionToEndingVideo();
+    } else if (_phase == _VideoPhase.ending) {
+      // 结束视频播完 → 进入报告
+      _phase = _VideoPhase.finished;
+      _finalizeDirectionAndExit();
+    }
+  }
+
+  /// 主体视频（伞/仓）→ 结束视频（伞结束/仓结束）
+  Future<void> _transitionToEndingVideo() async {
+    if (!mounted) return;
+    _phase = _VideoPhase.ending;
+
+    await _startVideo(_branch.postChoiceVideo);
   }
 
   void _showFinalTransitionMask() {
@@ -232,12 +251,6 @@ class _PageSixViewState extends State<PageSixView> {
       _directionDurations[_currentDirection!] =
           (_directionDurations[_currentDirection!] ?? 0) + duration;
     }
-  }
-
-  void _handleVideoEnded() {
-    if (!mounted || _phase == _PageSixPhase.finished) return;
-    _phase = _PageSixPhase.finished;
-    _finalizeDirectionAndExit();
   }
 
   void _startGazeTracking() {
@@ -299,7 +312,8 @@ class _PageSixViewState extends State<PageSixView> {
     BackendService.instance.userData.stageFourGazeDirection = dominantDirection;
     BackendService.instance.userData.stageFourDirectionDurations =
         Map.from(_directionDurations);
-    BackendService.instance.userData.stageFourFocusedDirection = _currentDirection;
+    BackendService.instance.userData.stageFourFocusedDirection =
+        _currentDirection;
 
     BackendService.instance.sendUserData();
 
@@ -307,12 +321,17 @@ class _PageSixViewState extends State<PageSixView> {
     widget.onComplete();
   }
 
+  /// 启动流程：先播 bodyVideo（主体 + 视线追踪），再播 postChoiceVideo（结束 + 过渡蒙版）
   Future<void> _bootstrap() async {
     _branch = ExperienceFlow.stageThreeBranchFromUserData();
+    // 预加载两个视频
+    await VideoControllerCache.instance.prepare(_branch.bodyVideo);
     await VideoControllerCache.instance.prepare(_branch.postChoiceVideo);
     if (!mounted) return;
+
+    // 阶段 A：播主体视频，开始视线追踪
     _startGazeTracking();
-    await _startVideo(_branch.postChoiceVideo);
+    await _startVideo(_branch.bodyVideo);
   }
 
   @override

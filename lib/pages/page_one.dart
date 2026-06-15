@@ -26,7 +26,7 @@ class _PageOneViewState extends State<PageOneView> {
             top: screenSize.height * 0.4,
             child: Center(
               child: Text(
-                '雨中人2',
+                '雨中人',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 48,

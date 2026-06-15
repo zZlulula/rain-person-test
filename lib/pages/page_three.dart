@@ -6,7 +6,6 @@ import '../config/experience_flow.dart';
 import '../utils/video_loader.dart';
 import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
-import '../widgets/gaze_choice_button.dart';
 
 class PageThreeView extends StatefulWidget {
   final VoidCallback onComplete;
@@ -20,23 +19,16 @@ class PageThreeView extends StatefulWidget {
 class _PageThreeViewState extends State<PageThreeView> {
   double _maskOpacity = 0;
   double _promptOpacity = 0;
-  bool _showExpressionChoices = false;
-  double _choicesOpacity = 0;
-  String? _highlightedExpression;
+  double _loadingOpacity = 0;
+  String _loadingText = '正在识别你的微表情…';
   String? _confirmedExpression;
 
   VideoPlayerController? _videoController;
   String? _currentVideoPath;
   bool _videoFinished = false;
 
-  Timer? _gazeTimer;
-  Timer? _choiceTimeoutTimer;
-  int _gazeOnChoiceFrames = 0;
-  String? _lastGazedExpression;
-  final Map<String, int> _expressionDurations = {};
-  static const int _gazeConfirmFrames = 8;
-
-  static const List<String> _expressions = ['皱眉', '抿嘴', '皱眉+抿嘴'];
+  Timer? _detectionTimer;
+  Timer? _timeoutTimer;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +39,7 @@ class _PageThreeViewState extends State<PageThreeView> {
       body: FullScreenVideoStack(
         videoController: _videoController,
         maskOpacity: _maskOpacity,
-        blockInteraction: !_showExpressionChoices,
+        blockInteraction: true,
         overlays: [
           Positioned(
             left: 0,
@@ -72,32 +64,41 @@ class _PageThreeViewState extends State<PageThreeView> {
               ),
             ),
           ),
-          if (_showExpressionChoices) _buildExpressionButtons(screenSize),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExpressionButtons(Size screenSize) {
-    return Positioned(
-      left: 16,
-      right: 16,
-      bottom: screenSize.height * 0.22,
-      child: AnimatedOpacity(
-        opacity: _choicesOpacity,
-        duration: ExperienceMask.fadeDuration,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: _expressions
-              .map(
-                (e) => GazeChoiceButton(
-                  label: e,
-                  highlighted: _highlightedExpression == e,
-                  minWidth: screenSize.width * 0.28,
+          // AU 自动检测中提示
+          if (_loadingOpacity > 0)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: screenSize.height * 0.35,
+              child: Center(
+                child: AnimatedOpacity(
+                  opacity: _loadingOpacity,
+                  duration: ExperienceMask.fadeDuration,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white70,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _loadingText,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              )
-              .toList(),
-        ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -144,97 +145,71 @@ class _PageThreeViewState extends State<PageThreeView> {
       _promptOpacity = 1;
     });
 
+    // 5 秒后开始 AU 自动检测
     Future.delayed(const Duration(seconds: 5), () {
-      if (!mounted) return;
+      if (!mounted || _confirmedExpression != null) return;
       setState(() {
         _promptOpacity = 0;
-        _showExpressionChoices = true;
-        _choicesOpacity = 1;
+        _loadingOpacity = 1;
       });
-      _startExpressionGazeTracking();
+      _startAutoDetection();
     });
   }
 
-  // TODO(后端接入-实时视线流 + AU): 视线落在选项上自动高亮，持续约1.6秒确认
-  // 可与 GET /api/rain-person/detect-expression 结果校对
-  void _startExpressionGazeTracking() {
-    BackendService.instance.startRealTimeGazeTracking(
-      targets: const [
-        Offset(0.2, 0.78),
-        Offset(0.5, 0.78),
-        Offset(0.8, 0.78),
-      ],
-    );
+  /// 自动 AU 表情检测（摄像头 → 后端 → 结果）
+  /// 15 秒内未返回则使用模拟结果作为 fallback
+  void _startAutoDetection() {
+    _timeoutTimer = Timer(const Duration(seconds: 15), () async {
+      if (!mounted || _confirmedExpression != null) return;
+      final expr = await BackendService.instance.detectExpression();
+      if (mounted && _confirmedExpression == null) {
+        _onDetectionResult(expr);
+      }
+    });
 
-    _gazeTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!mounted) {
+    // 轮询检测结果
+    _detectionTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
+      if (!mounted || _confirmedExpression != null) {
         timer.cancel();
         return;
       }
-      _processGaze();
+      _runDetection();
     });
 
-    _choiceTimeoutTimer = Timer(const Duration(seconds: 15), () {
-      if (!mounted || _confirmedExpression != null) return;
-      _confirmExpression(_pickFallbackExpression());
-    });
+    // 首次立即检测
+    _runDetection();
   }
 
-  void _processGaze() {
-    final gaze = BackendService.instance.getCurrentGaze();
-    String? gazed;
-    if (gaze.x < 0.35) {
-      gazed = '皱眉';
-    } else if (gaze.x > 0.65) {
-      gazed = '抿嘴';
-    } else {
-      gazed = '皱眉+抿嘴';
-    }
-
-    _expressionDurations[gazed] = (_expressionDurations[gazed] ?? 0) + 1;
-
-    if (gazed != _highlightedExpression) {
-      setState(() => _highlightedExpression = gazed);
-    }
-
-    if (gazed == _lastGazedExpression) {
-      _gazeOnChoiceFrames++;
-      if (_gazeOnChoiceFrames >= _gazeConfirmFrames) {
-        _confirmExpression(gazed);
-      }
-    } else {
-      _gazeOnChoiceFrames = 0;
-      _lastGazedExpression = gazed;
-    }
-  }
-
-  String _pickFallbackExpression() {
-    if (_expressionDurations.isEmpty) {
-      return _highlightedExpression ?? '皱眉';
-    }
-    final sorted = _expressionDurations.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    return sorted.first.key;
-  }
-
-  void _confirmExpression(String expression) {
+  Future<void> _runDetection() async {
     if (!mounted || _confirmedExpression != null) return;
-    _gazeTimer?.cancel();
-    _choiceTimeoutTimer?.cancel();
-    BackendService.instance.stopRealTimeGazeTracking();
+    try {
+      final expression = await BackendService.instance.detectExpression();
+      if (expression != 'unknown' && mounted && _confirmedExpression == null) {
+        _onDetectionResult(expression);
+      }
+    } catch (_) {
+      // 后端不可用，等待 timeout fallback
+    }
+  }
+
+  void _onDetectionResult(String expression) {
+    if (!mounted || _confirmedExpression != null) return;
+    _detectionTimer?.cancel();
+    _timeoutTimer?.cancel();
 
     final normalized = ExperienceFlow.normalizeExpression(expression);
-    // TODO(后端接入): 视线流 + AU 检测合并为最终表情，写入 stageOneExpression
     BackendService.instance.userData.stageOneExpression = normalized;
 
     setState(() {
       _confirmedExpression = normalized;
-      _highlightedExpression = normalized;
+      _loadingOpacity = 0;
     });
 
-    Future.delayed(const Duration(milliseconds: 250), () {
-      if (!mounted) return;
-      _transitionToNextPage();
+    // TODO(后端接入-实时视线流): 此阶段视线追踪可用于校对 AU 结果
+    // 保留 gaze 轨迹数据写入 userData 的能力，以备后续与 AU 结果交叉验证
+
+    Future.delayed(const Duration(milliseconds: 350), () {
+      if (mounted) _transitionToNextPage();
     });
   }
 
@@ -242,7 +217,7 @@ class _PageThreeViewState extends State<PageThreeView> {
     setState(() {
       _maskOpacity = 0;
       _promptOpacity = 0;
-      _choicesOpacity = 0;
+      _loadingOpacity = 0;
     });
     Future.delayed(const Duration(milliseconds: 350), () {
       if (mounted) widget.onComplete();
@@ -257,9 +232,8 @@ class _PageThreeViewState extends State<PageThreeView> {
 
   @override
   void dispose() {
-    _gazeTimer?.cancel();
-    _choiceTimeoutTimer?.cancel();
-    BackendService.instance.stopRealTimeGazeTracking();
+    _detectionTimer?.cancel();
+    _timeoutTimer?.cancel();
     _videoController?.removeListener(_onVideoUpdate);
     if (_currentVideoPath != null) {
       disposeAssetVideoController(_videoController, _currentVideoPath!);
