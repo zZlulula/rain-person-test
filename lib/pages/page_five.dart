@@ -32,12 +32,8 @@ class _PageFiveViewState extends State<PageFiveView> {
   final ValueNotifier<ShelterChoice?> _highlightedChoice =
       ValueNotifier<ShelterChoice?>(null);
 
-  Timer? _gazeTimer;
-  Timer? _choiceTimeoutTimer;
-  int _gazeOnChoiceFrames = 0;
-  ShelterChoice? _lastGazedChoice;
-  final Map<ShelterChoice, int> _choiceDurations = {};
-  static const int _gazeConfirmFrames = 8;
+  Timer? _detectionTimer;
+  Timer? _timeoutTimer;
 
   VideoPlayerController? _videoController;
   String? _currentVideoPath;
@@ -184,95 +180,75 @@ class _PageFiveViewState extends State<PageFiveView> {
         _showChoices = true;
         _choicesOpacity = 1;
       });
-      _startRealTimeGazeTracking();
-      _choiceTimeoutTimer = Timer(const Duration(seconds: 15), () {
-        if (!mounted || _confirmedChoice != null) return;
-        _confirmChoice(_pickFallbackChoice());
-      });
+      _startBackendDetection();
     });
   }
 
-  ShelterChoice _pickFallbackChoice() {
-    if (_choiceDurations.isEmpty) {
-      return _highlightedChoice.value ?? ShelterChoice.umbrella;
-    }
-    final sorted = _choiceDurations.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    return sorted.first.key;
-  }
+  // ══════════════════════════════════════════════════════════════════
+  // 后端驱动：调用 detectShelterChoice() 获取伞/亭子选择
+  // TODO(后端接入): 替换 detectShelterChoice() 为真实后端接口
+  //   接口: GET /api/rain-person/shelter-choice
+  //   返回: {"choice": "umbrella"}  // umbrella | pavilion
+  //   当前 mock: 随机选择，2~4 秒延迟模拟检测时间
+  // ══════════════════════════════════════════════════════════════════
+  void _startBackendDetection() {
+    _timeoutTimer = Timer(const Duration(seconds: 15), () {
+      if (!mounted || _confirmedChoice != null) return;
+      _confirmChoice(ShelterChoice.umbrella); // fallback
+    });
 
-  void _startRealTimeGazeTracking() {
-    BackendService.instance.startRealTimeGazeTracking(
-      targets: [
-        const Offset(0.25, 0.85),
-        const Offset(0.75, 0.85),
-      ],
+    _detectionTimer = Timer.periodic(
+      const Duration(milliseconds: 800),
+      (timer) {
+        if (!mounted || _confirmedChoice != null) {
+          timer.cancel();
+          return;
+        }
+        _pollShelterChoice();
+      },
     );
 
-    _gazeTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      _processGaze();
-    });
+    _pollShelterChoice();
   }
 
-  void _processGaze() {
-    final gaze = BackendService.instance.getCurrentGaze();
-
-    ShelterChoice? gazedChoice;
-    if (gaze.x < 0.45) {
-      gazedChoice = ShelterChoice.umbrella;
-    } else if (gaze.x > 0.55) {
-      gazedChoice = ShelterChoice.pavilion;
-    }
-
-    if (gazedChoice != null) {
-      _choiceDurations[gazedChoice] = (_choiceDurations[gazedChoice] ?? 0) + 1;
-    }
-
-    if (gazedChoice != _highlightedChoice.value) {
-      _highlightedChoice.value = gazedChoice;
-    }
-
-    if (gazedChoice != null && gazedChoice == _lastGazedChoice) {
-      _gazeOnChoiceFrames++;
-      if (_gazeOnChoiceFrames >= _gazeConfirmFrames) {
-        _gazeTimer?.cancel();
-        BackendService.instance.stopRealTimeGazeTracking();
-        _confirmChoice(gazedChoice);
-        return;
+  Future<void> _pollShelterChoice() async {
+    if (!mounted || _confirmedChoice != null) return;
+    try {
+      final choice = await BackendService.instance.detectShelterChoice();
+      if (mounted && _confirmedChoice == null) {
+        _highlightedChoice.value = choice;
+        // 后端检测到明确选择 → 确认
+        _confirmChoice(choice);
       }
-    } else {
-      _gazeOnChoiceFrames = 0;
-      _lastGazedChoice = gazedChoice;
+    } catch (_) {
+      // 后端不可用，等待 timeout fallback
     }
   }
 
   void _confirmChoice(ShelterChoice choice) {
     if (!mounted || _confirmedChoice != null) return;
-    _choiceTimeoutTimer?.cancel();
+    _detectionTimer?.cancel();
+    _timeoutTimer?.cancel();
     _confirmedChoice = choice;
     _highlightedChoice.value = choice;
 
     BackendService.instance.userData.stageThreeChoice = choice;
-    BackendService.instance.userData.stageThreeFocusedChoice = choice.name;
 
-    // 隐藏选项 UI，播放对应选择动画（选择伞 / 选择仓）
     setState(() {
       _showChoices = false;
       _choicesOpacity = 0;
       _promptOpacity = 0;
     });
 
-    _playSelectionVideo(choice);
+    // 短暂停顿让用户看到高亮结果
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) _playSelectionVideo(choice);
+    });
   }
 
   Future<void> _playSelectionVideo(ShelterChoice choice) async {
     final branch = ExperienceFlow.stageThreeBranch(choice);
 
-    // 停止当前引导视频，切换到选择动画
     _videoController?.removeListener(_onIntroVideoUpdate);
     _videoController?.pause();
     if (_currentVideoPath != null) {
@@ -281,7 +257,6 @@ class _PageFiveViewState extends State<PageFiveView> {
       _currentVideoPath = null;
     }
 
-    // 预加载分支资源
     await MediaPreloadService.instance.preloadShelterBranch(choice);
     if (!mounted) return;
 
@@ -318,9 +293,7 @@ class _PageFiveViewState extends State<PageFiveView> {
 
   void _transitionToNextPage() {
     if (!mounted) return;
-    setState(() {
-      _maskOpacity = 0;
-    });
+    setState(() => _maskOpacity = 0);
     Future.delayed(const Duration(milliseconds: 350), () {
       if (mounted) widget.onComplete();
     });
@@ -334,8 +307,8 @@ class _PageFiveViewState extends State<PageFiveView> {
 
   @override
   void dispose() {
-    _gazeTimer?.cancel();
-    _choiceTimeoutTimer?.cancel();
+    _detectionTimer?.cancel();
+    _timeoutTimer?.cancel();
     _videoController?.removeListener(_onIntroVideoUpdate);
     _videoController?.removeListener(_onSelectionVideoUpdate);
     if (_currentVideoPath != null) {
@@ -344,7 +317,6 @@ class _PageFiveViewState extends State<PageFiveView> {
       _videoController?.pause();
     }
     _highlightedChoice.dispose();
-    BackendService.instance.stopRealTimeGazeTracking();
     super.dispose();
   }
 }

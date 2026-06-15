@@ -247,6 +247,63 @@ class BackendService {
     }
   }
 
+  // TODO(后端接入): 第4阶段 — 词汇注视结果
+  // 接口: GET /api/rain-person/focused-words
+  // 返回: {"words": ["游戏", "娱乐"]}  // 注视时长最长的两个词
+  Future<List<String>> detectFocusedWords() async {
+    try {
+      final response = await _getResponse('/api/rain-person/focused-words');
+      final words = (response['words'] as List?)?.cast<String>() ?? [];
+      return words.length >= 2 ? words.sublist(0, 2) : _mockTopTwoWords();
+    } catch (e) {
+      debugPrint('Failed to detect focused words: $e');
+      return _mockTopTwoWords();
+    }
+  }
+
+  List<String> _mockTopTwoWords() {
+    final words = ['听歌', '发呆', '娱乐', '游戏', '家人', '朋友'];
+    return (List<String>.from(words)..shuffle()).take(2).toList();
+  }
+
+  // TODO(后端接入): 第5阶段 — 伞/亭子选择
+  // 接口: GET /api/rain-person/shelter-choice
+  // 返回: {"choice": "umbrella"}  // umbrella | pavilion
+  Future<ShelterChoice> detectShelterChoice() async {
+    try {
+      final response = await _getResponse('/api/rain-person/shelter-choice');
+      return response['choice'] == 'pavilion'
+          ? ShelterChoice.pavilion
+          : ShelterChoice.umbrella;
+    } catch (e) {
+      debugPrint('Failed to detect shelter choice: $e');
+      return _mockShelterChoice();
+    }
+  }
+
+  ShelterChoice _mockShelterChoice() {
+    return ['umbrella', 'pavilion'][_random.nextInt(2)] == 'pavilion'
+        ? ShelterChoice.pavilion
+        : ShelterChoice.umbrella;
+  }
+
+  // TODO(后端接入): 第6阶段 — 视线方向
+  // 接口: GET /api/rain-person/gaze-direction
+  // 返回: {"direction": "中间"}  // 后方 | 中间 | 森林
+  Future<String> detectGazeDirection() async {
+    try {
+      final response = await _getResponse('/api/rain-person/gaze-direction');
+      return response['direction'] ?? '中间';
+    } catch (e) {
+      debugPrint('Failed to detect gaze direction: $e');
+      return _mockGazeDirection();
+    }
+  }
+
+  String _mockGazeDirection() {
+    return ['后方', '中间', '森林'][_random.nextInt(3)];
+  }
+
   // TODO(后端接入): 心率变异率
   // 接口: GET /api/rain-person/heart-rate
   // 返回: {"variability": "高"}  // 可选值: "高" | "低" | "medium"

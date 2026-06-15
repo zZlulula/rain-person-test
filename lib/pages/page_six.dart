@@ -9,7 +9,7 @@ import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
 
 /// 页面六：选择伞/亭子后播放对应动画
-/// 阶段 A — bodyVideo（伞 / 仓）：蒙版1 + 文案 + 左中右视线追踪
+/// 阶段 A — bodyVideo（伞 / 仓）：蒙版1 + 文案 + 方向按钮（后端驱动）
 /// 阶段 B — postChoiceVideo（伞结束 / 仓结束）：第 3 秒蒙版2 + "正在生成报告" → 播完进报告
 enum _VideoPhase { body, ending, finished }
 
@@ -52,10 +52,8 @@ class _PageSixViewState extends State<PageSixView> {
   bool _loadingMaskShown = false;
   bool _exitHandled = false;
 
-  Timer? _gazeTimer;
-  final Map<String, int> _directionDurations = {};
-  String? _currentDirection;
-  DateTime? _directionStartTime;
+  Timer? _detectionTimer;
+  String? _confirmedDirection;
 
   late StageThreeBranch _branch;
 
@@ -212,16 +210,13 @@ class _PageSixViewState extends State<PageSixView> {
     if (!mounted) return;
 
     if (_phase == _VideoPhase.body) {
-      // 主体视频播完 → 切换到结束视频
       _transitionToEndingVideo();
     } else if (_phase == _VideoPhase.ending) {
-      // 结束视频播完 → 进入报告
       _phase = _VideoPhase.finished;
       _finalizeDirectionAndExit();
     }
   }
 
-  /// 主体视频（伞/仓）→ 结束视频（伞结束/仓结束）
   Future<void> _transitionToEndingVideo() async {
     if (!mounted) return;
     _phase = _VideoPhase.ending;
@@ -231,9 +226,7 @@ class _PageSixViewState extends State<PageSixView> {
 
   void _showFinalTransitionMask() {
     _loadingMaskShown = true;
-    _gazeTimer?.cancel();
-    BackendService.instance.stopRealTimeGazeTracking();
-    _flushDirectionDuration();
+    _detectionTimer?.cancel();
 
     if (!mounted) return;
     setState(() {
@@ -244,58 +237,38 @@ class _PageSixViewState extends State<PageSixView> {
     });
   }
 
-  void _flushDirectionDuration() {
-    if (_currentDirection != null && _directionStartTime != null) {
-      final duration =
-          DateTime.now().difference(_directionStartTime!).inMilliseconds;
-      _directionDurations[_currentDirection!] =
-          (_directionDurations[_currentDirection!] ?? 0) + duration;
-    }
-  }
-
-  void _startGazeTracking() {
-    _directionDurations['后方'] = 0;
-    _directionDurations['中间'] = 0;
-    _directionDurations['森林'] = 0;
-
-    BackendService.instance.startRealTimeGazeTracking(
-      targets: const [
-        Offset(0.2, 0.5),
-        Offset(0.5, 0.5),
-        Offset(0.8, 0.5),
-      ],
+  // ══════════════════════════════════════════════════════════════════
+  // 后端驱动：调用 detectGazeDirection() 获取视线方向
+  // TODO(后端接入): 替换 detectGazeDirection() 为真实后端接口
+  //   接口: GET /api/rain-person/gaze-direction
+  //   返回: {"direction": "中间"}  // 后方 | 中间 | 森林
+  //   当前 mock: 随机返回方向，模拟 2~4 秒检测延迟
+  // ══════════════════════════════════════════════════════════════════
+  void _startBackendDetection() {
+    _detectionTimer = Timer.periodic(
+      const Duration(milliseconds: 800),
+      (timer) {
+        if (!mounted || _confirmedDirection != null) {
+          timer.cancel();
+          return;
+        }
+        _pollGazeDirection();
+      },
     );
-    _gazeTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      _recordGazeDirection();
-    });
+
+    _pollGazeDirection();
   }
 
-  void _recordGazeDirection() {
-    final gaze = BackendService.instance.getCurrentGaze();
-    String direction;
-    if (gaze.x < 0.33) {
-      direction = '后方';
-    } else if (gaze.x > 0.66) {
-      direction = '森林';
-    } else {
-      direction = '中间';
-    }
-
-    final now = DateTime.now();
-    if (_currentDirection != null && _directionStartTime != null) {
-      final duration = now.difference(_directionStartTime!).inMilliseconds;
-      _directionDurations[_currentDirection!] =
-          (_directionDurations[_currentDirection!] ?? 0) + duration;
-    }
-
-    if (direction != _currentDirection) {
-      _currentDirection = direction;
-      _directionStartTime = now;
-      _highlightedDirection.value = direction;
+  Future<void> _pollGazeDirection() async {
+    if (!mounted || _confirmedDirection != null) return;
+    try {
+      final direction = await BackendService.instance.detectGazeDirection();
+      if (mounted && _confirmedDirection == null) {
+        _confirmedDirection = direction;
+        _highlightedDirection.value = direction;
+      }
+    } catch (_) {
+      // 后端不可用，保持 fallback
     }
   }
 
@@ -303,17 +276,10 @@ class _PageSixViewState extends State<PageSixView> {
     if (_exitHandled) return;
     _exitHandled = true;
 
-    _flushDirectionDuration();
+    _detectionTimer?.cancel();
 
-    final sorted = _directionDurations.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final dominantDirection = sorted.isNotEmpty ? sorted.first.key : '中间';
-
-    BackendService.instance.userData.stageFourGazeDirection = dominantDirection;
-    BackendService.instance.userData.stageFourDirectionDurations =
-        Map.from(_directionDurations);
-    BackendService.instance.userData.stageFourFocusedDirection =
-        _currentDirection;
+    final direction = _confirmedDirection ?? '中间';
+    BackendService.instance.userData.stageFourGazeDirection = direction;
 
     BackendService.instance.sendUserData();
 
@@ -321,16 +287,13 @@ class _PageSixViewState extends State<PageSixView> {
     widget.onComplete();
   }
 
-  /// 启动流程：先播 bodyVideo（主体 + 视线追踪），再播 postChoiceVideo（结束 + 过渡蒙版）
   Future<void> _bootstrap() async {
     _branch = ExperienceFlow.stageThreeBranchFromUserData();
-    // 预加载两个视频
     await VideoControllerCache.instance.prepare(_branch.bodyVideo);
     await VideoControllerCache.instance.prepare(_branch.postChoiceVideo);
     if (!mounted) return;
 
-    // 阶段 A：播主体视频，开始视线追踪
-    _startGazeTracking();
+    _startBackendDetection();
     await _startVideo(_branch.bodyVideo);
   }
 
@@ -342,11 +305,10 @@ class _PageSixViewState extends State<PageSixView> {
 
   @override
   void dispose() {
-    _gazeTimer?.cancel();
+    _detectionTimer?.cancel();
     _detachVideoListener();
     _videoController?.pause();
     _highlightedDirection.dispose();
-    BackendService.instance.stopRealTimeGazeTracking();
     super.dispose();
   }
 }
