@@ -1,0 +1,67 @@
+@echo off
+chcp 65001 >nul
+cd /d "C:\雨中人心理测试"
+
+echo ========================================
+echo   雨中人心理测试 — Git 一键上传
+echo ========================================
+echo.
+
+:: 检查远程仓库
+git remote get-url origin >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [!] 未配置远程仓库，当前只能本地提交
+    echo     如需推送，请先: git remote add origin ^<仓库地址^>
+    echo.
+)
+
+:: 显示变更
+echo --- 当前变更 ---
+git status --short
+echo.
+
+:: 输入提交信息
+set /p commitMsg="请输入提交信息: "
+if "%commitMsg%"=="" (
+    set commitMsg=update: %date:~0,10% %time:~0,8%
+    echo [i] 使用默认信息: %commitMsg%
+)
+
+echo.
+echo --- 执行中 ---
+
+:: add
+echo [1/3] git add -A ...
+git add -A
+if %errorlevel% neq 0 (
+    echo [X] git add 失败
+    pause
+    exit /b 1
+)
+
+:: commit
+echo [2/3] git commit ...
+git commit -m "%commitMsg%"
+if %errorlevel% neq 0 (
+    echo [i] 可能没有新变更需要提交
+)
+
+:: push
+git remote get-url origin >nul 2>&1
+if %errorlevel% equ 0 (
+    echo [3/3] git push ...
+    git push
+    if %errorlevel% neq 0 (
+        echo [!] push 失败，请检查网络或远程仓库
+    ) else (
+        echo [√] 推送成功！
+    )
+) else (
+    echo [3/3] 跳过 push — 无远程仓库
+)
+
+echo.
+echo ========================================
+echo   完成！按任意键关闭...
+echo ========================================
+pause >nul
