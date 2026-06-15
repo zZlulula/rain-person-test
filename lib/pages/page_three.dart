@@ -205,8 +205,8 @@ class _PageThreeViewState extends State<PageThreeView> {
       _highlightedExpression = normalized;
     });
 
-    // 确认后短暂停顿，让用户看到高亮结果
-    Future.delayed(const Duration(milliseconds: 800), () {
+    // 确认后停顿 1.5 秒，让用户看清选中的按钮
+    Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) _transitionToNextPage();
     });
   }

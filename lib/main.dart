@@ -220,13 +220,18 @@ class BackendService {
   // TODO(后端接入): AU表情检测
   // 接口: GET /api/rain-person/detect-expression
   // 返回: {"expression": "皱眉"}  // 可选值: "皱眉" | "抿嘴" | "皱眉+抿嘴" | "unknown"
+  // Mock: 前几次返回 unknown（模拟处理中），之后返回随机表情
   Future<String> detectExpression() async {
     try {
-      final response = await _getResponse('/api/rain-person/detect-expression');
-      final raw = response['expression'] ?? 'unknown';
-      return ExperienceFlow.normalizeExpression(raw);
+      // TODO(后端接入): 替换为真实接口调用
+      // final response = await _getResponse('/api/rain-person/detect-expression');
+      // return ExperienceFlow.normalizeExpression(response['expression'] ?? 'unknown');
+      throw UnimplementedError(); // 走 mock
     } catch (e) {
-      debugPrint('Failed to detect expression: $e');
+      _detectExpressionCallCount++;
+      await Future.delayed(const Duration(milliseconds: 500));
+      // 模拟逐帧检测：前 3 次返回 unknown（处理中），第 4 次起返回结果
+      if (_detectExpressionCallCount < 4) return 'unknown';
       return _randomExpression();
     }
   }
@@ -250,13 +255,15 @@ class BackendService {
   // TODO(后端接入): 第4阶段 — 词汇注视结果
   // 接口: GET /api/rain-person/focused-words
   // 返回: {"words": ["游戏", "娱乐"]}  // 注视时长最长的两个词
+  // Mock: 模拟 1.5~2.5 秒检测延迟
   Future<List<String>> detectFocusedWords() async {
     try {
-      final response = await _getResponse('/api/rain-person/focused-words');
-      final words = (response['words'] as List?)?.cast<String>() ?? [];
-      return words.length >= 2 ? words.sublist(0, 2) : _mockTopTwoWords();
+      // TODO(后端接入): 替换为真实接口调用
+      throw UnimplementedError();
     } catch (e) {
-      debugPrint('Failed to detect focused words: $e');
+      await Future.delayed(
+        Duration(milliseconds: 1500 + _random.nextInt(1000)),
+      );
       return _mockTopTwoWords();
     }
   }
@@ -269,14 +276,18 @@ class BackendService {
   // TODO(后端接入): 第5阶段 — 伞/亭子选择
   // 接口: GET /api/rain-person/shelter-choice
   // 返回: {"choice": "umbrella"}  // umbrella | pavilion
+  // Mock: 模拟 2.5~3.5 秒检测延迟
   Future<ShelterChoice> detectShelterChoice() async {
     try {
-      final response = await _getResponse('/api/rain-person/shelter-choice');
-      return response['choice'] == 'pavilion'
-          ? ShelterChoice.pavilion
-          : ShelterChoice.umbrella;
+      // TODO(后端接入): 替换为真实接口调用
+      // final response = await _getResponse('/api/rain-person/shelter-choice');
+      // return response['choice'] == 'pavilion' ? ShelterChoice.pavilion : ShelterChoice.umbrella;
+      throw UnimplementedError();
     } catch (e) {
-      debugPrint('Failed to detect shelter choice: $e');
+      // 模拟检测延迟：2.5 ± 0.5 秒
+      await Future.delayed(
+        Duration(milliseconds: 2500 + _random.nextInt(1000)),
+      );
       return _mockShelterChoice();
     }
   }
@@ -290,12 +301,15 @@ class BackendService {
   // TODO(后端接入): 第6阶段 — 视线方向
   // 接口: GET /api/rain-person/gaze-direction
   // 返回: {"direction": "中间"}  // 后方 | 中间 | 森林
+  // Mock: 模拟 2~3 秒检测延迟
   Future<String> detectGazeDirection() async {
     try {
-      final response = await _getResponse('/api/rain-person/gaze-direction');
-      return response['direction'] ?? '中间';
+      // TODO(后端接入): 替换为真实接口调用
+      throw UnimplementedError();
     } catch (e) {
-      debugPrint('Failed to detect gaze direction: $e');
+      await Future.delayed(
+        Duration(milliseconds: 2000 + _random.nextInt(1000)),
+      );
       return _mockGazeDirection();
     }
   }
@@ -329,8 +343,12 @@ class BackendService {
     return {'success': true};
   }
 
+  /// Mock 后端延迟（秒），模拟真实网络 + 处理时间
+  static const double _mockDelaySeconds = 2.5;
+  int _detectExpressionCallCount = 0;
+
   Future<Map<String, dynamic>> _getResponse(String endpoint) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(Duration(milliseconds: (_mockDelaySeconds * 1000).round()));
     return {};
   }
 

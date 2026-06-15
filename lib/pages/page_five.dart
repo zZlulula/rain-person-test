@@ -240,8 +240,8 @@ class _PageFiveViewState extends State<PageFiveView> {
       _promptOpacity = 0;
     });
 
-    // 短暂停顿让用户看到高亮结果
-    Future.delayed(const Duration(milliseconds: 600), () {
+    // 停顿 1.2 秒，让用户看清选中的选项
+    Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) _playSelectionVideo(choice);
     });
   }
