@@ -14,6 +14,8 @@ class MediaPreloadService {
     'assets/videos/仓和伞.mp4',
     'assets/videos/选择伞.mp4',
     'assets/videos/选择仓.mp4',
+    'assets/videos/伞.mp4',
+    'assets/videos/仓.mp4',
     'assets/videos/伞结束.mp4',
     'assets/videos/仓结束.mp4',
     'assets/audios/rain.mp3',

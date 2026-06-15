@@ -524,7 +524,15 @@ class _ContentViewState extends State<ContentView> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          _buildCurrentPage(),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            child: _buildCurrentPage(),
+          ),
           if (_pageHistory.isNotEmpty) _buildBackButton(),
         ],
       ),
@@ -534,19 +542,40 @@ class _ContentViewState extends State<ContentView> {
   Widget _buildCurrentPage() {
     switch (_currentPage) {
       case Page.page1:
-        return PageOneView(onStart: () => _navigateTo(Page.page2));
+        return PageOneView(
+          key: const ValueKey(Page.page1),
+          onStart: () => _navigateTo(Page.page2),
+        );
       case Page.page2:
-        return PageTwoView(onComplete: () => _navigateTo(Page.page3));
+        return PageTwoView(
+          key: const ValueKey(Page.page2),
+          onComplete: () => _navigateTo(Page.page3),
+        );
       case Page.page3:
-        return PageThreeView(onComplete: () => _navigateTo(Page.page4));
+        return PageThreeView(
+          key: const ValueKey(Page.page3),
+          onComplete: () => _navigateTo(Page.page4),
+        );
       case Page.page4:
-        return PageFourView(onComplete: () => _navigateTo(Page.page5));
+        return PageFourView(
+          key: const ValueKey(Page.page4),
+          onComplete: () => _navigateTo(Page.page5),
+        );
       case Page.page5:
-        return PageFiveView(onComplete: () => _navigateTo(Page.page6));
+        return PageFiveView(
+          key: const ValueKey(Page.page5),
+          onComplete: () => _navigateTo(Page.page6),
+        );
       case Page.page6:
-        return PageSixView(onComplete: () => _navigateTo(Page.report));
+        return PageSixView(
+          key: const ValueKey(Page.page6),
+          onComplete: () => _navigateTo(Page.report),
+        );
       case Page.report:
-        return ReportPageView(onRestart: _restartFlow);
+        return ReportPageView(
+          key: const ValueKey(Page.report),
+          onRestart: _restartFlow,
+        );
     }
   }
 

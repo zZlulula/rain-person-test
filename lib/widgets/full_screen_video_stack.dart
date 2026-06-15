@@ -15,6 +15,7 @@ class _IsolatedVideoLayer extends StatefulWidget {
 class _IsolatedVideoLayerState extends State<_IsolatedVideoLayer> {
   VideoPlayerController? _attached;
   Size _layoutSize = Size.zero;
+  double _videoOpacity = 0;
 
   @override
   void initState() {
@@ -33,7 +34,10 @@ class _IsolatedVideoLayerState extends State<_IsolatedVideoLayer> {
 
   void _attach(VideoPlayerController? controller) {
     _attached = controller;
-    if (controller == null) return;
+    if (controller == null) {
+      _videoOpacity = 0;
+      return;
+    }
     _syncLayoutSize(controller);
     controller.addListener(_onVideoTick);
   }
@@ -41,6 +45,7 @@ class _IsolatedVideoLayerState extends State<_IsolatedVideoLayer> {
   void _detach() {
     _attached?.removeListener(_onVideoTick);
     _attached = null;
+    _videoOpacity = 0;
   }
 
   void _onVideoTick() {
@@ -49,9 +54,18 @@ class _IsolatedVideoLayerState extends State<_IsolatedVideoLayer> {
     final next = controller.value.size;
     if (next.width <= 0 || next.height <= 0) return;
     if (next.width == _layoutSize.width && next.height == _layoutSize.height) {
+      // 尺寸稳定后渐入视频
+      if (_videoOpacity < 1 && controller.value.isPlaying) {
+        setState(() => _videoOpacity = 1);
+      }
       return;
     }
-    setState(() => _layoutSize = next);
+    setState(() {
+      _layoutSize = next;
+      if (controller.value.isPlaying) {
+        _videoOpacity = 1;
+      }
+    });
   }
 
   void _syncLayoutSize(VideoPlayerController controller) {
@@ -71,9 +85,9 @@ class _IsolatedVideoLayerState extends State<_IsolatedVideoLayer> {
   @override
   Widget build(BuildContext context) {
     final controller = _attached;
-    if (controller == null || !controller.value.isInitialized) {
-      return const ColoredBox(color: Colors.black);
-    }
+    final bool videoReady = controller != null &&
+        controller.value.isInitialized &&
+        _layoutSize.width > 0;
 
     final double width =
         _layoutSize.width > 0 ? _layoutSize.width.toDouble() : 1920;
@@ -85,17 +99,28 @@ class _IsolatedVideoLayerState extends State<_IsolatedVideoLayer> {
         color: Colors.black,
         child: ClipRect(
           child: SizedBox.expand(
-            child: FittedBox(
-              fit: BoxFit.fill,
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: width,
-                height: height,
-                child: VideoPlayer(
-                  controller,
-                  key: ValueKey(controller),
-                ),
-              ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (videoReady)
+                  AnimatedOpacity(
+                    opacity: _videoOpacity.clamp(0.0, 1.0),
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
+                    child: FittedBox(
+                      fit: BoxFit.fill,
+                      alignment: Alignment.center,
+                      child: SizedBox(
+                        width: width,
+                        height: height,
+                        child: VideoPlayer(
+                          controller,
+                          key: ValueKey(controller),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
