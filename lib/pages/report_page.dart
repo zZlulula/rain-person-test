@@ -1,43 +1,28 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../config/experience_flow.dart';
+import '../app_theme.dart';
 
+/// 报告页 — 禅意灰绿毛玻璃卡片
 class ReportPageView extends StatelessWidget {
   final VoidCallback onRestart;
-
   const ReportPageView({super.key, required this.onRestart});
 
   UserSelectionData get _data => BackendService.instance.userData;
-
   String get _summaryText => ExperienceFlow.buildSummary(_data);
 
   List<_ReportCardData> get _cards => [
-        _ReportCardData(
-          title: '第1阶段',
-          typeText: ExperienceFlow.stageOneReportType(_data.stageOneExpression),
-        ),
-        _ReportCardData(
-          title: '第2阶段',
-          typeText: ExperienceFlow.stageTwoReportType(_data.stageTwoWords),
-        ),
-        _ReportCardData(
-          title: '第3阶段',
-          typeText: ExperienceFlow.stageThreeBranchFromUserData().reportType,
-        ),
-        _ReportCardData(
-          title: '第4阶段',
-          typeText: ExperienceFlow.stageFourReportType(
-            _data.stageFourGazeDirection,
-          ),
-        ),
-      ];
+    _ReportCardData(title: '第1阶段', typeText: ExperienceFlow.stageOneReportType(_data.stageOneExpression)),
+    _ReportCardData(title: '第2阶段', typeText: ExperienceFlow.stageTwoReportType(_data.stageTwoWords)),
+    _ReportCardData(title: '第3阶段', typeText: ExperienceFlow.stageThreeBranchFromUserData().reportType),
+    _ReportCardData(title: '第4阶段', typeText: ExperienceFlow.stageFourReportType(_data.stageFourGazeDirection)),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.bg,
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -49,47 +34,39 @@ class ReportPageView extends StatelessWidget {
                   child: Text(
                     '你的本次雨境画像',
                     style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 2,
+                      color: AppTheme.textPrimary,
                     ),
                   ),
                 ),
                 Padding(
-                  padding:
-                      const EdgeInsets.only(top: 20, left: 24, right: 24),
+                  padding: const EdgeInsets.only(top: 20, left: 24, right: 24),
                   child: SizedBox(
                     width: screenSize.width * 0.9,
                     child: Text(
                       _summaryText,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        color: Colors.white,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppTheme.textSecondary,
                         height: 1.8,
                       ),
                     ),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(
-                    top: 32,
-                    left: 20,
-                    right: 20,
-                    bottom: 120,
-                  ),
+                  padding: const EdgeInsets.only(top: 32, left: 20, right: 20, bottom: 120),
                   child: Column(
-                    children:
-                        _cards.map((card) => _buildReportCard(card, screenSize)).toList(),
+                    children: _cards.map((card) => _buildReportCard(card, screenSize)).toList(),
                   ),
                 ),
               ],
             ),
           ),
           Positioned(
-            left: 0,
-            right: 0,
-            bottom: 30,
+            left: 0, right: 0, bottom: 30,
             child: Center(child: _buildRestartButton()),
           ),
         ],
@@ -103,36 +80,20 @@ class ReportPageView extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.surface.withOpacity(0.6),
+        border: Border.all(color: AppTheme.border),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            card.title,
-            style: const TextStyle(
-              fontSize: 22,
-              color: Color.fromARGB(153, 255, 255, 255),
-            ),
-          ),
+          Text(card.title, style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
           const SizedBox(height: 8),
-          Text(
-            card.typeText,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+          Text(card.typeText, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400, color: AppTheme.textPrimary)),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             '每个选择都是你内心的一次回应。',
-            style: TextStyle(
-              fontSize: 22,
-              color: Color.fromARGB(204, 255, 255, 255),
-              height: 1.6,
-            ),
+            style: TextStyle(fontSize: 15, color: AppTheme.textSecondary, height: 1.6),
           ),
         ],
       ),
@@ -145,15 +106,16 @@ class ReportPageView extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 56, vertical: 18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          border: Border.all(color: AppTheme.borderStrong, width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Text(
           '重新体验',
           style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w300,
+            letterSpacing: 2,
+            color: AppTheme.textPrimary,
           ),
         ),
       ),
@@ -164,6 +126,5 @@ class ReportPageView extends StatelessWidget {
 class _ReportCardData {
   final String title;
   final String typeText;
-
   _ReportCardData({required this.title, required this.typeText});
 }

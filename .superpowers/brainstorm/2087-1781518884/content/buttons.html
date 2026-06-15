@@ -1,0 +1,58 @@
+<h2>按钮 & 组件风格 — 月夜靛蓝</h2>
+<p class="subtitle">基于选定的配色（背景 #141c2c · 卡片 #1d2840 · 文字 #dde4f0 · 点缀 #8899bb）</p>
+
+<div class="options">
+  <div class="option" data-choice="minimal" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>极简线条</h3>
+      <p>细边框 + 微光 hover，安静不抢眼。适合心理测试的低干扰氛围。</p>
+      <div style="margin-top:12px;display:flex;gap:12px;align-items:center;">
+        <div style="padding:10px 28px;border:1px solid #8899bb;border-radius:10px;color:#dde4f0;font-size:16px;background:transparent;">开始</div>
+        <div style="padding:10px 28px;border:1px solid #8899bb;border-radius:10px;color:#141c2c;font-size:16px;background:#8899bb;">确认</div>
+      </div>
+    </div>
+  </div>
+  <div class="option" data-choice="softfill" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>柔和填充（推荐）</h3>
+      <p>半透明玻璃质感按钮，朦胧的柔光效果。有种透过雨窗看灯的治愈感。</p>
+      <div style="margin-top:12px;display:flex;gap:12px;align-items:center;">
+        <div style="padding:10px 28px;border-radius:12px;color:#dde4f0;font-size:16px;background:rgba(136,153,187,0.15);border:1px solid rgba(136,153,187,0.25);">开始</div>
+        <div style="padding:10px 28px;border-radius:12px;color:#141c2c;font-size:16px;background:rgba(136,153,187,0.85);box-shadow:0 0 20px rgba(136,153,187,0.3);">确认</div>
+      </div>
+    </div>
+  </div>
+  <div class="option" data-choice="solid" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>实色块</h3>
+      <p>纯色填充、干净利落，专业测试工具风格，对比强烈。</p>
+      <div style="margin-top:12px;display:flex;gap:12px;align-items:center;">
+        <div style="padding:10px 28px;border-radius:8px;color:#dde4f0;font-size:16px;background:#4a6090;">开始</div>
+        <div style="padding:10px 28px;border-radius:8px;color:#141c2c;font-size:16px;background:#dde4f0;">确认</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top:32px;">卡片样式</h3>
+<div class="options">
+  <div class="option" data-choice="card-glass" onclick="toggleSelect(this)" style="display:block;">
+    <div style="padding:20px;border-radius:14px;background:rgba(29,40,64,0.6);border:1px solid rgba(136,153,187,0.12);margin-bottom:8px;">
+      <div style="color:#8899bb;font-size:14px;">第1阶段</div>
+      <div style="color:#dde4f0;font-size:20px;font-weight:bold;margin:6px 0;">负面情绪偏高</div>
+      <div style="color:rgba(221,228,240,0.7);font-size:16px;">你在风雨中仍然保持清晰与克制。</div>
+    </div>
+    <p style="font-size:13px;color:#8899bb;">A · 毛玻璃卡片 — 半透明朦胧感，有层次</p>
+  </div>
+  <div class="option" data-choice="card-solid" onclick="toggleSelect(this)" style="display:block;">
+    <div style="padding:20px;border-radius:14px;background:#1d2840;border:1px solid #2a3a50;margin-bottom:8px;">
+      <div style="color:#8899bb;font-size:14px;">第1阶段</div>
+      <div style="color:#dde4f0;font-size:20px;font-weight:bold;margin:6px 0;">负面情绪偏高</div>
+      <div style="color:rgba(221,228,240,0.7);font-size:16px;">你在风雨中仍然保持清晰与克制。</div>
+    </div>
+    <p style="font-size:13px;color:#8899bb;">B · 实色卡片 — 干净利落，对比清晰</p>
+  </div>
+</div>

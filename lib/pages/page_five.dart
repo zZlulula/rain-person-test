@@ -9,6 +9,7 @@ import '../utils/video_loader.dart';
 import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
+import '../app_theme.dart';
 
 /// 页面五：分支选择页（伞 / 亭子）
 ///
@@ -53,7 +54,7 @@ class _PageFiveViewState extends State<PageFiveView> {
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.bg,
       body: FullScreenVideoStack(
         videoController: _holdBlackFrame ? null : _videoController,
         maskOpacity: _maskOpacity,

@@ -7,6 +7,7 @@ import '../services/video_controller_cache.dart';
 import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
+import '../app_theme.dart';
 
 /// 页面六：结尾动画 + 方向检测 + 最终过渡
 ///
@@ -60,7 +61,7 @@ class _PageSixViewState extends State<PageSixView> {
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.sizeOf(context);
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.bg,
       body: FullScreenVideoStack(
         videoController: _holdBlackFrame ? null : _videoController,
         maskOpacity: _loadingOpacity > 0 ? 0 : _maskOpacity,

@@ -1,8 +1,9 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
+import '../app_theme.dart';
 
-/// 视线驱动选项按钮（后端视线数据高亮，不可点击）
+/// 视线驱动选项按钮 — 禅意灰绿线条风格
+/// 正常态：透明底 + 细边框 · 高亮态：accent 填充 + 白字
 class GazeChoiceButton extends StatelessWidget {
   const GazeChoiceButton({
     super.key,
@@ -61,9 +62,11 @@ class GazeChoiceButton extends StatelessWidget {
       constraints: BoxConstraints(minWidth: effectiveMinWidth),
       padding: padding,
       decoration: BoxDecoration(
-        color: highlighted
-            ? Colors.blue
-            : const Color.fromARGB(229, 255, 255, 255),
+        color: highlighted ? AppTheme.accent : AppTheme.bg.withOpacity(0.3),
+        border: Border.all(
+          color: highlighted ? AppTheme.accent : AppTheme.borderStrong,
+          width: 1,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -71,8 +74,8 @@ class GazeChoiceButton extends StatelessWidget {
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: effectiveFontSize,
-          fontWeight: FontWeight.w600,
-          color: highlighted ? Colors.white : Colors.black,
+          fontWeight: FontWeight.w300,
+          color: highlighted ? Colors.white : AppTheme.textPrimary,
         ),
       ),
     );

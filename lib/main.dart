@@ -487,7 +487,7 @@ class _ContentViewState extends State<ContentView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.bg,
       body: Stack(
         children: [
           // 页面切换带淡入淡出过渡（200ms）
