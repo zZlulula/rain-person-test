@@ -217,8 +217,10 @@ class _PageFiveViewState extends State<PageFiveView> {
       final choice = await BackendService.instance.detectShelterChoice();
       if (mounted && _confirmedChoice == null) {
         _highlightedChoice.value = choice;
-        // 后端检测到明确选择 → 确认
-        _confirmChoice(choice);
+        // 高亮 1.2s 让用户看清 → 确认
+        Future.delayed(const Duration(milliseconds: 1200), () {
+          if (mounted && _confirmedChoice == null) _confirmChoice(choice);
+        });
       }
     } catch (_) {
       // 后端不可用，等待 timeout fallback

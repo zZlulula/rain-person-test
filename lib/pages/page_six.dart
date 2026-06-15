@@ -53,20 +53,13 @@ class _PageSixViewState extends State<PageSixView> {
   // 用定时器而非监听器触发视频结束（Windows video_player 监听不可靠）
   void _scheduleVideoEnd(Duration duration) {
     _videoEndTimer?.cancel();
-    if (duration > const Duration(milliseconds: 500)) {
-      _videoEndTimer = Timer(duration, () {
-        if (!mounted || _videoEndHandled) return;
-        _videoEndHandled = true;
-        _onVideoFinished();
-      });
-    } else {
-      // 无法获取有效时长，10 秒兜底
-      _videoEndTimer = Timer(const Duration(seconds: 10), () {
-        if (!mounted || _videoEndHandled) return;
-        _videoEndHandled = true;
-        _onVideoFinished();
-      });
-    }
+    final delay = duration > const Duration(milliseconds: 500)
+        ? duration
+        : const Duration(seconds: 10);
+    _videoEndTimer = Timer(delay, () {
+      if (!mounted) return;
+      _onVideoFinished();
+    });
   }
 
   @override
