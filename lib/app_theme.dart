@@ -15,6 +15,21 @@ class AppTheme {
   static const Color border = Color(0x1a3a4a3f);        // 浅边框 (~10%)
   static const Color borderStrong = Color(0x403a4a3f);  // 深边框 (~25%)
 
+  // ── 动效时长 ──
+  static const Duration durMist = Duration(milliseconds: 600);
+  static const Duration durBreeze = Duration(milliseconds: 500);
+  static const Duration durRipple = Duration(milliseconds: 800);
+  static const Duration durBurst = Duration(milliseconds: 1400);
+  static const Duration durCloud = Duration(milliseconds: 2800);
+  static const Duration durStagger = Duration(milliseconds: 100);
+  static const Duration durPress = Duration(milliseconds: 150);
+
+  // ── 动效曲线 ──
+  static const Curve easeMist = Curves.easeOutExpo;
+  static const Curve easeBreeze = Curves.easeInOutCubic;
+  static const Curve easeBurst = Curves.easeOutExpo;
+  static const Curve easeCloud = Curves.easeInOutSine;
+
   // ── 蒙版（不变，叠加在视频上）──
   static const Color mask1 = Color.fromARGB(115, 0, 0, 0); // 45% 黑
   static const Color mask2 = Colors.black;                  // 100% 黑
