@@ -50,10 +50,10 @@ class _PageThreeViewState extends State<PageThreeView> {
                 opacity: _promptOpacity, duration: ExperienceMask.fadeDuration,
                 child: SizedBox(
                   width: screenSize.width * 0.8,
-                  child: const Text(
+                  child: Text(
                     '你遇到了一位朋友，想象你在和他解释你的烦恼',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 26, color: Colors.white, height: 1.6),
+                    style: TextStyle(fontSize: 26, color: Color(0xFFd5e5d2), height: 1.6, fontWeight: FontWeight.w300, letterSpacing: 2),
                   ),
                 ),
               ),

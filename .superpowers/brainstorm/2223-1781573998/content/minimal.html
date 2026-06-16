@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>极简方案</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;background:#0d1110;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;gap:32px}
+.scene{background:linear-gradient(180deg,#1a1c1b,#141716 40%,#181b19 70%,#111312);border-radius:20px;padding:40px 28px;position:relative;overflow:hidden;min-width:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.mask{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:0}
+.scene>*{position:relative;z-index:1}
+h2{font-weight:200;letter-spacing:6px;font-size:14px;margin-bottom:4px;opacity:.5}
+.note{font-size:10px;opacity:.2;letter-spacing:3px;margin-top:4px}
+.hint{font-size:13px;font-weight:300;opacity:.45;letter-spacing:1px;text-align:center;max-width:260px;line-height:1.7}
+.row{display:flex;gap:28px;justify-content:center;align-items:center;flex-wrap:wrap}
+
+/* ═══ 方案A：纯文字+微光 ═══
+   无边框无底色，选中时文字变亮 + 背后浮现极柔光晕
+*/
+.glow-text{
+  padding:10px 20px;cursor:pointer;font-size:16px;font-weight:300;letter-spacing:2px;
+  font-family:inherit;outline:none;border:none;background:none;
+  color:rgba(255,255,255,.45);
+  transition:all .5s ease;
+  position:relative;
+}
+.glow-text::before{
+  content:'';position:absolute;inset:-4px -8px;border-radius:20px;z-index:-1;
+  background:radial-gradient(ellipse at center, rgba(255,255,255,.04) 0%, transparent 70%);
+  opacity:0;transition:opacity .6s ease;
+}
+.glow-text:hover{color:rgba(255,255,255,.65)}
+.glow-text:hover::before{opacity:1}
+.glow-text.sel{
+  color:rgba(255,255,255,.9);
+  letter-spacing:3px;
+}
+.glow-text.sel::before{
+  opacity:1;
+  background:radial-gradient(ellipse at center, rgba(255,248,240,.08) 0%, rgba(255,248,240,.02) 40%, transparent 70%);
+}
+
+/* ═══ 方案B：下划线浮现 ═══
+   文字底部一条极细暖线，选中时线亮起
+*/
+.underline-text{
+  padding:10px 20px;cursor:pointer;font-size:16px;font-weight:300;letter-spacing:2px;
+  font-family:inherit;outline:none;border:none;background:none;
+  color:rgba(255,255,255,.45);
+  position:relative;
+  transition:color .4s ease;
+}
+.underline-text::after{
+  content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+  width:0;height:.5px;
+  background:rgba(255,255,255,.3);
+  transition:width .5s cubic-bezier(.16,1,.3,1);
+}
+.underline-text:hover{color:rgba(255,255,255,.65)}
+.underline-text:hover::after{width:50%}
+.underline-text.sel{
+  color:rgba(255,255,255,.9);
+  font-weight:400;
+}
+.underline-text.sel::after{
+  width:70%;
+  background:rgba(255,248,240,.5);
+  box-shadow:0 0 6px rgba(255,248,240,.2);
+}
+
+/* ═══ 方案C：雾中灯 ═══
+   文字周围有极柔的光晕呼吸，选中时光晕变暖
+*/
+.lantern-text{
+  padding:10px 24px;cursor:pointer;font-size:16px;font-weight:300;letter-spacing:2px;
+  font-family:inherit;outline:none;border:none;background:none;
+  color:rgba(255,255,255,.45);
+  position:relative;transition:all .5s ease;
+}
+.lantern-text::before{
+  content:'';position:absolute;inset:-6px -12px;border-radius:24px;z-index:-1;
+  background:transparent;
+  transition:background .6s ease;
+}
+.lantern-text:hover{color:rgba(255,255,255,.65)}
+.lantern-text.sel{
+  color:rgba(255,255,255,.9);
+  animation:lanternBreath 3s ease-in-out infinite;
+}
+.lantern-text.sel::before{
+  background:radial-gradient(ellipse at center,
+    rgba(255,245,235,.06) 0%,
+    rgba(255,240,225,.02) 40%,
+    transparent 65%);
+}
+@keyframes lanternBreath{
+  0%,100%{color:rgba(255,255,255,.85)}
+  50%{color:rgba(255,255,255,.95)}
+}
+</style>
+</head>
+<body>
+
+<div style="text-align:center">
+  <h2>A · 纯文字微光</h2>
+  <div class="note">无边框无底色 · 选中时背后浮现柔光</div>
+</div>
+<div class="scene">
+  <div class="mask"></div>
+  <div class="hint">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+  <div class="row">
+    <button class="glow-text" onclick="toggleSel(this,'glow-text')">皱眉</button>
+    <button class="glow-text" onclick="toggleSel(this,'glow-text')">抿嘴</button>
+    <button class="glow-text" onclick="toggleSel(this,'glow-text')">皱眉+抿嘴</button>
+  </div>
+  <div class="row">
+    <button class="glow-text" style="font-size:20px;padding:12px 28px" onclick="toggleSel(this,'glow-text')">伞</button>
+    <button class="glow-text" style="font-size:20px;padding:12px 28px" onclick="toggleSel(this,'glow-text')">亭子</button>
+  </div>
+  <div class="note">点击选项查看选中态</div>
+</div>
+
+<div style="text-align:center;margin-top:8px">
+  <h2>B · 下划线浮现</h2>
+  <div class="note">选中时底部暖线亮起</div>
+</div>
+<div class="scene">
+  <div class="mask"></div>
+  <div class="hint">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+  <div class="row">
+    <button class="underline-text" onclick="toggleSel(this,'underline-text')">皱眉</button>
+    <button class="underline-text" onclick="toggleSel(this,'underline-text')">抿嘴</button>
+    <button class="underline-text" onclick="toggleSel(this,'underline-text')">皱眉+抿嘴</button>
+  </div>
+  <div class="row">
+    <button class="underline-text" style="font-size:20px;padding:12px 28px" onclick="toggleSel(this,'underline-text')">伞</button>
+    <button class="underline-text" style="font-size:20px;padding:12px 28px" onclick="toggleSel(this,'underline-text')">亭子</button>
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:8px">
+  <h2>C · 雾中灯</h2>
+  <div class="note">选中后光晕呼吸，像雾中灯笼</div>
+</div>
+<div class="scene">
+  <div class="mask"></div>
+  <div class="hint">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+  <div class="row">
+    <button class="lantern-text" onclick="toggleSel(this,'lantern-text')">皱眉</button>
+    <button class="lantern-text" onclick="toggleSel(this,'lantern-text')">抿嘴</button>
+    <button class="lantern-text" onclick="toggleSel(this,'lantern-text')">皱眉+抿嘴</button>
+  </div>
+  <div class="row">
+    <button class="lantern-text" style="font-size:20px;padding:12px 28px" onclick="toggleSel(this,'lantern-text')">伞</button>
+    <button class="lantern-text" style="font-size:20px;padding:12px 28px" onclick="toggleSel(this,'lantern-text')">亭子</button>
+  </div>
+</div>
+
+<script>
+function toggleSel(btn, cls){
+  const row=btn.parentElement;
+  row.querySelectorAll('.sel').forEach(b=>b.classList.remove('sel'));
+  btn.classList.toggle('sel');
+}
+</script>
+</body>
+</html>

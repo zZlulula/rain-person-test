@@ -154,69 +154,58 @@ class _PageTwoViewState extends State<PageTwoView> {
   void initState() { super.initState(); _startSequence(); }
 }
 
-/// 标定准星绘制器 — 相机取景器风格
+/// 标定准星 — 暖色水滴光点 + 呼吸环 + 十字线
 class _CalibrationReticlePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2, cy = size.height / 2;
     final r = min(cx, cy) - 4;
-    final dot = Paint()
+
+    // ── 外圈：暖色呼吸环 ──
+    final ringPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = 1.0
+      ..color = AppTheme.calibGlow.withValues(alpha: 0.2);
+    canvas.drawCircle(Offset(cx, cy), r, ringPaint);
 
-    // ── 外圈：极细光圈环 ──
-    dot.color = AppTheme.textPrimary.withValues(alpha: 0.12);
-    canvas.drawCircle(Offset(cx, cy), r, dot);
-
-    // ── 四角括号（L 形）──
-    final bracketLen = r * 0.22;
-    final bracketGap = r * 0.08;
-    dot.color = AppTheme.textPrimary.withValues(alpha: 0.18);
-    for (int i = 0; i < 4; i++) {
-      final a = i * pi / 2 + pi / 4;
-      final bx = cx + cos(a) * (r - bracketGap);
-      final by = cy + sin(a) * (r - bracketGap);
-      // 径向段
-      canvas.drawLine(
-        Offset(bx, by),
-        Offset(bx - cos(a) * bracketLen, by - sin(a) * bracketLen),
-        dot,
-      );
-      // 切向段
-      final ta = a + pi / 2;
-      canvas.drawLine(
-        Offset(bx, by),
-        Offset(bx + cos(ta) * bracketLen, by + sin(ta) * bracketLen),
-        dot,
-      );
-    }
-
-    // ── 十字准星（细线）──
-    final crossLen = r * 0.4;
-    dot.color = AppTheme.textPrimary.withValues(alpha: 0.12);
-    canvas.drawLine(
-      Offset(cx - crossLen, cy), Offset(cx + crossLen, cy), dot);
-    canvas.drawLine(
-      Offset(cx, cy - crossLen), Offset(cx, cy + crossLen), dot);
-
-    // ── 中心光点（柔光红点）──
+    // ── 中层光晕 ──
     final glowPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          const Color(0xFFC4736E).withValues(alpha: 0.6),
-          const Color(0xFFC4736E).withValues(alpha: 0.12),
-          const Color(0xFFC4736E).withValues(alpha: 0),
+          AppTheme.calibGlow.withValues(alpha: 0.25),
+          AppTheme.calibGlow.withValues(alpha: 0.06),
+          Colors.transparent,
         ],
-        stops: const [0.0, 0.25, 1.0],
-      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: 18));
-    canvas.drawCircle(Offset(cx, cy), 18, glowPaint);
+        stops: const [0.0, 0.4, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: 30));
+    canvas.drawCircle(Offset(cx, cy), 30, glowPaint);
 
-    // 中心小点
-    final centerDot = Paint()
-      ..color = const Color(0xFFC4736E)
+    // ── 十字线 ──
+    final crossPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5
+      ..color = AppTheme.calibGlow.withValues(alpha: 0.16);
+    final crossLen = r * 0.45;
+    canvas.drawLine(Offset(cx - crossLen, cy), Offset(cx + crossLen, cy), crossPaint);
+    canvas.drawLine(Offset(cx, cy - crossLen), Offset(cx, cy + crossLen), crossPaint);
+
+    // ── 中心水滴光点 ──
+    final coreGlow = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppTheme.calibGlow.withValues(alpha: 0.65),
+          AppTheme.calibGlow.withValues(alpha: 0.18),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.3, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: 16));
+    canvas.drawCircle(Offset(cx, cy), 16, coreGlow);
+
+    // 实心小点
+    final core = Paint()
+      ..color = AppTheme.calibGlow
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(cx, cy), 2.5, centerDot);
+    canvas.drawCircle(Offset(cx, cy), 5, core);
   }
 
   @override

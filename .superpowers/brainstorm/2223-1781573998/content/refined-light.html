@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光 · 尘 · 呼吸</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;background:#0d1110;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;gap:28px}
+
+.scene{background:linear-gradient(180deg,#1a1c1b,#141716 40%,#181b19 70%,#111312);border-radius:20px;padding:44px 28px;position:relative;overflow:hidden;min-width:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.mask{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:0}
+.scene>*{position:relative;z-index:1}
+h2{font-weight:200;letter-spacing:6px;font-size:14px;margin-bottom:2px;opacity:.4}
+.note{font-size:10px;opacity:.2;letter-spacing:3px;margin-top:2px}
+.hint{font-size:13px;font-weight:300;opacity:.4;letter-spacing:1px;text-align:center;max-width:260px;line-height:1.7}
+.row{display:flex;gap:32px;justify-content:center;align-items:center;flex-wrap:wrap}
+
+/* ═══════════════════════════════════════════
+   雾光按钮
+   - 正常：极淡文字，像雾里的字
+   - Hover：文字渐渐清晰
+   - 选中：背后亮起暖光 + 微尘浮动 + 字面闪烁
+   ═══════════════════════════════════════════ */
+
+.mist-btn{
+  position:relative;padding:10px 22px;
+  cursor:pointer;font-size:16px;font-weight:300;letter-spacing:2px;
+  font-family:inherit;outline:none;border:none;background:none;
+  color:rgba(255,255,255,.35);
+  transition:color .6s ease,letter-spacing .6s ease;
+}
+/* Hover：文字渐显 */
+.mist-btn:hover{color:rgba(255,255,255,.6)}
+
+/* 光晕层 */
+.mist-btn .halo{
+  position:absolute;inset:-8px -14px;border-radius:24px;z-index:-1;pointer-events:none;
+  opacity:0;transition:opacity .7s ease;
+  background:radial-gradient(ellipse at center,
+    rgba(255,245,235,.07) 0%,
+    rgba(255,240,225,.025) 35%,
+    transparent 65%);
+}
+.mist-btn.sel .halo{opacity:1}
+
+/* 选中态 */
+.mist-btn.sel{
+  color:rgba(255,255,255,.9);
+  letter-spacing:3px;
+}
+
+/* 微尘容器 */
+.dust-container{
+  position:absolute;inset:-6px -10px;z-index:-1;pointer-events:none;overflow:hidden;
+  opacity:0;transition:opacity .8s ease;
+}
+.mist-btn.sel .dust-container{opacity:1}
+
+/* 微尘粒子 */
+.dust{
+  position:absolute;border-radius:50%;pointer-events:none;
+  background:rgba(255,245,235,.5);
+  animation:driftUp var(--dur) ease-in-out infinite;
+  animation-delay:var(--delay);
+  width:var(--size);height:var(--size);
+  left:var(--x);bottom:-4px;
+  opacity:0;
+}
+@keyframes driftUp{
+  0%{opacity:0;transform:translateY(0) translateX(0)}
+  20%{opacity:.7}
+  80%{opacity:.2}
+  100%{opacity:0;transform:translateY(calc(-1 * var(--rise))) translateX(var(--drift))}
+}
+
+/* 字面微闪 */
+.mist-btn.sel::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,
+    transparent 30%,
+    rgba(255,255,255,.04) 47%,
+    rgba(255,255,255,.01) 50%,
+    transparent 65%);
+  background-size:200% 100%;
+  animation:shimmer 4s ease-in-out infinite;
+}
+@keyframes shimmer{
+  0%,100%{background-position:200% 0}
+  50%{background-position:-100% 0}
+}
+
+/* ═══ 浅色底版本 ═══ */
+.light-bg{background:linear-gradient(180deg,#e8ebe4 0%,#dfe5da 50%,#e8ebe4 100%)}
+.mist-btn-light{
+  position:relative;padding:10px 22px;
+  cursor:pointer;font-size:16px;font-weight:300;letter-spacing:2px;
+  font-family:inherit;outline:none;border:none;background:none;
+  color:rgba(58,74,63,.35);
+  transition:color .6s ease,letter-spacing .6s ease;
+}
+.mist-btn-light:hover{color:rgba(58,74,63,.55)}
+.mist-btn-light .halo-light{
+  position:absolute;inset:-8px -14px;border-radius:24px;z-index:-1;pointer-events:none;
+  opacity:0;transition:opacity .7s ease;
+  background:radial-gradient(ellipse at center,
+    rgba(180,170,155,.06) 0%,
+    rgba(160,150,135,.02) 35%,
+    transparent 65%);
+}
+.mist-btn-light.sel .halo-light{opacity:1}
+.mist-btn-light.sel{
+  color:rgba(58,74,63,.8);
+  letter-spacing:3px;
+}
+.mist-btn-light .dust-container-light{
+  position:absolute;inset:-6px -10px;z-index:-1;pointer-events:none;overflow:hidden;
+  opacity:0;transition:opacity .8s ease;
+}
+.mist-btn-light.sel .dust-container-light{opacity:1}
+.dust-light{
+  position:absolute;border-radius:50%;pointer-events:none;
+  background:rgba(160,145,125,.35);
+  animation:driftUp var(--dur) ease-in-out infinite;
+  animation-delay:var(--delay);
+  width:var(--size);height:var(--size);
+  left:var(--x);bottom:-4px;
+  opacity:0;
+}
+.mist-btn-light.sel::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,
+    transparent 30%,rgba(255,255,255,.06) 47%,rgba(255,255,255,.02) 50%,transparent 65%);
+  background-size:200% 100%;
+  animation:shimmer 4s ease-in-out infinite;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ 暗色底 ═══ -->
+<div style="text-align:center">
+  <h2>光 · 尘 · 呼吸</h2>
+  <div class="note">选中后：暖光晕 + 微尘浮动 + 字面闪烁</div>
+</div>
+<div class="scene">
+  <div class="mask"></div>
+  <div class="hint">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+  <div class="row">
+    <button class="mist-btn" onclick="toggleBtn(this,'mist-btn')">
+      <span class="halo"></span>
+      <span class="dust-container" id="dust1"></span>
+      皱眉
+    </button>
+    <button class="mist-btn" onclick="toggleBtn(this,'mist-btn')">
+      <span class="halo"></span>
+      <span class="dust-container" id="dust2"></span>
+      抿嘴
+    </button>
+    <button class="mist-btn" onclick="toggleBtn(this,'mist-btn')">
+      <span class="halo"></span>
+      <span class="dust-container" id="dust3"></span>
+      皱眉+抿嘴
+    </button>
+  </div>
+  <div class="row">
+    <button class="mist-btn" style="font-size:20px;padding:12px 28px" onclick="toggleBtn(this,'mist-btn')">
+      <span class="halo"></span>
+      <span class="dust-container"></span>
+      伞
+    </button>
+    <button class="mist-btn" style="font-size:20px;padding:12px 28px" onclick="toggleBtn(this,'mist-btn')">
+      <span class="halo"></span>
+      <span class="dust-container"></span>
+      亭子
+    </button>
+  </div>
+  <div class="note">点击看完整选中效果</div>
+</div>
+
+<!-- ═══ 浅色底 ═══ -->
+<div style="text-align:center;margin-top:8px">
+  <h2 style="color:rgba(0,0,0,.35)">浅色底 · 纸页上的光尘</h2>
+</div>
+<div class="scene light-bg">
+  <div class="hint" style="color:rgba(58,74,63,.4)">一场关于内心世界的雨境之旅</div>
+  <div class="row">
+    <button class="mist-btn-light" onclick="toggleBtn(this,'mist-btn-light')">
+      <span class="halo-light"></span>
+      <span class="dust-container-light"></span>
+      皱眉
+    </button>
+    <button class="mist-btn-light" onclick="toggleBtn(this,'mist-btn-light')">
+      <span class="halo-light"></span>
+      <span class="dust-container-light"></span>
+      抿嘴
+    </button>
+    <button class="mist-btn-light" onclick="toggleBtn(this,'mist-btn-light')">
+      <span class="halo-light"></span>
+      <span class="dust-container-light"></span>
+      皱眉+抿嘴
+    </button>
+  </div>
+  <div class="row">
+    <button class="mist-btn-light" style="font-size:20px;padding:12px 28px" onclick="toggleBtn(this,'mist-btn-light')">
+      <span class="halo-light"></span>
+      <span class="dust-container-light"></span>
+      伞
+    </button>
+    <button class="mist-btn-light" style="font-size:20px;padding:12px 28px" onclick="toggleBtn(this,'mist-btn-light')">
+      <span class="halo-light"></span>
+      <span class="dust-container-light"></span>
+      亭子
+    </button>
+  </div>
+  <div style="margin-top:10px">
+    <button class="mist-btn-light" style="font-size:19px;padding:13px 48px;letter-spacing:6px" onclick="toggleBtn(this,'mist-btn-light')">
+      <span class="halo-light"></span>
+      <span class="dust-container-light"></span>
+      开 始
+    </button>
+  </div>
+  <div class="note" style="color:rgba(0,0,0,.15)">点击看完整选中效果</div>
+</div>
+
+<script>
+function toggleBtn(btn, cls){
+  const row=btn.parentElement;
+  row.querySelectorAll('.sel').forEach(b=>{
+    b.classList.remove('sel');
+    // 清理旧粒子
+    const dc=b.querySelector('.dust-container,.dust-container-light');
+    if(dc)dc.innerHTML='';
+  });
+  btn.classList.toggle('sel');
+
+  if(btn.classList.contains('sel')){
+    // 生成微尘
+    const dc=btn.querySelector('.dust-container,.dust-container-light');
+    if(!dc)return;
+    const dClass=cls.includes('light')?'dust-light':'dust';
+    for(let i=0;i<12;i++){
+      const d=document.createElement('div');d.className=dClass;
+      d.style.cssText=`--x:${15+Math.random()*70}%;--size:${1+Math.random()*1.5}px;--dur:${2+Math.random()*3}s;--delay:${Math.random()*2}s;--rise:${20+Math.random()*30}px;--drift:${(Math.random()-.5)*16}px`;
+      dc.appendChild(d);
+    }
+  }
+}
+</script>
+</body>
+</html>

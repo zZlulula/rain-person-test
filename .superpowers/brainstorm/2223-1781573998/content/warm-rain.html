@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>暖雨 · 治愈字体</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Serif SC','Noto Sans SC','Microsoft YaHei',serif;background:#1c1a18;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;gap:22px}
+
+.scene{
+  border-radius:20px;padding:48px 32px;position:relative;overflow:hidden;
+  min-width:360px;max-width:400px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:18px;
+}
+/* 暖灰雨幕 — 不是纯黑，是深暖灰像暴雨前的天空 */
+.scene-dark{
+  background:linear-gradient(175deg,
+    #262320 0%,
+    #1f1d1a 30%,
+    #1a1816 55%,
+    #1d1b18 80%,
+    #141210 100%);
+}
+/* 浅色底 — 暖灰纸色，像旧书页 */
+.scene-light{
+  background:linear-gradient(180deg,
+    #eae5dd 0%,
+    #e3ded5 40%,
+    #ebe6de 70%,
+    #e0dbd2 100%);
+}
+.mask{position:absolute;inset:0;background:rgba(0,0,0,.42);z-index:0}
+.scene>*{position:relative;z-index:1}
+
+/* ═══ 文案 ═══ */
+.hint{
+  font-size:14px;font-weight:300;text-align:center;max-width:270px;
+  line-height:2;letter-spacing:1px;
+  font-family:'Noto Serif SC',serif;
+}
+.hint-dark{color:rgba(235,225,210,.45)}
+.hint-light{color:rgba(80,70,60,.45)}
+
+.note{font-size:10px;opacity:.2;letter-spacing:3px;margin-top:2px}
+.row{display:flex;gap:34px;justify-content:center;align-items:center;flex-wrap:wrap}
+
+/* ═══════════════════════════════════════════
+   字体方案 A：宋体/衬线 — 文学感，像诗集
+   ═══════════════════════════════════════════ */
+.btn-serif{
+  position:relative;padding:10px 22px;
+  cursor:pointer;font-size:16px;font-weight:300;letter-spacing:3px;
+  font-family:'Noto Serif SC',serif;
+  outline:none;border:none;background:none;
+  color:rgba(225,215,200,.38);
+  transition:all .6s ease;
+}
+.btn-serif:hover{color:rgba(235,225,210,.6)}
+.btn-serif .halo{
+  position:absolute;inset:-8px -14px;border-radius:24px;z-index:-1;pointer-events:none;
+  opacity:0;transition:opacity .7s ease;
+}
+/* 暗底光晕 */
+.btn-dark .halo{
+  background:radial-gradient(ellipse at center,
+    rgba(240,225,200,.06) 0%,
+    rgba(220,200,175,.02) 35%,
+    transparent 65%);
+}
+.btn-dark.sel .halo{opacity:1}
+.btn-dark.sel{color:rgba(245,235,215,.88);letter-spacing:4px}
+
+/* ═══ 字体方案 B：小薇圆体 — 可爱治愈 ═══ */
+.btn-round{
+  position:relative;padding:10px 22px;
+  cursor:pointer;font-size:16px;font-weight:400;letter-spacing:3px;
+  font-family:'ZCOOL XiaoWei',serif;
+  outline:none;border:none;background:none;
+  color:rgba(225,215,200,.38);
+  transition:all .6s ease;
+}
+.btn-round:hover{color:rgba(235,225,210,.6)}
+.btn-round .halo{
+  position:absolute;inset:-8px -14px;border-radius:24px;z-index:-1;pointer-events:none;
+  opacity:0;transition:opacity .7s ease;
+  background:radial-gradient(ellipse at center,
+    rgba(240,225,200,.06) 0%,
+    rgba(220,200,175,.02) 35%,
+    transparent 65%);
+}
+.btn-round.sel .halo{opacity:1}
+.btn-round.sel{color:rgba(245,235,215,.88);letter-spacing:4px}
+
+/* ═══ 字体方案 C：马山正楷 — 手写书法感 ═══ */
+.btn-hand{
+  position:relative;padding:10px 22px;
+  cursor:pointer;font-size:18px;font-weight:400;letter-spacing:3px;
+  font-family:'Ma Shan Zheng',cursive;
+  outline:none;border:none;background:none;
+  color:rgba(225,215,200,.35);
+  transition:all .6s ease;
+}
+.btn-hand:hover{color:rgba(235,225,210,.55)}
+.btn-hand .halo{
+  position:absolute;inset:-8px -14px;border-radius:24px;z-index:-1;pointer-events:none;
+  opacity:0;transition:opacity .7s ease;
+  background:radial-gradient(ellipse at center,
+    rgba(240,225,200,.06) 0%,
+    rgba(220,200,175,.02) 35%,
+    transparent 65%);
+}
+.btn-hand.sel .halo{opacity:1}
+.btn-hand.sel{color:rgba(245,235,215,.88);letter-spacing:5px}
+
+/* ═══ 微尘 ═══ */
+.dust-box{position:absolute;inset:-6px -10px;z-index:-1;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .8s ease}
+.sel .dust-box{opacity:1}
+.dust{
+  position:absolute;border-radius:50%;pointer-events:none;
+  background:rgba(235,220,195,.45);
+  animation:driftUp var(--dur) ease-in-out infinite;
+  animation-delay:var(--delay);
+  width:var(--size);height:var(--size);
+  left:var(--x);bottom:-4px;opacity:0;
+}
+@keyframes driftUp{
+  0%{opacity:0;transform:translateY(0) translateX(0)}
+  20%{opacity:.6}
+  80%{opacity:.15}
+  100%{opacity:0;transform:translateY(calc(-1 * var(--rise))) translateX(var(--drift))}
+}
+/* 字面光扫 */
+.btn-dark.sel::after,.btn-round.sel::after,.btn-hand.sel::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,
+    transparent 25%,rgba(255,245,230,.03) 47%,rgba(255,250,240,.01) 50%,transparent 65%);
+  background-size:200% 100%;
+  animation:shimmer 3.5s ease-in-out infinite;
+}
+@keyframes shimmer{0%,100%{background-position:200% 0}50%{background-position:-100% 0}}
+
+/* ═══ 标题 ═══ */
+h2{font-weight:200;letter-spacing:6px;font-size:13px;margin-bottom:2px}
+h2.dark{color:rgba(235,225,210,.3)}
+h2.light{color:rgba(80,70,60,.3)}
+.tag{font-size:10px;letter-spacing:3px;margin-bottom:4px}
+.tag-dark{color:rgba(235,225,210,.15)}
+.tag-light{color:rgba(80,70,60,.15)}
+</style>
+</head>
+<body>
+
+<!-- ═══ 暗色底 — 三种字体 ═══ -->
+<div style="text-align:center">
+  <h2 class="dark">暖灰雨幕 · 三种治愈字体</h2>
+  <div class="tag tag-dark">深暖灰背景 #262320 → #141210 · 奶油色文字</div>
+</div>
+
+<!-- 方案 A：宋体 -->
+<div class="scene scene-dark">
+  <div class="mask"></div>
+  <div class="hint hint-dark">你遇到了一位朋友，<br>想象你在和他解释你的烦恼</div>
+  <div style="font-size:10px;opacity:.18;letter-spacing:4px;margin-bottom:4px">A · Noto Serif SC 宋体</div>
+  <div class="row">
+    <button class="btn-serif btn-dark" onclick="toggleBtn(this,'btn-dark')">
+      <span class="halo"></span><span class="dust-box"></span>皱眉
+    </button>
+    <button class="btn-serif btn-dark" onclick="toggleBtn(this,'btn-dark')">
+      <span class="halo"></span><span class="dust-box"></span>抿嘴
+    </button>
+  </div>
+  <div class="row">
+    <button class="btn-serif btn-dark" style="font-size:20px;padding:12px 28px" onclick="toggleBtn(this,'btn-dark')">
+      <span class="halo"></span><span class="dust-box"></span>伞
+    </button>
+    <button class="btn-serif btn-dark" style="font-size:20px;padding:12px 28px" onclick="toggleBtn(this,'btn-dark')">
+      <span class="halo"></span><span class="dust-box"></span>亭子
+    </button>
+  </div>
+  <div class="note" style="color:rgba(235,225,210,.12)">文学感 · 像翻阅诗集</div>
+</div>
+
+<!-- 方案 B：小薇圆体 -->
+<div class="scene scene-dark">
+  <div class="mask"></div>
+  <div class="hint hint-dark">我们察觉到了你心中深处的雨，<br>看着屏幕中的词汇，放松自己</div>
+  <div style="font-size:10px;opacity:.18;letter-spacing:4px;margin-bottom:4px">B · ZCOOL XiaoWei 小薇圆体</div>
+  <div class="row">
+    <button class="btn-round btn-dark" onclick="toggleBtn(this,'btn-dark')">
+      <span class="halo"></span><span class="dust-box"></span>皱眉
+    </button>
+    <button class="btn-round btn-dark" onclick="toggleBtn(this,'btn-dark')">
+      <span class="halo"></span><span class="dust-box"></span>抿嘴
+    </button>
+  </div>
+  <div class="row">
+    <button class="btn-round btn-dark" style="font-size:20px;padding:12px 28px" onclick="toggleBtn(this,'btn-dark')">
+      <span class="halo"></span><span class="dust-box"></span>伞
+    </button>
+    <button class="btn-round btn-dark" style="font-size:20px;padding:12px 28px" onclick="toggleBtn(this,'btn-dark')">
+      <span class="halo"></span><span class="dust-box"></span>亭子
+    </button>
+  </div>
+  <div class="note" style="color:rgba(235,225,210,.12)">圆润柔和 · 像手写卡片</div>
+</div>
+
+<!-- 方案 C：马山正楷 -->
+<div class="scene scene-dark">
+  <div class="mask"></div>
+  <div class="hint hint-dark">放松好了吗？场景还在下雨，<br>你的前方出现了一把伞和一个小亭子</div>
+  <div style="font-size:10px;opacity:.18;letter-spacing:4px;margin-bottom:4px">C · Ma Shan Zheng 马山正楷</div>
+  <div class="row">
+    <button class="btn-hand btn-dark" style="font-size:22px;padding:12px 28px" onclick="toggleBtn(this,'btn-dark')">
+      <span class="halo"></span><span class="dust-box"></span>伞
+    </button>
+    <button class="btn-hand btn-dark" style="font-size:22px;padding:12px 28px" onclick="toggleBtn(this,'btn-dark')">
+      <span class="halo"></span><span class="dust-box"></span>亭子
+    </button>
+  </div>
+  <div class="note" style="color:rgba(235,225,210,.12)">书法气韵 · 像毛笔轻点</div>
+</div>
+
+<script>
+function toggleBtn(btn, cls){
+  const row=btn.parentElement;
+  row.querySelectorAll('.sel').forEach(b=>{
+    b.classList.remove('sel');
+    const db=b.querySelector('.dust-box');if(db)db.innerHTML='';
+  });
+  btn.classList.toggle('sel');
+  if(btn.classList.contains('sel')){
+    const db=btn.querySelector('.dust-box');if(!db)return;
+    for(let i=0;i<12;i++){
+      const d=document.createElement('div');d.className='dust';
+      d.style.cssText=`--x:${15+Math.random()*70}%;--size:${1+Math.random()*1.5}px;--dur:${2+Math.random()*3}s;--delay:${Math.random()*2}s;--rise:${20+Math.random()*30}px;--drift:${(Math.random()-.5)*16}px`;
+      db.appendChild(d);
+    }
+  }
+}
+</script>
+</body>
+</html>

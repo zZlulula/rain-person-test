@@ -314,7 +314,7 @@ class _CloudLoadingIndicatorState extends State<_CloudLoadingIndicator>
                 fontSize: 22,
                 fontWeight: FontWeight.w300,
                 letterSpacing: 3,
-                color: Colors.white.withValues(alpha: 0.5 + sin(_controller.value * 2 * pi) * 0.35),
+                color: const Color(0xFFd5e5d2).withValues(alpha: 0.5 + sin(_controller.value * 2 * pi) * 0.35),
               ),
             ),
           ],

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>暗色背景按钮方案</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;background:#0d1110;color:#fff;display:flex;gap:24px;align-items:flex-start;justify-content:center;min-height:100vh;padding:40px 20px;flex-wrap:wrap}
+
+.col{flex:1;min-width:300px;max-width:380px;text-align:center}
+.col h3{font-weight:200;letter-spacing:4px;margin-bottom:4px;font-size:16px}
+.col .tag{font-size:10px;opacity:.4;letter-spacing:2px;margin-bottom:20px}
+.scene{background:linear-gradient(180deg,#1a221d,#121a16);border-radius:20px;padding:32px 20px;position:relative;overflow:hidden;min-height:320px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px}
+.mask{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:0}
+.scene>*{position:relative;z-index:1}
+
+/* 提示文字 */
+.hint{font-size:12px;font-weight:300;opacity:.45;letter-spacing:1px;text-align:center;max-width:240px}
+
+/* ═══ A: 烟熏玻璃 ═══ */
+.smoke{
+  padding:12px 26px;border-radius:11px;cursor:pointer;font-size:16px;font-weight:300;letter-spacing:2px;
+  border:.5px solid rgba(255,255,255,.12);
+  background:rgba(30,36,32,.55);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  color:rgba(255,255,255,.85);
+  transition:all .5s cubic-bezier(.16,1,.3,1);
+  outline:none;font-family:inherit;
+}
+.smoke:hover{background:rgba(35,42,38,.6);border-color:rgba(255,255,255,.18)}
+.smoke.sel{
+  transform:scale(1.04);
+  background:rgba(122,155,138,.2);
+  border-color:rgba(122,155,138,.45);
+  color:#fff;
+  box-shadow:0 0 0 3px rgba(122,155,138,.08),0 0 0 10px rgba(122,155,138,.025),0 3px 20px rgba(122,155,138,.12);
+}
+
+/* ═══ B: 纯线框 ═══ */
+.wire{
+  padding:12px 26px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:300;letter-spacing:2px;
+  border:.5px solid rgba(255,255,255,.2);
+  background:transparent;
+  color:rgba(255,255,255,.8);
+  transition:all .5s cubic-bezier(.16,1,.3,1);
+  outline:none;font-family:inherit;
+}
+.wire:hover{border-color:rgba(255,255,255,.35)}
+.wire.sel{
+  transform:scale(1.04);
+  border-color:rgba(122,155,138,.55);
+  border-width:1px;
+  background:rgba(122,155,138,.08);
+  color:#fff;
+  box-shadow:0 0 0 2px rgba(122,155,138,.06),0 0 20px rgba(122,155,138,.08);
+  border-radius:10px;
+}
+
+/* ═══ C: 微光 pill ═══ */
+.pill{
+  padding:12px 26px;border-radius:24px;cursor:pointer;font-size:16px;font-weight:300;letter-spacing:2px;
+  border:none;
+  background:transparent;
+  color:rgba(255,255,255,.7);
+  position:relative;
+  transition:all .5s cubic-bezier(.16,1,.3,1);
+  outline:none;font-family:inherit;
+}
+.pill::after{
+  content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+  width:60%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);
+  transition:all .5s cubic-bezier(.16,1,.3,1);
+}
+.pill:hover{color:rgba(255,255,255,.9)}
+.pill:hover::after{width:80%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent)}
+.pill.sel{
+  transform:scale(1.04);color:#fff;
+  background:rgba(122,155,138,.12);border-radius:24px;
+  box-shadow:0 0 0 1px rgba(122,155,138,.25),0 0 0 6px rgba(122,155,138,.05),0 2px 20px rgba(122,155,138,.1);
+}
+.pill.sel::after{
+  width:100%;height:1.5px;
+  background:linear-gradient(90deg,transparent,rgba(122,155,138,.6),transparent);
+}
+
+/* 按钮行 */
+.row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+
+/* 选中提示 */
+.sel-hint{font-size:10px;opacity:.3;letter-spacing:2px;margin-top:4px}
+
+.spark{position:fixed;border-radius:50%;pointer-events:none;z-index:999;animation:sparkBurst 1.2s ease-out forwards}
+@keyframes sparkBurst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0)}}
+</style>
+</head>
+<body>
+
+<!-- A: 烟熏玻璃 -->
+<div class="col">
+  <h3>A · 烟熏玻璃</h3>
+  <div class="tag">深灰半透明底，安静融入视频</div>
+  <div class="scene">
+    <div class="mask"></div>
+    <div class="hint" style="margin-bottom:8px">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+    <div class="row">
+      <button class="smoke" onclick="toggleSel(this)">皱眉</button>
+      <button class="smoke" onclick="toggleSel(this)">抿嘴</button>
+      <button class="smoke" onclick="toggleSel(this)">皱眉+抿嘴</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="smoke" style="font-size:19px;padding:15px 34px" onclick="toggleSel(this)">伞</button>
+      <button class="smoke" style="font-size:19px;padding:15px 34px" onclick="toggleSel(this)">亭子</button>
+    </div>
+    <div class="sel-hint">点击按钮看选中态</div>
+  </div>
+</div>
+
+<!-- B: 纯线框 -->
+<div class="col">
+  <h3>B · 纯线框</h3>
+  <div class="tag">只有边框+文字，像电影字幕</div>
+  <div class="scene">
+    <div class="mask"></div>
+    <div class="hint" style="margin-bottom:8px">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+    <div class="row">
+      <button class="wire" onclick="toggleSel(this)">皱眉</button>
+      <button class="wire" onclick="toggleSel(this)">抿嘴</button>
+      <button class="wire" onclick="toggleSel(this)">皱眉+抿嘴</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="wire" style="font-size:19px;padding:15px 34px" onclick="toggleSel(this)">伞</button>
+      <button class="wire" style="font-size:19px;padding:15px 34px" onclick="toggleSel(this)">亭子</button>
+    </div>
+    <div class="sel-hint">点击按钮看选中态</div>
+  </div>
+</div>
+
+<!-- C: 微光 pill -->
+<div class="col">
+  <h3>C · 微光 Pill</h3>
+  <div class="tag">底部微光细线，悬浮感</div>
+  <div class="scene">
+    <div class="mask"></div>
+    <div class="hint" style="margin-bottom:8px">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+    <div class="row">
+      <button class="pill" onclick="toggleSel(this)">皱眉</button>
+      <button class="pill" onclick="toggleSel(this)">抿嘴</button>
+      <button class="pill" onclick="toggleSel(this)">皱眉+抿嘴</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="pill" style="font-size:19px;padding:15px 34px" onclick="toggleSel(this)">伞</button>
+      <button class="pill" style="font-size:19px;padding:15px 34px" onclick="toggleSel(this)">亭子</button>
+    </div>
+    <div class="sel-hint">点击按钮看选中态</div>
+  </div>
+</div>
+
+<script>
+function toggleSel(btn){
+  const was=btn.classList.contains('sel');
+  const row=btn.parentElement;
+  row.querySelectorAll('.sel').forEach(b=>b.classList.remove('sel'));
+  btn.classList.toggle('sel');
+  if(!was){
+    const rect=btn.getBoundingClientRect();
+    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+    for(let i=0;i<16;i++){
+      const p=document.createElement('div');p.className='spark';
+      const a=(i/16)*Math.PI*2;p.style.cssText=`left:${cx}px;top:${cy}px;--sx:${Math.cos(a)*40}px;--sy:${Math.sin(a)*40}px;width:2px;height:2px;background:#b8dcc0;animation-delay:${Math.random()*.1}s`;
+      document.body.appendChild(p);setTimeout(()=>p.remove(),1300);
+    }
+  }
+}
+</script>
+</body>
+</html>

@@ -68,10 +68,10 @@ class _PageFiveViewState extends State<PageFiveView> {
                 duration: ExperienceMask.fadeDuration,
                 child: SizedBox(
                   width: screenSize.width * 0.85,
-                  child: const Text(
+                  child: Text(
                     '放松好了吗？场景还在下雨，你的前方出现了一把伞和一个小亭子，你想选哪个？（看着你想选的选项）',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 24, color: Colors.white, height: 1.6),
+                    style: TextStyle(fontSize: 24, color: Color(0xFFd5e5d2), height: 1.6, fontWeight: FontWeight.w300, letterSpacing: 2),
                   ),
                 ),
               ),

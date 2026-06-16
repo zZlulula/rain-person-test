@@ -7,13 +7,15 @@ class AppTheme {
   AppTheme._();
 
   // ── 色板 ──
-  static const Color bg = Color(0xFFe8ebe4);           // 页面背景
-  static const Color surface = Color(0xFFdde2d8);       // 卡片/面板
-  static const Color textPrimary = Color(0xFF3a4a3f);   // 主文字
-  static const Color textSecondary = Color(0x803a4a3f); // 次要文字 (~50%)
-  static const Color accent = Color(0xFF7a9b8a);        // 高亮/选中
-  static const Color border = Color(0x1a3a4a3f);        // 浅边框 (~10%)
-  static const Color borderStrong = Color(0x403a4a3f);  // 深边框 (~25%)
+  static const Color bg = Color(0xFFe8ebe4);
+  static const Color surface = Color(0xFFdde2d8);
+  static const Color textPrimary = Color(0xFF2a3a2e);     // 主文字 — 加深
+  static const Color textSecondary = Color(0xB32a3a2e);   // 次要文字 (~70%)
+  static const Color textOnDark = Color(0xFFc8dcc6);      // 暗底文字
+  static const Color accent = Color(0xFF7a9b8a);
+  static const Color border = Color(0x1a3a4a3f);
+  static const Color borderStrong = Color(0x403a4a3f);
+  static const Color calibGlow = Color(0xFFc48565);       // 标定光点暖色
 
   // ── 动效时长 ──
   static const Duration durMist = Duration(milliseconds: 600);

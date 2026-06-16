@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雨后初晴 · 终版预览</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400&family=Noto+Sans+SC:wght@200;300&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;
+  background:#c5cac0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;min-height:100vh;padding:20px;gap:18px;
+}
+.phone{width:380px;background:#e8ebe4;border-radius:32px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.14)}
+.page{display:none;aspect-ratio:9/18.5;position:relative;overflow:hidden}
+.page.on{display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+/* ═══ 背景 ═══ */
+.bg-light{background:linear-gradient(180deg,#e8ebe4 0%,#dfe5da 55%,#e8ebe4 100%)}
+.bg-vid{background:linear-gradient(180deg,rgba(42,50,44,.88),rgba(38,46,40,.85) 40%,rgba(44,52,46,.86) 100%)}
+.bg-vid::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(180,200,175,.04),transparent 50%),radial-gradient(ellipse at 65% 55%,rgba(200,215,195,.025),transparent 40%);z-index:0}
+.bg-load{background:linear-gradient(180deg,rgba(42,50,44,.92),rgba(38,46,40,.9),rgba(44,52,46,.92))}
+.mask{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:0}
+
+/* ═══ 标题用宋体 ═══ */
+.serif{font-family:'Noto Serif SC',serif}
+
+/* ═══════════════════════════════════════════
+   P1: 首页
+   ═══════════════════════════════════════════ */
+.title-breath{
+  font-family:'Noto Serif SC',serif;font-size:32px;font-weight:200;letter-spacing:8px;
+  color:rgba(60,80,65,.75);animation:titleBreath 4s ease-in-out infinite;
+}
+@keyframes titleBreath{0%,100%{letter-spacing:8px}50%{letter-spacing:11px}}
+.sub-text{font-size:13px;font-weight:300;color:rgba(90,110,95,.4);letter-spacing:4px;margin:10px 0 48px}
+
+/* ═══════════════════════════════════════════
+   P2: 标定 — 雨滴形光标
+   ═══════════════════════════════════════════ */
+.raindrop-cursor{position:relative;width:100px;height:120px;margin-bottom:0}
+/* 外圈呼吸环 */
+.rain-ring{
+  position:absolute;top:10px;left:10px;width:80px;height:80px;
+  border-radius:50%;border:.5px solid rgba(100,120,105,.1);
+  animation:ringBreath 3s ease-in-out infinite;
+}
+@keyframes ringBreath{0%,100%{transform:scale(1);border-color:rgba(100,120,105,.06)}50%{transform:scale(1.08);border-color:rgba(100,120,105,.16)}}
+/* 水滴形状 */
+.raindrop-shape{
+  position:absolute;top:20px;left:28px;
+  width:44px;height:44px;
+  background:linear-gradient(135deg,rgba(185,155,135,.25),rgba(165,135,115,.12));
+  border-radius:50% 0 50% 50%;
+  transform:rotate(45deg);
+  box-shadow:0 0 20px rgba(180,145,125,.18),0 0 40px rgba(170,135,115,.06);
+  animation:dropPulse 2.2s ease-in-out infinite;
+}
+@keyframes dropPulse{0%,100%{transform:rotate(45deg) scale(1);opacity:.7}50%{transform:rotate(45deg) scale(1.2);opacity:1}}
+/* 十字准星 */
+.rain-cross{position:absolute;top:30px;left:38px;width:24px;height:24px}
+.rain-cross::before,.rain-cross::after{content:'';position:absolute;background:rgba(100,120,105,.08)}
+.rain-cross::before{top:0;left:50%;width:.5px;height:100%}
+.rain-cross::after{left:0;top:50%;height:.5px;width:100%}
+.calib-text{font-size:13px;font-weight:300;color:rgba(80,100,85,.4);letter-spacing:3px;margin-top:20px}
+.p2-hint{font-size:16px;font-weight:300;letter-spacing:2px;color:rgba(80,100,85,.5);text-align:center;line-height:2;padding:0 30px;margin-bottom:28px}
+
+/* ═══════════════════════════════════════════
+   按钮系统 — 雾气浮现入场 + 选中：光晕+光尘+呼吸字闪
+   ═══════════════════════════════════════════ */
+
+/* 入场：雾气浮现 */
+.mist-enter{opacity:0;transform:translateY(12px);filter:blur(3px)}
+.mist-enter.in{animation:mistIn .7s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes mistIn{to{opacity:1;transform:translateY(0);filter:blur(0)}}
+
+.btn{
+  position:relative;padding:11px 24px;cursor:pointer;
+  font-size:16px;font-weight:300;letter-spacing:3px;
+  font-family:inherit;outline:none;border:none;background:none;
+  transition:all .7s cubic-bezier(.16,1,.3,1);
+}
+.btn-dark{color:rgba(205,222,202,.3)}
+.btn-dark:hover{color:rgba(215,232,212,.5)}
+.btn-dark.sel{color:rgba(232,242,227,.9);letter-spacing:5px}
+
+.btn-light{color:rgba(90,112,95,.25)}
+.btn-light:hover{color:rgba(80,102,85,.42)}
+.btn-light.sel{color:rgba(55,75,60,.72);letter-spacing:5px}
+
+/* 光晕层 */
+.btn .glow{
+  position:absolute;inset:-10px -16px;border-radius:28px;z-index:-1;pointer-events:none;
+  opacity:0;transition:opacity .8s ease;
+}
+.btn-dark .glow{
+  background:
+    radial-gradient(ellipse at center,rgba(210,228,205,.06) 0%,transparent 60%),
+    radial-gradient(ellipse at center,rgba(195,218,190,.03) 0%,transparent 45%);
+}
+.btn-dark.sel .glow{opacity:1}
+.btn-light .glow{
+  background:
+    radial-gradient(ellipse at center,rgba(150,175,145,.05) 0%,transparent 60%),
+    radial-gradient(ellipse at center,rgba(135,160,130,.025) 0%,transparent 45%);
+}
+.btn-light.sel .glow{opacity:1}
+
+/* 光尘 */
+.dust-cage{position:absolute;inset:-8px -12px;z-index:-1;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .8s ease}
+.sel .dust-cage{opacity:1}
+.dust{position:absolute;border-radius:50%;pointer-events:none;animation:floatUp var(--dur) ease-out infinite;animation-delay:var(--delay);width:var(--size);height:var(--size);left:var(--x);bottom:-6px;opacity:0}
+.dust-d{background:rgba(195,220,190,.38)}.dust-l{background:rgba(135,165,130,.25)}
+@keyframes floatUp{0%{opacity:0;transform:translateY(0) translateX(0)}15%{opacity:.5}60%{opacity:.18}100%{opacity:0;transform:translateY(calc(-1 * var(--rise))) translateX(var(--drift))}}
+
+/* 选中后：字面微闪 */
+.btn-dark.sel::after,.btn-light.sel::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 25%,rgba(255,255,255,.025) 47%,rgba(255,255,255,.008) 50%,transparent 65%);
+  background-size:200% 100%;animation:shimmer 4s ease-in-out infinite;
+}
+@keyframes shimmer{0%,100%{background-position:200% 0}50%{background-position:-100% 0}}
+
+/* ═══════════════════════════════════════════
+   加载
+   ═══════════════════════════════════════════ */
+.load-bars{display:flex;gap:5px;align-items:flex-end;margin-bottom:18px}
+.load-bar{width:3px;border-radius:1.5px;background:rgba(180,205,175,.5);animation:cloudBreath 2.6s ease-in-out infinite}
+@keyframes cloudBreath{0%,100%{opacity:.1;transform:scaleY(.55)}50%{opacity:.65;transform:scaleY(1)}}
+.load-label{font-family:'Noto Serif SC',serif;font-size:17px;font-weight:300;letter-spacing:4px;color:rgba(200,220,195,.5);animation:cloudBreath 2.6s ease-in-out infinite}
+
+/* ═══════════════════════════════════════════
+   报告卡片
+   ═══════════════════════════════════════════ */
+.rpt-card{padding:16px 18px;border-radius:14px;margin-bottom:10px;width:100%;background:rgba(255,255,255,.32);border:.5px solid rgba(80,100,85,.05);box-shadow:0 1px 0 rgba(255,255,255,.25)}
+.card-tag{font-size:10px;color:rgba(80,100,85,.28);letter-spacing:2px;margin-bottom:4px}
+.card-body{font-family:'Noto Serif SC',serif;font-size:17px;font-weight:300;color:rgba(55,75,60,.7)}
+
+/* 视频页文字 */
+.vid-text{font-size:14px;font-weight:300;text-align:center;max-width:270px;line-height:2.1;letter-spacing:2px;color:rgba(205,222,202,.4)}
+.row{display:flex;gap:28px;justify-content:center;align-items:center;flex-wrap:wrap;position:relative;z-index:1}
+.inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:20px;padding:30px 20px}
+
+/* 顶栏 */
+.tabs{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:2px}
+.tabs button{padding:6px 12px;border-radius:14px;border:.5px solid rgba(80,100,85,.1);background:transparent;color:rgba(60,80,65,.35);font-family:inherit;font-size:10px;font-weight:300;letter-spacing:2px;cursor:pointer;transition:all .3s}
+.tabs button:hover{color:rgba(60,80,65,.6);border-color:rgba(80,100,85,.18)}
+.tabs button.on{background:rgba(100,130,105,.08);border-color:rgba(100,130,105,.2);color:rgba(60,80,65,.7)}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <button class="on" onclick="show(0)">🏠 首页</button>
+  <button onclick="show(1)">🎯 标定</button>
+  <button onclick="show(2)">🎬 入场</button>
+  <button onclick="show(3)">📖 词汇</button>
+  <button onclick="show(4)">🌂 选择</button>
+  <button onclick="show(5)">☁️ 加载</button>
+  <button onclick="show(6)">📋 报告</button>
+</div>
+
+<div class="phone">
+
+  <!-- P1 -->
+  <div class="page on bg-light" id="p0">
+    <div class="mist-enter in serif" style="font-size:32px;font-weight:200;letter-spacing:8px;color:rgba(60,80,65,.75);animation-delay:0s;animation-duration:.9s">雨 中 人</div>
+    <div class="mist-enter in sub-text" style="animation-delay:.15s">一场关于内心世界的雨境之旅</div>
+    <div class="mist-enter in" style="animation-delay:.35s">
+      <button class="btn btn-light" style="font-size:18px;padding:14px 48px;letter-spacing:7px" onclick="pick(this,'light')">
+        <span class="glow"></span><span class="dust-cage"></span>开 始
+      </button>
+    </div>
+  </div>
+
+  <!-- P2 -->
+  <div class="page bg-light" id="p1" style="gap:0">
+    <div class="mist-enter p2-hint" style="animation-delay:0s">放松自己，<br>测试全程看着屏幕以获得更准确的结果</div>
+    <div class="mist-enter" style="animation-delay:.3s">
+      <div class="raindrop-cursor">
+        <div class="rain-ring"></div>
+        <div class="raindrop-shape"></div>
+        <div class="rain-cross"></div>
+      </div>
+    </div>
+    <div class="mist-enter calib-text" style="animation-delay:.5s">看着光点，正在标定...</div>
+  </div>
+
+  <!-- P3 -->
+  <div class="page bg-vid" id="p2">
+    <div class="mask"></div>
+    <div class="inner">
+      <div class="mist-enter vid-text" style="animation-delay:.2s">你遇到了一位朋友，<br>想象你在和他解释你的烦恼</div>
+      <div class="row">
+        <div class="mist-enter" style="animation-delay:.5s"><button class="btn btn-dark" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>皱眉</button></div>
+        <div class="mist-enter" style="animation-delay:.6s"><button class="btn btn-dark" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>抿嘴</button></div>
+        <div class="mist-enter" style="animation-delay:.7s"><button class="btn btn-dark" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>皱眉+抿嘴</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- P4 -->
+  <div class="page bg-vid" id="p3">
+    <div class="mask"></div>
+    <div class="inner">
+      <div class="mist-enter vid-text" style="animation-delay:.2s">我们察觉到了你心中深处的雨，<br>看着屏幕中的词汇，放松自己</div>
+      <div style="position:relative;width:250px;height:250px">
+        <div class="mist-enter" style="animation-delay:.4s;position:absolute;top:0;left:50%;transform:translateX(-50%)"><button class="btn btn-dark" style="font-size:15px;padding:8px 18px" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>听歌</button></div>
+        <div class="mist-enter" style="animation-delay:.48s;position:absolute;top:48px;right:0"><button class="btn btn-dark" style="font-size:15px;padding:8px 18px" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>发呆</button></div>
+        <div class="mist-enter" style="animation-delay:.56s;position:absolute;top:160px;right:8px"><button class="btn btn-dark" style="font-size:15px;padding:8px 18px" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>娱乐</button></div>
+        <div class="mist-enter" style="animation-delay:.64s;position:absolute;top:160px;left:8px"><button class="btn btn-dark" style="font-size:15px;padding:8px 18px" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>游戏</button></div>
+        <div class="mist-enter" style="animation-delay:.72s;position:absolute;top:48px;left:0"><button class="btn btn-dark" style="font-size:15px;padding:8px 18px" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>家人</button></div>
+        <div class="mist-enter" style="animation-delay:.8s;position:absolute;top:104px;left:50%;transform:translateX(-50%)"><button class="btn btn-dark" style="font-size:15px;padding:8px 18px" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>朋友</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- P5 -->
+  <div class="page bg-vid" id="p4">
+    <div class="mask"></div>
+    <div class="inner">
+      <div class="mist-enter vid-text" style="animation-delay:.2s">放松好了吗？场景还在下雨，<br>你的前方出现了一把伞和一个小亭子</div>
+      <div class="row">
+        <div class="mist-enter" style="animation-delay:.5s"><button class="btn btn-dark" style="font-size:23px;padding:14px 36px" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>伞</button></div>
+        <div class="mist-enter" style="animation-delay:.6s"><button class="btn btn-dark" style="font-size:23px;padding:14px 36px" onclick="pick(this,'dark')"><span class="glow"></span><span class="dust-cage"></span>亭子</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- P6 -->
+  <div class="page bg-load" id="p5">
+    <div class="load-bars"><div class="load-bar" style="height:24px;animation-delay:0s"></div><div class="load-bar" style="height:34px;animation-delay:.3s"></div><div class="load-bar" style="height:18px;animation-delay:.6s"></div><div class="load-bar" style="height:30px;animation-delay:.9s"></div><div class="load-bar" style="height:22px;animation-delay:1.2s"></div></div>
+    <div class="load-label">正在生成报告</div>
+  </div>
+
+  <!-- P7 -->
+  <div class="page bg-light" id="p6" style="overflow-y:auto;padding:34px 22px 44px;display:none;align-items:center">
+    <div class="mist-enter in serif" style="animation-delay:.05s;font-size:21px;font-weight:200;letter-spacing:4px;color:rgba(60,80,65,.7);text-align:center;margin-bottom:10px">你的本次雨境画像</div>
+    <div class="mist-enter in" style="animation-delay:.15s;font-size:13px;font-weight:300;color:rgba(80,100,85,.4);text-align:center;line-height:1.9;margin-bottom:22px;padding:0 4px">从情绪表达来看，你在情绪表达上保持克制与清醒…</div>
+    <div class="mist-enter in rpt-card" style="animation-delay:.25s"><div class="card-tag">第1阶段</div><div class="card-body">情绪压抑偏高</div></div>
+    <div class="mist-enter in rpt-card" style="animation-delay:.35s"><div class="card-tag">第2阶段</div><div class="card-body">倾向独自处理情绪</div></div>
+    <div class="mist-enter in rpt-card" style="animation-delay:.45s"><div class="card-tag">第3阶段</div><div class="card-body">倾向于先解决问题</div></div>
+    <div class="mist-enter in rpt-card" style="animation-delay:.55s"><div class="card-tag">第4阶段</div><div class="card-body">倾向于稳定</div></div>
+    <div class="mist-enter in" style="animation-delay:.65s;margin-top:16px">
+      <button class="btn btn-light" style="font-size:17px;padding:13px 44px;letter-spacing:5px" onclick="pick(this,'light')"><span class="glow"></span><span class="dust-cage"></span>重新体验</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function show(i){
+  document.querySelectorAll('.tabs button').forEach((b,j)=>b.classList.toggle('on',j===i));
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('on');p.style.display='none'});
+  const p=document.getElementById('p'+i);p.style.display='flex';p.classList.add('on');
+  // 重播入场动画
+  p.querySelectorAll('.mist-enter').forEach(el=>{el.classList.remove('in');el.offsetHeight;el.classList.add('in')});
+}
+
+function pick(btn,mode){
+  const row=btn.closest('.row');const scope=row||btn.parentElement;
+  scope.querySelectorAll('.sel').forEach(b=>{b.classList.remove('sel');const dc=b.querySelector('.dust-cage');if(dc)dc.innerHTML=''});
+  btn.classList.toggle('sel');
+  if(btn.classList.contains('sel')){
+    const dc=btn.querySelector('.dust-cage');if(!dc)return;
+    const cls=mode==='dark'?'dust dust-d':'dust dust-l';
+    for(let i=0;i<10;i++){
+      const d=document.createElement('div');d.className=cls;
+      d.style.cssText=`--x:${15+Math.random()*70}%;--size:${1+Math.random()*1.5}px;--dur:${2+Math.random()*2.5}s;--delay:${Math.random()*1.5}s;--rise:${25+Math.random()*35}px;--drift:${(Math.random()-.5)*12}px`;
+      dc.appendChild(d);
+    }
+  }
+}
+</script>
+</body>
+</html>

@@ -59,7 +59,7 @@ class _PageFourViewState extends State<PageFourView> {
                 child: SizedBox(
                   width: screenSize.width * 0.85,
                   child: Text(_promptText, textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 24, color: Colors.white, height: 1.6)),
+                    style: TextStyle(fontSize: 24, color: Color(0xFFd5e5d2), height: 1.6, fontWeight: FontWeight.w300, letterSpacing: 2)),
                 ),
               ),
             ),
