@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:math';
 import '../app_theme.dart';
 
 /// 页面二：准备页（眼动标定）— 禅意灰绿
@@ -66,61 +67,16 @@ class _PageTwoViewState extends State<PageTwoView> {
                 child: SizedBox(
                   width: 130,
                   height: 130,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 1.0, end: 1.06),
-                        duration: const Duration(milliseconds: 3500),
-                        builder: (context, scale, _) => Transform.scale(
-                          scale: scale,
-                          child: Container(
-                            width: 130, height: 130,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppTheme.textPrimary.withValues(alpha: 0.06),
-                                width: 0.5,
-                              ),
-                            ),
-                          ),
-                        ),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.92, end: 1.0),
+                    duration: const Duration(milliseconds: 2400),
+                    builder: (context, s, _) => Transform.scale(
+                      scale: s,
+                      child: CustomPaint(
+                        painter: _CalibrationReticlePainter(),
+                        size: const Size(130, 130),
                       ),
-                      Container(
-                        width: 80, height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppTheme.textPrimary.withValues(alpha: 0.08),
-                            width: 0.5,
-                          ),
-                        ),
-                      ),
-                      TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 1.0, end: 1.35),
-                        duration: const Duration(milliseconds: 2200),
-                        builder: (context, scale, _) => Transform.scale(
-                          scale: scale,
-                          child: Container(
-                            width: 10, height: 10,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(0xFFC4736E),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFC4736E).withValues(alpha: 0.2),
-                                  blurRadius: 22,
-                                ),
-                                BoxShadow(
-                                  color: const Color(0xFFC4736E).withValues(alpha: 0.06),
-                                  blurRadius: 44,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -196,4 +152,73 @@ class _PageTwoViewState extends State<PageTwoView> {
 
   @override
   void initState() { super.initState(); _startSequence(); }
+}
+
+/// 标定准星绘制器 — 相机取景器风格
+class _CalibrationReticlePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2, cy = size.height / 2;
+    final r = min(cx, cy) - 4;
+    final dot = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5
+      ..strokeCap = StrokeCap.round;
+
+    // ── 外圈：极细光圈环 ──
+    dot.color = AppTheme.textPrimary.withValues(alpha: 0.12);
+    canvas.drawCircle(Offset(cx, cy), r, dot);
+
+    // ── 四角括号（L 形）──
+    final bracketLen = r * 0.22;
+    final bracketGap = r * 0.08;
+    dot.color = AppTheme.textPrimary.withValues(alpha: 0.18);
+    for (int i = 0; i < 4; i++) {
+      final a = i * pi / 2 + pi / 4;
+      final bx = cx + cos(a) * (r - bracketGap);
+      final by = cy + sin(a) * (r - bracketGap);
+      // 径向段
+      canvas.drawLine(
+        Offset(bx, by),
+        Offset(bx - cos(a) * bracketLen, by - sin(a) * bracketLen),
+        dot,
+      );
+      // 切向段
+      final ta = a + pi / 2;
+      canvas.drawLine(
+        Offset(bx, by),
+        Offset(bx + cos(ta) * bracketLen, by + sin(ta) * bracketLen),
+        dot,
+      );
+    }
+
+    // ── 十字准星（细线）──
+    final crossLen = r * 0.4;
+    dot.color = AppTheme.textPrimary.withValues(alpha: 0.12);
+    canvas.drawLine(
+      Offset(cx - crossLen, cy), Offset(cx + crossLen, cy), dot);
+    canvas.drawLine(
+      Offset(cx, cy - crossLen), Offset(cx, cy + crossLen), dot);
+
+    // ── 中心光点（柔光红点）──
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFFC4736E).withValues(alpha: 0.6),
+          const Color(0xFFC4736E).withValues(alpha: 0.12),
+          const Color(0xFFC4736E).withValues(alpha: 0),
+        ],
+        stops: const [0.0, 0.25, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: 18));
+    canvas.drawCircle(Offset(cx, cy), 18, glowPaint);
+
+    // 中心小点
+    final centerDot = Paint()
+      ..color = const Color(0xFFC4736E)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(cx, cy), 2.5, centerDot);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CalibrationReticlePainter oldDelegate) => false;
 }
