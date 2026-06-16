@@ -104,27 +104,28 @@ class _GazeChoiceButtonState extends State<GazeChoiceButton>
 
     // 颜色：全部在 build 中计算，由 setState 驱动的 highlight 变化触发重建
     final borderColor = hl
-        ? AppTheme.accent.withValues(alpha: 0.35)
+        ? AppTheme.accent.withValues(alpha: 0.4)
         : isDark
-            ? Colors.white.withValues(alpha: 0.1)
-            : AppTheme.textPrimary.withValues(alpha: 0.1);
+            ? Colors.white.withValues(alpha: 0.12)
+            : AppTheme.textPrimary.withValues(alpha: 0.18);
     final textColor = isDark ? Colors.white : AppTheme.textPrimary;
 
-    // 背景渐变：模拟水晶顶部受光
+    // 背景渐变：毛玻璃质感
     final bgGradient = LinearGradient(
       colors: hl
           ? [
-              AppTheme.accent.withValues(alpha: isDark ? 0.2 : 0.18),
-              AppTheme.accent.withValues(alpha: isDark ? 0.08 : 0.06),
+              AppTheme.accent.withValues(alpha: isDark ? 0.22 : 0.18),
+              AppTheme.accent.withValues(alpha: isDark ? 0.10 : 0.08),
             ]
-          : [
-              isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : AppTheme.textPrimary.withValues(alpha: 0.02),
-              isDark
-                  ? Colors.white.withValues(alpha: 0.01)
-                  : Colors.transparent,
-            ],
+          : isDark
+              ? [
+                  Colors.white.withValues(alpha: 0.08),
+                  Colors.white.withValues(alpha: 0.03),
+                ]
+              : [
+                  Colors.white.withValues(alpha: 0.45),
+                  Colors.white.withValues(alpha: 0.15),
+                ],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     );
