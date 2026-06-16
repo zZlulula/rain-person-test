@@ -77,6 +77,7 @@ class _PageThreeViewState extends State<PageThreeView> {
               label: label,
               highlighted: _highlightedExpression == label,
               minWidth: screenSize.width * 0.28,
+              onDark: true,
             );
           }).toList(),
         ),

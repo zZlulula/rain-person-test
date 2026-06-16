@@ -460,10 +460,12 @@ class _ContentViewState extends State<ContentView> {
   final List<Page> _pageHistory = [];
   bool _isBackActionLocked = false;
   double _backButtonOpacity = 1;
+  bool _isNavigatingForward = true;
 
   /// 前进到指定页面
   void _navigateTo(Page page) {
     setState(() {
+      _isNavigatingForward = true;
       _pageHistory.add(_currentPage);
       _currentPage = page;
     });
@@ -472,7 +474,10 @@ class _ContentViewState extends State<ContentView> {
   /// 返回上一页
   void _navigateBack() {
     if (_pageHistory.isEmpty) return;
-    setState(() => _currentPage = _pageHistory.removeLast());
+    setState(() {
+      _isNavigatingForward = false;
+      _currentPage = _pageHistory.removeLast();
+    });
   }
 
   /// 重新体验：重置数据 + 回到首页
@@ -492,11 +497,18 @@ class _ContentViewState extends State<ContentView> {
         children: [
           // 页面切换带淡入淡出过渡（200ms）
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) =>
-                FadeTransition(opacity: animation, child: child),
+            duration: AppTheme.durBreeze,
+            switchInCurve: AppTheme.easeBreeze,
+            switchOutCurve: AppTheme.easeBreeze,
+            transitionBuilder: (child, animation) {
+              final offset = _isNavigatingForward
+                  ? Tween<Offset>(begin: const Offset(0.06, 0), end: Offset.zero)
+                  : Tween<Offset>(begin: const Offset(-0.06, 0), end: Offset.zero);
+              return SlideTransition(
+                position: offset.animate(animation),
+                child: FadeTransition(opacity: animation, child: child),
+              );
+            },
             child: _buildCurrentPage(),
           ),
           // 非首页时显示返回按钮

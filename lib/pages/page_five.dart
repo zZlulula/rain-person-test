@@ -101,12 +101,14 @@ class _PageFiveViewState extends State<PageFiveView> {
                   highlighted: highlighted == ShelterChoice.umbrella,
                   fontSize: 28,
                   minWidth: screenSize.width * 0.32,
+                  onDark: true,
                 ),
                 GazeChoiceButton(
                   label: '亭子',
                   highlighted: highlighted == ShelterChoice.pavilion,
                   fontSize: 28,
                   minWidth: screenSize.width * 0.32,
+                  onDark: true,
                 ),
               ],
             );

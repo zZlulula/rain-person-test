@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
+import '../widgets/rain_particles.dart';
 
 /// 页面一：首页 — 禅意灰绿
 ///
@@ -21,6 +22,7 @@ class _PageOneViewState extends State<PageOneView> {
       backgroundColor: AppTheme.bg,
       body: Stack(
         children: [
+          const Positioned.fill(child: RainParticles()),
           Positioned(
             left: 0, right: 0, top: screenSize.height * 0.33,
             child: Column(

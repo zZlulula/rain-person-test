@@ -63,16 +63,65 @@ class _PageTwoViewState extends State<PageTwoView> {
               top: screenSize.height * _calibrationPoints[_currentCalibrationIndex].dy - 25,
               child: AnimatedOpacity(
                 opacity: _redDotOpacity, duration: const Duration(milliseconds: 200),
-                child: Container(
-                  width: 50, height: 50,
-                  decoration: const BoxDecoration(
-                    color: Colors.red, shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(color: Colors.red, blurRadius: 40, spreadRadius: 20),
-                      BoxShadow(color: Color.fromARGB(127, 255, 0, 0), blurRadius: 60, spreadRadius: 30),
+                child: SizedBox(
+                  width: 130,
+                  height: 130,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 1.0, end: 1.06),
+                        duration: const Duration(milliseconds: 3500),
+                        builder: (context, scale, _) => Transform.scale(
+                          scale: scale,
+                          child: Container(
+                            width: 130, height: 130,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppTheme.textPrimary.withValues(alpha: 0.06),
+                                width: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 80, height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppTheme.textPrimary.withValues(alpha: 0.08),
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 1.0, end: 1.35),
+                        duration: const Duration(milliseconds: 2200),
+                        builder: (context, scale, _) => Transform.scale(
+                          scale: scale,
+                          child: Container(
+                            width: 10, height: 10,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFFC4736E),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFC4736E).withValues(alpha: 0.2),
+                                  blurRadius: 22,
+                                ),
+                                BoxShadow(
+                                  color: const Color(0xFFC4736E).withValues(alpha: 0.06),
+                                  blurRadius: 44,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  child: const Center(child: Icon(Icons.circle, size: 10, color: Colors.white)),
                 ),
               ),
             ),

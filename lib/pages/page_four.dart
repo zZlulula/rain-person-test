@@ -80,7 +80,7 @@ class _PageFourViewState extends State<PageFourView> {
           opacity: _wordsOpacity,
           child: ValueListenableBuilder<Set<String>>(
             valueListenable: _highlightedWords,
-            builder: (context, hl, _) => GazeChoiceButton(label: _words[i], highlighted: hl.contains(_words[i])),
+            builder: (context, hl, _) => GazeChoiceButton(label: _words[i], highlighted: hl.contains(_words[i]), onDark: true),
           ),
         ),
       ));

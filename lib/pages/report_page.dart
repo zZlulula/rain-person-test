@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../config/experience_flow.dart';
 import '../app_theme.dart';
+import '../widgets/rain_particles.dart';
 
 /// 报告页 — 禅意灰绿毛玻璃卡片
 class ReportPageView extends StatelessWidget {
@@ -25,6 +26,7 @@ class ReportPageView extends StatelessWidget {
       backgroundColor: AppTheme.bg,
       body: Stack(
         children: [
+          const Positioned.fill(child: LightSpots()),
           SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
@@ -80,7 +82,7 @@ class ReportPageView extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: AppTheme.surface.withOpacity(0.6),
+        color: AppTheme.surface.withValues(alpha: 0.6),
         border: Border.all(color: AppTheme.border),
         borderRadius: BorderRadius.circular(14),
       ),

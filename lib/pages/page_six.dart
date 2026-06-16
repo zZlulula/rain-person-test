@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:math';
 import 'package:video_player/video_player.dart';
 import '../main.dart';
 import '../config/experience_flow.dart';
@@ -89,14 +90,7 @@ class _PageSixViewState extends State<PageSixView> {
           if (_showDirections) _buildDirectionButtons(screenSize),
         ],
         finalMaskChild: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(color: Colors.white),
-              SizedBox(height: 20),
-              Text('正在生成报告', style: TextStyle(fontSize: 24, color: Colors.white)),
-            ],
-          ),
+          child: _CloudLoadingIndicator(),
         ),
       ),
     );
@@ -256,5 +250,76 @@ class _PageSixViewState extends State<PageSixView> {
     _videoController?.pause();
     _highlightedDirection.dispose();
     super.dispose();
+  }
+}
+
+class _CloudLoadingIndicator extends StatefulWidget {
+  const _CloudLoadingIndicator();
+  @override
+  State<_CloudLoadingIndicator> createState() => _CloudLoadingIndicatorState();
+}
+
+class _CloudLoadingIndicatorState extends State<_CloudLoadingIndicator>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: AppTheme.durCloud,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(5, (i) {
+                final delay = i * 0.35;
+                final t = (_controller.value + delay) % 1.0;
+                final h = 20.0 + sin(t * pi) * 16.0;
+                final opacity = 0.15 + sin(t * pi) * 0.7;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: Container(
+                    width: 3,
+                    height: h,
+                    decoration: BoxDecoration(
+                      color: AppTheme.accent.withValues(alpha: opacity),
+                      borderRadius: BorderRadius.circular(1.5),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              '正在生成报告',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w300,
+                letterSpacing: 3,
+                color: Colors.white.withValues(alpha: 0.5 + sin(_controller.value * 2 * pi) * 0.35),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
