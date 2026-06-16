@@ -1,0 +1,94 @@
+<h2>雨中人 — 当前 UI 状态概览</h2>
+<p class="subtitle">7 个页面的交互特效现状，标注了可优化点</p>
+
+<div class="section">
+  <h3>📋 页面清单与当前特效</h3>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-body">
+      <h3>Page 1 · 首页</h3>
+      <p style="color:#7a9b8a;font-size:13px">标题 + 副标题 + 开始按钮</p>
+      <p>特效：<span style="color:#c4a45a">无动画</span>，纯静态布局</p>
+      <p style="opacity:0.7">可优化：入场动画、按钮呼吸效果、背景微动</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>Page 2 · 标定页</h3>
+      <p style="color:#7a9b8a;font-size:13px">文字提示 → 红点标定 → 完成按钮</p>
+      <p>特效：AnimatedOpacity 文字淡入、AnimatedPositioned 红点移动</p>
+      <p style="opacity:0.7">可优化：红点脉冲动画、更流畅的位置缓动</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>Page 3 · 入场动画</h3>
+      <p style="color:#7a9b8a;font-size:13px">视频 + 半透明蒙版 + 表情选项</p>
+      <p>特效：蒙版淡入、按钮组淡入</p>
+      <p style="opacity:0.7">可优化：按钮悬浮效果、选中反馈动画</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>Page 4 · 词汇观察</h3>
+      <p style="color:#7a9b8a;font-size:13px">视频 + 六边形词汇布局</p>
+      <p>特效：词汇淡入、高亮切换</p>
+      <p style="opacity:0.7">可优化：词汇逐个弹入、高亮发光效果</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>Page 5 · 伞/亭子选择</h3>
+      <p style="color:#7a9b8a;font-size:13px">视频 + 两个选项按钮</p>
+      <p>特效：按钮组淡入、选中高亮</p>
+      <p style="opacity:0.7">可优化：按钮缩放反馈、选中过渡动画</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>Page 6 · 结尾动画</h3>
+      <p style="color:#7a9b8a;font-size:13px">视频 + 方向选项 + 加载过渡</p>
+      <p>特效：默认 CircularProgressIndicator</p>
+      <p style="opacity:0.7">可优化：自定义加载动画、报告生成过渡</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>Report · 报告页</h3>
+      <p style="color:#7a9b8a;font-size:13px">ScrollView + 4 个阶段卡片 + 重新体验按钮</p>
+      <p>特效：无入场动画，卡片静态排列</p>
+      <p style="opacity:0.7">可优化：卡片交错入场、毛玻璃强化</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px">
+  <h3>🎯 通用交互短板</h3>
+</div>
+
+<div class="pros-cons">
+  <div class="cons">
+    <h4>当前不足</h4>
+    <ul>
+      <li>所有按钮无按下反馈（无缩放/无涟漪）</li>
+      <li>页面切换仅 200ms 淡入淡出</li>
+      <li>文字始终整段出现，无逐字或分段动画</li>
+      <li>高亮切换是瞬间的，无过渡</li>
+      <li>加载指示器是系统默认样式</li>
+      <li>无微交互（hover、press、release）</li>
+    </ul>
+  </div>
+  <div class="pros">
+    <h4>可优化方向</h4>
+    <ul>
+      <li>按钮：按下缩放 + 涟漪 + 高亮平滑过渡</li>
+      <li>页面：滑动/缩放/渐变组合过渡</li>
+      <li>文字：淡入上移、逐字浮现</li>
+      <li>组件：AnimatedContainer 替代静态容器</li>
+      <li>加载：自定义动画 + 进度暗示</li>
+      <li>反馈：触觉般的视觉反馈</li>
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雨中人 · 全特效预览</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;background:#c5cac0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+
+/* ═══ 手机框 ═══ */
+.phone{width:390px;height:760px;background:#e8ebe4;border-radius:32px;overflow:hidden;position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.18),0 0 0 1px rgba(0,0,0,0.04)}
+.phone-inner{width:100%;height:100%;position:relative;overflow:hidden}
+
+/* ═══ 页面容器 ═══ */
+.page{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .5s cubic-bezier(.4,0,.2,1);pointer-events:none;opacity:0}
+.page.active{opacity:1;pointer-events:auto}
+.page.exit-left{opacity:0;transform:translateX(-40px)}
+.page.exit-right{opacity:0;transform:translateX(40px)}
+.page.enter-left{opacity:0;transform:translateX(-40px)}
+.page.enter-right{opacity:0;transform:translateX(40px)}
+
+/* ═══ 雨丝 ═══ */
+.rain-layer{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.rain-line{position:absolute;top:-100px;width:1px;background:linear-gradient(180deg,transparent,rgba(58,74,63,.05),transparent);animation:rain linear infinite;transform:rotate(12deg)}
+@keyframes rain{0%{transform:translateY(-120px) rotate(12deg)}100%{transform:translateY(880px) rotate(12deg)}}
+
+/* ═══ 光斑 ═══ */
+.light-blob{position:absolute;border-radius:50%;pointer-events:none;z-index:0;animation:drift ease-in-out infinite alternate}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(18px,-12px) scale(1.25)}}
+
+/* ═══ 浮动文字（雾气浮现） ═══ */
+.mist-text{opacity:0;transform:translateY(14px);filter:blur(5px);animation:mistIn .7s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes mistIn{to{opacity:1;transform:translateY(0);filter:blur(0)}}
+
+/* ═══ 按钮基础 ═══ */
+.btn{position:relative;padding:12px 32px;border-radius:12px;border:1px solid rgba(58,74,63,.22);background:transparent;color:#3a4a3f;font-family:inherit;font-size:17px;font-weight:300;letter-spacing:3px;cursor:pointer;transition:all .45s cubic-bezier(.16,1,.3,1);overflow:visible;outline:none}
+.btn:active{transform:scale(.94)}
+.btn.sel{background:#7a9b8a;color:#fff;border-color:#7a9b8a;box-shadow:0 0 32px rgba(122,155,138,.25),0 0 64px rgba(122,155,138,.1)}
+.btn-accent{padding:14px 52px;font-size:19px;letter-spacing:5px}
+
+/* ═══ 涟漪 ═══ */
+.ripple-ring{position:absolute;border-radius:50%;border:1px solid rgba(122,155,138,.3);pointer-events:none;animation:rippleOut .7s ease-out forwards}
+@keyframes rippleOut{0%{width:0;height:0;opacity:.6}100%{width:160px;height:160px;opacity:0;margin-left:-80px;margin-top:-80px}}
+
+/* ═══ 粒子爆发 ═══ */
+.star-particle{position:fixed;border-radius:50%;pointer-events:none;z-index:9999;animation:starBurst 1.3s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes starBurst{0%{opacity:1;transform:translate(0,0) scale(1)}50%{opacity:.7}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0)}}
+
+/* ═══ 云层加载 ═══ */
+.cloud-load{display:flex;flex-direction:column;align-items:center;gap:12px}
+.cloud-bars{display:flex;gap:6px;align-items:flex-end}
+.cloud-bar{width:4px;border-radius:2px;background:#7a9b8a;animation:cloudBreathe 2.8s ease-in-out infinite}
+@keyframes cloudBreathe{0%,100%{opacity:.25}50%{opacity:.9}}
+
+/* ═══ 卡片 ═══ */
+.rpt-card{padding:16px 18px;background:rgba(221,226,216,.55);border:1px solid rgba(58,74,63,.06);border-radius:14px;width:100%;opacity:0;transform:translateY(20px)}
+.rpt-card.show{animation:cardIn .55s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes cardIn{to{opacity:1;transform:translateY(0)}}
+
+/* ═══ 红点脉冲 ═══ */
+.dot-pulse{width:22px;height:22px;background:#c4736e;border-radius:50%;box-shadow:0 0 28px rgba(196,115,110,.35),0 0 56px rgba(196,115,110,.12);animation:dotBeat 1.3s ease-in-out infinite}
+@keyframes dotBeat{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.82);opacity:.6}}
+
+/* ═══ 视频蒙版模拟 ═══ */
+.vid-bg{background:linear-gradient(180deg,#1a221d,#121a16 30%,#162018 65%,#0f1712)}
+.mask{background:rgba(0,0,0,.45)}
+.vid-btn{color:#fff;border-color:rgba(255,255,255,.25)}
+.vid-btn.sel{background:#7a9b8a;border-color:#7a9b8a;color:#fff}
+
+/* 顶栏 */
+.top-bar{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:8px 14px}
+.dot-nav{display:flex;gap:8px}
+.dot-nav span{width:7px;height:7px;border-radius:50%;background:rgba(58,74,63,.15);transition:all .3s}
+.dot-nav span.on{background:#7a9b8a;box-shadow:0 0 6px rgba(122,155,138,.35)}
+.page-label{font-size:10px;letter-spacing:2px;color:rgba(58,74,63,.3)}
+</style>
+</head>
+<body>
+
+<div class="phone">
+<div class="phone-inner" id="app">
+
+  <!-- ═══════════════ Page 1: 首页 ═══════════════ -->
+  <div class="page active" id="p1" style="background:linear-gradient(180deg,#e8ebe4 0%,#dce3d6 100%)">
+    <div class="rain-layer" id="rain1"></div>
+    <div class="light-blob" style="width:90px;height:90px;top:40px;right:10px;background:radial-gradient(circle,rgba(122,155,138,.06),transparent 70%);animation-duration:22s"></div>
+    <div class="light-blob" style="width:50px;height:50px;bottom:140px;left:30px;background:radial-gradient(circle,rgba(122,155,138,.045),transparent 70%);animation-duration:18s;animation-delay:-6s"></div>
+    <div style="position:relative;z-index:1;text-align:center">
+      <div class="mist-text" style="animation-delay:.1s;font-size:34px;font-weight:200;letter-spacing:10px;margin-bottom:16px">雨 中 人</div>
+      <div class="mist-text" style="animation-delay:.3s;font-size:13px;font-weight:300;color:rgba(58,74,63,.48);letter-spacing:4px;margin-bottom:52px">一场关于内心世界的雨境之旅</div>
+      <div class="mist-text" style="animation-delay:.55s">
+        <button class="btn btn-accent" onclick="burst(this);goPage(1)">开 始</button>
+      </div>
+      <div class="mist-text" style="animation-delay:.8s;margin-top:56px;font-size:11px;color:rgba(58,74,63,.28);letter-spacing:3px">请戴上耳机，静心体验</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ Page 2: 标定页 ═══════════════ -->
+  <div class="page" id="p2" style="background:#e8ebe4">
+    <div style="position:relative;z-index:1;text-align:center;padding:40px 28px">
+      <div class="mist-text" style="animation-delay:0s;font-size:18px;font-weight:300;letter-spacing:2px;line-height:1.9;margin-bottom:44px">
+        放松自己，<br>测试全程看着屏幕<br>以获得更准确的结果
+      </div>
+      <div class="mist-text" style="animation-delay:.3s;margin-bottom:36px">
+        <div style="width:160px;height:160px;border:2px dashed rgba(58,74,63,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto">
+          <div class="dot-pulse"></div>
+        </div>
+      </div>
+      <div class="mist-text cloud-breathe" style="animation-delay:.6s;font-size:14px;font-weight:300;color:rgba(58,74,63,.45);letter-spacing:3px">
+        看着红点，正在标定...
+      </div>
+      <div class="mist-text" style="animation-delay:1s;margin-top:30px">
+        <button class="btn" style="background:#7a9b8a;color:#fff;border-color:#7a9b8a" onclick="burst(this);goPage(2)">标定完成 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ Page 3: 入场动画（视频模拟） ═══════════════ -->
+  <div class="page" id="p3" style="background:#1a221d">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:0"></div>
+    <div style="position:relative;z-index:1;text-align:center;padding:30px 22px">
+      <div class="mist-text" style="animation-delay:.4s;color:#fff;font-size:20px;font-weight:300;line-height:1.7;letter-spacing:2px;margin-bottom:52px">
+        你遇到了一位朋友，<br>想象你在和他解释你的烦恼
+      </div>
+      <div class="mist-text" style="animation-delay:.8s;display:flex;gap:18px;justify-content:center">
+        <button class="btn vid-btn" onclick="this.classList.toggle('sel');if(this.classList.contains('sel'))burst(this)">皱眉</button>
+        <button class="btn vid-btn sel" onclick="burst(this)">抿嘴</button>
+        <button class="btn vid-btn" onclick="this.classList.toggle('sel');if(this.classList.contains('sel'))burst(this)">皱眉+抿嘴</button>
+      </div>
+      <div class="mist-text" style="animation-delay:1.1s;margin-top:18px;font-size:11px;color:rgba(255,255,255,.35);letter-spacing:2px">↑ 点击可触发粒子爆发</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ Page 4: 词汇观察页（视频模拟） ═══════════════ -->
+  <div class="page" id="p4" style="background:#121a16">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:0"></div>
+    <div style="position:relative;z-index:1;text-align:center;padding:30px 10px">
+      <div class="mist-text" style="animation-delay:.2s;color:#fff;font-size:17px;font-weight:300;line-height:1.6;letter-spacing:1px;margin-bottom:36px">
+        我们察觉到了你心中深处的雨，<br>看着屏幕中的词汇，放松自己
+      </div>
+      <!-- 六边形词汇布局模拟 -->
+      <div style="position:relative;width:280px;height:280px;margin:0 auto">
+        <button class="btn vid-btn" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:15px;padding:10px 22px" onclick="toggleSel(this)">听歌</button>
+        <button class="btn vid-btn" style="position:absolute;top:68px;right:8px;font-size:15px;padding:10px 22px" onclick="toggleSel(this)">发呆</button>
+        <button class="btn vid-btn" style="position:absolute;top:190px;right:20px;font-size:15px;padding:10px 22px" onclick="toggleSel(this)">娱乐</button>
+        <button class="btn vid-btn" style="position:absolute;top:190px;left:20px;font-size:15px;padding:10px 22px" onclick="toggleSel(this)">游戏</button>
+        <button class="btn vid-btn" style="position:absolute;top:68px;left:8px;font-size:15px;padding:10px 22px" onclick="toggleSel(this)">家人</button>
+        <button class="btn vid-btn" style="position:absolute;top:128px;left:50%;transform:translateX(-50%);font-size:15px;padding:10px 22px" onclick="toggleSel(this)">朋友</button>
+      </div>
+      <div class="mist-text" style="animation-delay:.6s;margin-top:16px;font-size:11px;color:rgba(255,255,255,.3);letter-spacing:2px">点击词汇 → 粒子爆发选中</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ Page 5: 伞/亭子选择（视频模拟） ═══════════════ -->
+  <div class="page" id="p5" style="background:#0f1712">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:0"></div>
+    <div style="position:relative;z-index:1;text-align:center;padding:30px 20px">
+      <div class="mist-text" style="animation-delay:.3s;color:#fff;font-size:17px;font-weight:300;line-height:1.7;letter-spacing:1px;margin-bottom:56px">
+        放松好了吗？场景还在下雨，<br>你想选哪个？
+      </div>
+      <div class="mist-text" style="animation-delay:.7s;display:flex;gap:32px;justify-content:center">
+        <button class="btn vid-btn" style="font-size:24px;padding:16px 40px;letter-spacing:4px" onclick="toggleSel(this)">伞</button>
+        <button class="btn vid-btn" style="font-size:24px;padding:16px 40px;letter-spacing:4px" onclick="toggleSel(this)">亭子</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ Page 6: 加载过渡 ═══════════════ -->
+  <div class="page" id="p6" style="background:#000">
+    <div class="cloud-load" style="position:relative;z-index:1">
+      <div class="cloud-bars">
+        <div class="cloud-bar" style="height:28px;animation-delay:0s"></div>
+        <div class="cloud-bar" style="height:38px;animation-delay:.3s"></div>
+        <div class="cloud-bar" style="height:22px;animation-delay:.6s"></div>
+        <div class="cloud-bar" style="height:34px;animation-delay:.9s"></div>
+        <div class="cloud-bar" style="height:26px;animation-delay:1.2s"></div>
+      </div>
+      <span style="color:#7a9b8a;font-size:18px;font-weight:300;letter-spacing:3px;animation:cloudBreathe 2.8s ease-in-out infinite">正在生成报告</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════ Page 7: 报告页 ═══════════════ -->
+  <div class="page" id="p7" style="background:#e8ebe4;overflow-y:auto;padding:36px 22px 70px;justify-content:flex-start">
+    <div class="light-blob" style="width:100px;height:100px;top:10px;right:-20px;background:radial-gradient(circle,rgba(122,155,138,.055),transparent 70%);animation-duration:24s"></div>
+    <div class="light-blob" style="width:60px;height:60px;bottom:80px;left:0px;background:radial-gradient(circle,rgba(122,155,138,.04),transparent 70%);animation-duration:20s;animation-delay:-10s"></div>
+    <div style="position:relative;z-index:1;width:100%">
+      <h2 class="mist-text" style="animation-delay:.05s;font-size:21px;font-weight:200;letter-spacing:3px;text-align:center;margin-bottom:14px">你的本次雨境画像</h2>
+      <p class="mist-text" style="animation-delay:.15s;font-size:13px;color:rgba(58,74,63,.45);text-align:center;line-height:1.8;margin-bottom:28px">从情绪表达来看，你在情绪表达上保持克制与清醒…</p>
+      <div class="rpt-card" style="animation-delay:.25s" id="card0"><div style="font-size:10px;color:rgba(58,74,63,.4);letter-spacing:2px;margin-bottom:4px">第1阶段</div><div style="font-size:17px;font-weight:300">情绪压抑偏高</div><div style="font-size:12px;color:rgba(58,74,63,.4);margin-top:6px">每段情绪都是真实的倒影。</div></div>
+      <div class="rpt-card" style="animation-delay:.38s" id="card1"><div style="font-size:10px;color:rgba(58,74,63,.4);letter-spacing:2px;margin-bottom:4px">第2阶段</div><div style="font-size:17px;font-weight:300">倾向独自处理情绪</div><div style="font-size:12px;color:rgba(58,74,63,.4);margin-top:6px">安静是一种力量。</div></div>
+      <div class="rpt-card" style="animation-delay:.51s" id="card2"><div style="font-size:10px;color:rgba(58,74,63,.4);letter-spacing:2px;margin-bottom:4px">第3阶段</div><div style="font-size:17px;font-weight:300">倾向于先解决问题</div><div style="font-size:12px;color:rgba(58,74,63,.4);margin-top:6px">伞下的你，始终清醒。</div></div>
+      <div class="rpt-card" style="animation-delay:.64s" id="card3"><div style="font-size:10px;color:rgba(58,74,63,.4);letter-spacing:2px;margin-bottom:4px">第4阶段</div><div style="font-size:17px;font-weight:300">倾向于稳定</div><div style="font-size:12px;color:rgba(58,74,63,.4);margin-top:6px">了解当前情况，对你是重要的。</div></div>
+      <div class="mist-text" style="animation-delay:.8s;text-align:center;margin-top:22px">
+        <button class="btn" style="padding:14px 44px;font-size:17px;letter-spacing:4px" onclick="burst(this);resetAllCards()">重新体验</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导航顶栏 -->
+  <div class="top-bar" style="position:absolute;top:10px;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+    <div class="dot-nav" id="dots"></div>
+    <button onclick="goBack()" id="backBtn" style="display:none;background:none;border:1px solid rgba(58,74,63,.18);border-radius:8px;padding:5px 12px;font-family:inherit;font-size:12px;font-weight:300;color:#3a4a3f;cursor:pointer;letter-spacing:1px">← 返回</button>
+  </div>
+
+</div>
+</div>
+
+<script>
+let cur = 0; const total = 7; const history = [];
+
+function updateDots(){
+  const d=document.getElementById('dots');
+  d.innerHTML='';
+  for(let i=0;i<total;i++){
+    const s=document.createElement('span');
+    if(i===cur) s.className='on';
+    d.appendChild(s);
+  }
+  document.getElementById('backBtn').style.display=history.length?'block':'none';
+  // 更新返回按钮颜色（根据当前页面是视频页还是浅色页）
+  const isDark=[2,3,4,5].includes(cur);
+  const bb=document.getElementById('backBtn');
+  bb.style.color=isDark?'#fff':'#3a4a3f';
+  bb.style.borderColor=isDark?'rgba(255,255,255,.25)':'rgba(58,74,63,.18)';
+}
+
+function goPage(to){
+  if(to===cur)return;
+  history.push(cur);
+  const oldP=document.getElementById('p'+(cur+1));
+  const newP=document.getElementById('p'+(to+1));
+  oldP.classList.remove('active'); oldP.classList.add(to>cur?'exit-left':'exit-right');
+  cur=to;
+  newP.classList.add('active');
+  setTimeout(()=>{oldP.classList.remove('exit-left','exit-right')},500);
+
+  // 触发报告页卡片动画
+  if(to===6) setTimeout(animateCards,200);
+  updateDots();
+}
+
+function goBack(){
+  if(!history.length)return;
+  const prev=history.pop();
+  const oldP=document.getElementById('p'+(cur+1));
+  const newP=document.getElementById('p'+(prev+1));
+  oldP.classList.remove('active'); oldP.classList.add(prev<cur?'exit-left':'exit-right');
+  cur=prev;
+  newP.classList.add('active');
+  setTimeout(()=>{oldP.classList.remove('exit-left','exit-right')},500);
+  updateDots();
+}
+
+// 粒子爆发
+function burst(btn){
+  const rect=btn.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  for(let i=0;i<20;i++){
+    const p=document.createElement('div');
+    p.className='star-particle';
+    const angle=(i/20)*Math.PI*2+(Math.random()-.5)*.3;
+    const dist=35+Math.random()*55;
+    p.style.cssText=`left:${cx}px;top:${cy}px;--sx:${Math.cos(angle)*dist}px;--sy:${Math.sin(angle)*dist}px;width:${2+Math.random()*3}px;height:${2+Math.random()*3}px;background:${Math.random()>.5?'#d4ead0':'#fff'};animation-delay:${Math.random()*.15}s`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),1500);
+  }
+  // 涟漪
+  const ring=document.createElement('div');
+  ring.className='ripple-ring';
+  ring.style.left=cx+'px';ring.style.top=cy+'px';
+  document.body.appendChild(ring);
+  setTimeout(()=>ring.remove(),700);
+}
+
+function toggleSel(btn){
+  const was=btn.classList.contains('sel');
+  btn.classList.toggle('sel');
+  if(!was) burst(btn); // only burst on select, not deselect
+}
+
+// 卡片交錯动画重置
+function animateCards(){
+  for(let i=0;i<4;i++){
+    const c=document.getElementById('card'+i);
+    c.classList.remove('show');
+    setTimeout(()=>c.classList.add('show'),250+i*130);
+  }
+}
+function resetAllCards(){
+  for(let i=0;i<4;i++) document.getElementById('card'+i).classList.remove('show');
+}
+
+// 雨丝生成
+function spawnRain(id,n){
+  const el=document.getElementById(id);
+  if(!el)return;
+  for(let i=0;i<n;i++){
+    const l=document.createElement('div');
+    l.className='rain-line';
+    l.style.left=Math.random()*100+'%';
+    l.style.height=(40+Math.random()*80)+'px';
+    l.style.animationDuration=(3.5+Math.random()*5)+'s';
+    l.style.animationDelay=Math.random()*7+'s';
+    l.style.opacity=(.03+Math.random()*.05);
+    el.appendChild(l);
+  }
+}
+
+// 初始化
+spawnRain('rain1',20);
+updateDots();
+
+// 键盘导航
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'&&cur<total-1) goPage(cur+1);
+  if(e.key==='ArrowLeft') goBack();
+});
+</script>
+
+</body>
+</html>

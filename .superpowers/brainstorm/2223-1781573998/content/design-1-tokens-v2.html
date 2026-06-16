@@ -1,0 +1,99 @@
+<h2>设计 v2 · 第一节：动画令牌 & 氛围系统（增强版）</h2>
+<p class="subtitle">从"能用"升级到"难忘"——雨境主题贯穿所有动效</p>
+
+<div class="section">
+  <h3>🌧️ 核心隐喻：雨的五种形态 → 五种动效</h3>
+  <p>不再用抽象的 duration/curve 令牌，而是用雨的具象形态命名，每种形态对应一组动画参数，贯穿全应用。</p>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-body">
+      <h3>💧 雨滴 · 轻触反馈</h3>
+      <p style="font-size:13px;opacity:0.8">按钮按下 → 像雨滴落入水面</p>
+      <p style="font-size:12px;font-family:monospace">scale: 1.0→0.96→1.02→1.0<br>duration: 400ms · easeOutBack<br>+ 涟漪扩散 (InkWell 自定义)</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>🌫️ 雾气 · 浮现过渡</h3>
+      <p style="font-size:13px;opacity:0.8">文字/卡片出现 → 像晨雾中显形</p>
+      <p style="font-size:12px;font-family:monospace">opacity 0→1 + translateY 12→0<br>duration: 500ms · easeOutExpo<br>+ 模糊滤镜渐消 (ImageFiltered)</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>💨 微风 · 扫过切换</h3>
+      <p style="font-size:13px;opacity:0.8">页面过渡 → 像风吹开雨帘</p>
+      <p style="font-size:12px;font-family:monospace">slideX + fade 组合<br>duration: 500ms · easeInOutCubic<br>方向跟随页面栈前进/后退</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>☁️ 云层 · 呼吸循环</h3>
+      <p style="font-size:13px;opacity:0.8">等待/加载状态 → 像云层缓缓流动</p>
+      <p style="font-size:12px;font-family:monospace">opacity 0.4→0.8→0.4 循环<br>duration: 2500ms · easeInOutSine<br>替代默认 CircularProgressIndicator</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>💡 霁光 · 高亮绽放</h3>
+      <p style="font-size:13px;opacity:0.8">选项选中 → 像雨后初晴的光</p>
+      <p style="font-size:12px;font-family:monospace">bgColor 渐变 + 柔光扩散<br>duration: 600ms · easeOutExpo<br>boxShadow 从 0 到扩散 halo</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px">
+  <h3>📐 技术实现</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">app_theme.dart 新增 RainMotion 类</div>
+      <div class="mockup-body" style="font-size:12px;font-family:monospace;line-height:1.7;padding:12px">
+<span style="opacity:0.5">/// 雨的 5 种动画预设</span><br>
+<b>class</b> <b>RainMotion</b> {<br>
+&nbsp;&nbsp;<span style="opacity:0.5">// 雨滴 — 按钮按下反馈</span><br>
+&nbsp;&nbsp;<b>static</b> <b>Widget</b> <b>raindrop</b>(child, onTap)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;→ _RaindropWrapper<br>
+&nbsp;&nbsp;<span style="opacity:0.5">// 雾气 — 浮现效果</span><br>
+&nbsp;&nbsp;<b>static</b> <b>Widget</b> <b>mistReveal</b>(child, {delay})<br>
+&nbsp;&nbsp;&nbsp;&nbsp;→ _MistRevealWrapper<br>
+&nbsp;&nbsp;<span style="opacity:0.5">// 微风 — 扫过过渡</span><br>
+&nbsp;&nbsp;<b>static</b> <b>Widget</b> <b>breezeSlide</b>(child, dir)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;→ _BreezeTransition<br>
+&nbsp;&nbsp;<span style="opacity:0.5">// 云层 — 呼吸循环</span><br>
+&nbsp;&nbsp;<b>static</b> <b>Widget</b> <b>cloudBreathe</b>(child)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;→ _CloudBreatheWrapper<br>
+&nbsp;&nbsp;<span style="opacity:0.5">// 霁光 — 高亮绽放</span><br>
+&nbsp;&nbsp;<b>static</b> <b>Decoration</b> <b>sunlight</b>(active)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;→ BoxDecoration + halo shadow<br>
+}
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">新增 rain_particles.dart</div>
+      <div class="mockup-body" style="font-size:12px;font-family:monospace;line-height:1.7;padding:12px">
+<span style="opacity:0.5">/// 首页 & 报告页背景氛围</span><br>
+<b>class</b> <b>RainParticles</b> <b>extends</b> StatefulWidget<br>
+&nbsp;&nbsp;· 15-25 条雨丝（CustomPainter）<br>
+&nbsp;&nbsp;· AnimationController 驱动下落<br>
+&nbsp;&nbsp;· 雨丝随机：长度 40-120px<br>
+&nbsp;&nbsp;&nbsp;&nbsp;速度 0.3-0.7x 随机<br>
+&nbsp;&nbsp;&nbsp;&nbsp;透明度 0.04-0.10<br>
+&nbsp;&nbsp;&nbsp;&nbsp;倾斜 8-15°<br>
+&nbsp;&nbsp;· 页面不可见时 pause()<br>
+&nbsp;&nbsp;· RepaintBoundary 隔离性能<br>
+<br>
+<span style="opacity:0.5">/// 光斑（报告页用）</span><br>
+<b>class</b> <b>LightSpots</b> <b>extends</b> StatefulWidget<br>
+&nbsp;&nbsp;· 3-5 个大柔光光斑<br>
+&nbsp;&nbsp;· 极慢速漂移（20-30s/周期）<br>
+&nbsp;&nbsp;· 透明度 0.03-0.06<br>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px">
+  <p style="font-size:14px;opacity:0.7">新方案不再仅仅是"参数常量"，而是用<b>雨的五种形态</b>作为隐喻统一全应用动效语言——按钮反馈如雨滴、文字浮现如晨雾、页面切换如风过、加载等待如云流、选中高亮如霁光。</p>
+</div>

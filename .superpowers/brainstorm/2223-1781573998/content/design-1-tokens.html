@@ -1,0 +1,84 @@
+<h2>设计 · 第一节：动画令牌 & 氛围粒子</h2>
+<p class="subtitle">所有动效的基础参数 + 首页/报告页的微雨背景</p>
+
+<div class="section">
+  <h3>🎨 动画令牌（app_theme.dart 新增）</h3>
+  <p>统一管理所有动效的时长和曲线，不分散在各页面中硬编码。</p>
+
+  <div style="background:rgba(58,74,63,0.04);border-radius:8px;padding:16px;margin-top:12px;font-family:monospace;font-size:13px;line-height:1.8">
+    <span style="opacity:0.5">// 时长令牌</span><br>
+    <b>static const</b> Duration <b>fadeSlow</b> = Duration(milliseconds: 600);<br>
+    <b>static const</b> Duration <b>fadeMedium</b> = Duration(milliseconds: 400);<br>
+    <b>static const</b> Duration <b>fadeFast</b> = Duration(milliseconds: 250);<br>
+    <b>static const</b> Duration <b>staggerInterval</b> = Duration(milliseconds: 80);<br>
+    <span style="opacity:0.5">// 曲线令牌</span><br>
+    <b>static const</b> Curve <b>easeInk</b> = Curves.easeOutExpo;<br>
+    <b>static const</b> Curve <b>easeBreathe</b> = Curves.easeInOutCubic;<br>
+    <b>static const</b> Curve <b>easeSpring</b> = Curves.easeOutBack;<br>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px">
+  <h3>🌧️ 微雨粒子组件（新增 RainParticles Widget）</h3>
+  <p>首页和报告页底部叠加的极简雨丝动画，用 CustomPainter 实现，不影响可访问性。</p>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">首页 · 微雨背景示意</div>
+    <div class="mockup-body" style="min-height:240px;background:linear-gradient(180deg, #e8ebe4 0%, #d5ddd2 100%);position:relative;overflow:hidden">
+      <div style="position:absolute;top:30%;left:0;right:0;text-align:center">
+        <div style="font-size:32px;font-weight:300;letter-spacing:4px;color:#3a4a3f;margin-bottom:8px">雨中人</div>
+        <div style="font-size:12px;color:rgba(58,74,63,0.5)">一场关于内心世界的雨境之旅</div>
+      </div>
+      <!-- 模拟雨丝 -->
+      <div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(0deg, rgba(122,155,138,0.08) 0%, transparent 100%)"></div>
+      <div style="position:absolute;top:0;left:15%;width:1px;height:60px;background:linear-gradient(180deg, transparent, rgba(58,74,63,0.06), transparent);transform:rotate(12deg)"></div>
+      <div style="position:absolute;top:20px;left:35%;width:1px;height:80px;background:linear-gradient(180deg, transparent, rgba(58,74,63,0.04), transparent);transform:rotate(10deg)"></div>
+      <div style="position:absolute;top:10px;left:55%;width:1px;height:50px;background:linear-gradient(180deg, transparent, rgba(58,74,63,0.05), transparent);transform:rotate(14deg)"></div>
+      <div style="position:absolute;top:30px;left:75%;width:1px;height:70px;background:linear-gradient(180deg, transparent, rgba(58,74,63,0.04), transparent);transform:rotate(8deg)"></div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">报告页 · 竹影光斑示意</div>
+    <div class="mockup-body" style="min-height:240px;background:linear-gradient(180deg, #e8ebe4 0%, #dde2d8 100%);position:relative;overflow:hidden">
+      <div style="padding:20px;position:relative;z-index:1">
+        <div style="font-size:20px;font-weight:300;color:#3a4a3f;margin-bottom:12px">你的本次雨境画像</div>
+        <div style="background:rgba(221,226,216,0.6);border:1px solid rgba(58,74,63,0.08);border-radius:12px;padding:14px;margin-bottom:10px">
+          <div style="font-size:11px;color:rgba(58,74,63,0.5)">第1阶段</div>
+          <div style="font-size:16px;color:#3a4a3f">情绪压抑偏高</div>
+        </div>
+        <div style="background:rgba(221,226,216,0.6);border:1px solid rgba(58,74,63,0.08);border-radius:12px;padding:14px">
+          <div style="font-size:11px;color:rgba(58,74,63,0.5)">第2阶段</div>
+          <div style="font-size:16px;color:#3a4a3f">倾向独自处理情绪</div>
+        </div>
+      </div>
+      <!-- 模拟光斑 -->
+      <div style="position:absolute;top:40px;right:30px;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle, rgba(122,155,138,0.06) 0%, transparent 70%)"></div>
+      <div style="position:absolute;bottom:60px;left:20px;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle, rgba(122,155,138,0.04) 0%, transparent 70%)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px">
+  <h3>📐 实现要点</h3>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>RainParticles 设计</h4>
+      <ul>
+        <li>CustomPainter 绘制 15-25 条极细雨丝</li>
+        <li>AnimationController 驱动下落循环（8-12s/周期）</li>
+        <li>透明度 0.03-0.08，几乎不可见但增加质感</li>
+        <li>仅在首页和报告页使用，视频页面不需要</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>性能注意事项</h4>
+      <ul>
+        <li>RepaintBoundary 隔离，不触发页面重建</li>
+        <li>shouldRepaint 只在动画帧返回 true</li>
+        <li>首页进入视频页时自动停止动画</li>
+      </ul>
+    </div>
+  </div>
+</div>

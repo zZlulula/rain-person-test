@@ -497,16 +497,22 @@ class _ContentViewState extends State<ContentView> {
         children: [
           // 页面切换带淡入淡出过渡（200ms）
           AnimatedSwitcher(
-            duration: AppTheme.durBreeze,
-            switchInCurve: AppTheme.easeBreeze,
-            switchOutCurve: AppTheme.easeBreeze,
+            duration: const Duration(milliseconds: 400),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
             transitionBuilder: (child, animation) {
               final offset = _isNavigatingForward
-                  ? Tween<Offset>(begin: const Offset(0.06, 0), end: Offset.zero)
-                  : Tween<Offset>(begin: const Offset(-0.06, 0), end: Offset.zero);
-              return SlideTransition(
-                position: offset.animate(animation),
-                child: FadeTransition(opacity: animation, child: child),
+                  ? Tween<Offset>(begin: const Offset(0.02, 0), end: Offset.zero)
+                  : Tween<Offset>(begin: const Offset(-0.02, 0), end: Offset.zero);
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: offset.animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOut,
+                  )),
+                  child: child,
+                ),
               );
             },
             child: _buildCurrentPage(),

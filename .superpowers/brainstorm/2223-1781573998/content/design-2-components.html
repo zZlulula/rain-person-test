@@ -1,0 +1,151 @@
+<h2>设计 · 第二节：核心组件动效规格</h2>
+<p class="subtitle">每个组件的具体动画参数 + 代码实现路径</p>
+
+<div class="section">
+  <h3>🔘 GazeChoiceButton · 视线选项按钮（重点改造）</h3>
+  <p>当前是纯静态样式切换。改造为三层动效叠加：</p>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-body">
+      <h3>💧 雨滴反馈（每击必有）</h3>
+      <p style="font-size:13px;opacity:0.8">用户点击/视线选中时触发</p>
+      <div style="font-size:12px;font-family:monospace;line-height:1.7;margin-top:8px;background:rgba(58,74,63,0.03);padding:8px;border-radius:6px">
+        1. scale: 1.0 → 0.94（60ms）→ 1.03（200ms easeOutBack）→ 1.0（150ms）<br>
+        2. 涟漪：以触点为中心，径向渐变扩散 400ms<br>
+        3. InkWell.splashColor → 改为自定义 _ripplePainter
+      </div>
+      <p style="font-size:11px;opacity:0.5;margin-top:6px">实现：GestureDetector + AnimatedScale + TweenAnimationBuilder</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>💡 霁光绽放（选中瞬间）</h3>
+      <p style="font-size:13px;opacity:0.8">从未选中 → 选中时触发一次</p>
+      <div style="font-size:12px;font-family:monospace;line-height:1.7;margin-top:8px;background:rgba(58,74,63,0.03);padding:8px;border-radius:6px">
+        18 颗光粒子从按钮边缘爆发：<br>
+        · 颜色：accent (#7a9b8a) + 白<br>
+        · 大小：2-5px，随机<br>
+        · 方向：360° 均匀分布 ± 随机偏角 15°<br>
+        · 距离：30-70px，随机<br>
+        · 时长：1.2s，easeOutExpo<br>
+        · 透明度：1.0 → 0，scale 1.0 → 0
+      </div>
+      <p style="font-size:11px;opacity:0.5;margin-top:6px">实现：CustomPainter 叠加层 + AnimationController 单次播放</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h3>🌫️ 雾气显形（出现时）</h3>
+      <p style="font-size:13px;opacity:0.8">按钮首次出现在屏幕上时</p>
+      <div style="font-size:12px;font-family:monospace;line-height:1.7;margin-top:8px;background:rgba(58,74,63,0.03);padding:8px;border-radius:6px">
+        opacity: 0 → 1<br>
+        translateY: 12 → 0<br>
+        blur: ImageFiltered 6px → 0<br>
+        时长：500ms，easeOutExpo<br>
+        延迟：按索引 stagger 80ms
+      </div>
+      <p style="font-size:11px;opacity:0.5;margin-top:6px">实现：TweenAnimationBuilder + ImageFiltered + 延迟 Timer</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px">
+  <h3>📄 页面过渡 · 微风扫过</h3>
+  <p>main.dart ContentView 的 AnimatedSwitcher 升级：</p>
+</div>
+
+<div style="display:flex;gap:24px;margin-top:12px">
+  <div style="flex:1;background:rgba(58,74,63,0.03);border-radius:10px;padding:16px">
+    <h4 style="font-size:14px;font-weight:300;letter-spacing:1px;margin-bottom:8px">前进（下一页）</h4>
+    <div style="font-size:12px;font-family:monospace;line-height:1.7">
+      SlideTransition + FadeTransition 组合<br>
+      方向：从右向左滑入（dx: 0.05 → 0）<br>
+      旧页面：向左滑出 + 淡出<br>
+      时长：500ms · easeInOutCubic<br>
+      像风吹开雨帘露出下一幕
+    </div>
+  </div>
+  <div style="flex:1;background:rgba(58,74,63,0.03);border-radius:10px;padding:16px">
+    <h4 style="font-size:14px;font-weight:300;letter-spacing:1px;margin-bottom:8px">后退（上一页）</h4>
+    <div style="font-size:12px;font-family:monospace;line-height:1.7">
+      SlideTransition + FadeTransition 组合<br>
+      方向：从左向右滑入（dx: -0.05 → 0）<br>
+      旧页面：向右滑出 + 淡出<br>
+      时长：500ms · easeInOutCubic<br>
+      方向感明确，不迷失
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px">
+  <h3>☁️ 加载动画 · 云层呼吸</h3>
+  <p>替换报告页的 CircularProgressIndicator（页面六 "正在生成报告"）：</p>
+</div>
+
+<div style="display:flex;align-items:center;gap:16px;background:rgba(58,74,63,0.03);border-radius:10px;padding:20px;margin-top:12px">
+  <div style="flex:1;text-align:center">
+    <div style="font-size:11px;opacity:0.5;margin-bottom:8px;letter-spacing:1px">当前（系统默认）</div>
+    <div style="width:40px;height:40px;border:3px solid rgba(122,155,138,0.15);border-top-color:#7a9b8a;border-radius:50%;margin:0 auto;animation:spin 1s linear infinite"></div>
+    <style>.spin1{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>
+  </div>
+  <div style="font-size:24px;opacity:0.2">→</div>
+  <div style="flex:1;text-align:center">
+    <div style="font-size:11px;opacity:0.5;margin-bottom:8px;letter-spacing:1px">改进（云层呼吸）</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div style="display:flex;gap:8px">
+        <div class="cloud-breathe" style="width:4px;height:24px;background:#7a9b8a;border-radius:2px;opacity:0.3"></div>
+        <div class="cloud-breathe" style="width:4px;height:32px;background:#7a9b8a;border-radius:2px;opacity:0.3"></div>
+        <div class="cloud-breathe" style="width:4px;height:20px;background:#7a9b8a;border-radius:2px;opacity:0.3"></div>
+        <div class="cloud-breathe" style="width:4px;height:28px;background:#7a9b8a;border-radius:2px;opacity:0.3"></div>
+      </div>
+      <span style="font-size:14px;font-weight:300;color:#7a9b8a;letter-spacing:2px">正在生成报告</span>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px">
+  <h3>📋 报告卡片 · 交錯入场</h3>
+  <p>报告页 4 张卡片 + 重新体验按钮依次出现：</p>
+</div>
+
+<div style="font-size:12px;font-family:monospace;line-height:1.7;background:rgba(58,74,63,0.03);padding:16px;border-radius:10px;margin-top:12px">
+  <span style="opacity:0.5">// 页面进入时，5 个元素依次浮现</span><br>
+  标题 "你的本次雨境画像" → delay 0ms<br>
+  摘要文字 → delay 120ms<br>
+  卡片 1 → delay 240ms<br>
+  卡片 2 → delay 360ms<br>
+  卡片 3 → delay 480ms<br>
+  卡片 4 → delay 600ms<br>
+  重新体验按钮 → delay 720ms<br>
+  <br>
+  <span style="opacity:0.5">// 每个元素：</span><br>
+  TweenAnimationBuilder(<br>
+  &nbsp;&nbsp;tween: (opacity: 0→1, translateY: 20→0)<br>
+  &nbsp;&nbsp;duration: 500ms, curve: easeOutExpo<br>
+  &nbsp;&nbsp;child: card<br>
+  )
+</div>
+
+<div class="section" style="margin-top:28px">
+  <h3>📐 实现清单</h3>
+  <div style="font-size:13px;line-height:2">
+    <p>1. <b>app_theme.dart</b> — 新增 RainMotion 类（5 种动画 Wrapper）</p>
+    <p>2. <b>widgets/rain_particles.dart</b> — 新增雨丝 + 光斑组件</p>
+    <p>3. <b>widgets/gaze_choice_button.dart</b> — 重构：粒子爆发 + 雨滴反馈 + 雾气浮现</p>
+    <p>4. <b>pages/page_one.dart</b> — 首页：雨丝背景 + 文字雾气浮现 + 按钮呼吸</p>
+    <p>5. <b>pages/page_two.dart</b> — 标定页：红点脉冲 + 文字过渡优化</p>
+    <p>6. <b>pages/page_three.dart</b> — 入场动画：按钮粒子效果 + 蒙版过渡</p>
+    <p>7. <b>pages/page_four.dart</b> — 词汇页：六边形词汇逐个浮现 + 粒子选中</p>
+    <p>8. <b>pages/page_five.dart</b> — 选择页：两个按钮粒子效果</p>
+    <p>9. <b>pages/page_six.dart</b> — 结尾页：云层加载替代系统圈</p>
+    <p>10. <b>pages/report_page.dart</b> — 报告页：卡片交错入场 + 光斑背景</p>
+    <p>11. <b>main.dart</b> — 页面过渡升级为微风扫过</p>
+  </div>
+</div>
+
+<style>
+  @keyframes cloudBreathe { 0%,100%{opacity:0.3} 50%{opacity:0.9} }
+  .cloud-breathe { animation: cloudBreathe 2.5s ease-in-out infinite; }
+</style>

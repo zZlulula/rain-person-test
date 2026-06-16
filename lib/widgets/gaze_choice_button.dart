@@ -60,6 +60,7 @@ class GazeChoiceButton extends StatefulWidget {
 class _GazeChoiceButtonState extends State<GazeChoiceButton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _burstController;
+  late final Animation<double> _burstAnimation;
   bool _wasHighlighted = false;
 
   @override
@@ -68,6 +69,10 @@ class _GazeChoiceButtonState extends State<GazeChoiceButton>
     _burstController = AnimationController(
       vsync: this,
       duration: AppTheme.durBurst,
+    );
+    _burstAnimation = CurvedAnimation(
+      parent: _burstController,
+      curve: AppTheme.easeBurst,
     );
     _wasHighlighted = widget.highlighted;
   }
@@ -97,95 +102,94 @@ class _GazeChoiceButtonState extends State<GazeChoiceButton>
     final isDark = widget.onDark;
     final hl = widget.highlighted;
 
+    // 颜色：全部在 build 中计算，由 setState 驱动的 highlight 变化触发重建
     final borderColor = hl
-        ? AppTheme.accent.withValues(alpha: 0.4)
+        ? AppTheme.accent.withValues(alpha: 0.35)
         : isDark
             ? Colors.white.withValues(alpha: 0.1)
             : AppTheme.textPrimary.withValues(alpha: 0.1);
-    final bgColor = hl
-        ? AppTheme.accent.withValues(alpha: isDark ? 0.15 : 0.14)
-        : isDark
-            ? Colors.white.withValues(alpha: 0.03)
-            : AppTheme.textPrimary.withValues(alpha: 0.015);
     final textColor = isDark ? Colors.white : AppTheme.textPrimary;
 
+    // 背景渐变：模拟水晶顶部受光
+    final bgGradient = LinearGradient(
+      colors: hl
+          ? [
+              AppTheme.accent.withValues(alpha: isDark ? 0.2 : 0.18),
+              AppTheme.accent.withValues(alpha: isDark ? 0.08 : 0.06),
+            ]
+          : [
+              isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : AppTheme.textPrimary.withValues(alpha: 0.02),
+              isDark
+                  ? Colors.white.withValues(alpha: 0.01)
+                  : Colors.transparent,
+            ],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+
+    // 光晕：选中时三层扩散
+    final shadows = hl
+        ? [
+            BoxShadow(color: AppTheme.accent.withValues(alpha: 0.08), blurRadius: 3),
+            BoxShadow(color: AppTheme.accent.withValues(alpha: 0.04), blurRadius: 10),
+            BoxShadow(color: AppTheme.accent.withValues(alpha: 0.02), blurRadius: 22),
+          ]
+        : <BoxShadow>[];
+
+    // 缩放：选中时 1.04x（用 TweenAnimationBuilder 驱动）
+    final scale = hl ? 1.04 : 1.0;
+
     return TweenAnimationBuilder<double>(
-      tween: Tween(end: hl ? 1.04 : 1.0),
-      duration: AppTheme.durMist,
+      tween: Tween<double>(begin: scale, end: scale),
+      duration: const Duration(milliseconds: 500),
       curve: AppTheme.easeMist,
-      builder: (context, scale, child) {
+      builder: (context, currentScale, _) {
         return Transform.scale(
-          scale: scale,
-          child: AnimatedBuilder(
-            animation: _burstController,
-            builder: (context, _) {
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 450),
-                    curve: AppTheme.easeMist,
-                    constraints: BoxConstraints(minWidth: effectiveMinWidth),
-                    padding: padding,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: borderColor, width: 0.5),
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: isDark ? 0.06 : 0.18),
-                          bgColor,
-                          Colors.white.withValues(alpha: isDark ? 0.03 : 0.08),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: hl
-                          ? [
-                              BoxShadow(
-                                color: AppTheme.accent.withValues(alpha: 0.08),
-                                blurRadius: 3,
-                              ),
-                              BoxShadow(
-                                color: AppTheme.accent.withValues(alpha: 0.04),
-                                blurRadius: 10,
-                              ),
-                              BoxShadow(
-                                color: AppTheme.accent.withValues(alpha: 0.02),
-                                blurRadius: 22,
-                              ),
-                            ]
-                          : [
-                              const BoxShadow(
-                                color: Colors.white,
-                                offset: Offset(0, 1),
-                                blurRadius: 0,
-                              ),
-                            ],
-                    ),
-                    child: Text(
-                      widget.label,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: effectiveFontSize,
-                        fontWeight: FontWeight.w300,
-                        color: textColor,
-                      ),
-                    ),
+          scale: currentScale,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // 按钮主体 — 静态 Container，由 build 重建驱动样式变更
+              Container(
+                constraints: BoxConstraints(minWidth: effectiveMinWidth),
+                padding: padding,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderColor, width: 0.5),
+                  gradient: bgGradient,
+                  boxShadow: shadows,
+                ),
+                child: Text(
+                  widget.label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: effectiveFontSize,
+                    fontWeight: FontWeight.w300,
+                    color: textColor,
                   ),
-                  if (_burstController.value > 0) ..._buildParticles(),
-                ],
-              );
-            },
+                ),
+              ),
+              // 粒子爆发层 — 仅在选中瞬间播放
+              if (_burstAnimation.value > 0)
+                AnimatedBuilder(
+                  animation: _burstAnimation,
+                  builder: (_, _) => Stack(
+                    clipBehavior: Clip.none,
+                    children: _buildParticles(_burstAnimation.value),
+                  ),
+                ),
+            ],
           ),
         );
       },
     );
   }
 
-  List<Widget> _buildParticles() {
+  List<Widget> _buildParticles(double t) {
     final particles = <Widget>[];
     final rng = Random(42);
-    final t = _burstController.value;
     for (int i = 0; i < 20; i++) {
       final angle = (i / 20) * pi * 2 + (rng.nextDouble() - 0.5) * 0.3;
       final dist = 30.0 + rng.nextDouble() * 50.0;

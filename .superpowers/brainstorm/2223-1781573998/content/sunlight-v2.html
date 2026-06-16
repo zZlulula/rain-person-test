@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>霁光效果重设计</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    background: #e8ebe4; color: #3a4a3f;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; flex-direction: column; gap: 48px;
+    padding: 40px 20px;
+  }
+  h2 { font-weight: 200; letter-spacing: 4px; font-size: 20px; }
+  .sub { font-size: 12px; color: rgba(58,74,63,0.4); letter-spacing: 2px; margin-bottom: 24px; }
+
+  .row { display: flex; gap: 60px; flex-wrap: wrap; justify-content: center; }
+  .demo-box { text-align: center; }
+  .demo-label { font-size: 11px; color: rgba(58,74,63,0.35); letter-spacing: 2px; margin-bottom: 14px; }
+
+  /* ══════════════════════════════════════════════
+     方案 A: 光柱穿透 — 选中时光束从背后穿过
+     ══════════════════════════════════════════════ */
+  .sunlight-a {
+    position: relative; padding: 12px 28px; border-radius: 12px;
+    border: 1px solid rgba(58,74,63,0.2); cursor: pointer;
+    font-size: 16px; font-weight: 300; letter-spacing: 3px;
+    background: transparent; color: #3a4a3f;
+    overflow: hidden; transition: all 0.5s ease;
+  }
+  .sunlight-a::before {
+    content: ''; position: absolute; inset: -50% -20%;
+    background: conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 150deg, rgba(255,255,240,0.6) 165deg, rgba(200,220,180,0.4) 180deg, rgba(255,255,240,0.6) 195deg, transparent 210deg, transparent 360deg);
+    opacity: 0; transition: opacity 0.6s ease;
+    animation: lightSweep 3s linear infinite paused;
+    pointer-events: none; z-index: 0;
+  }
+  .sunlight-a::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 120%, rgba(255,252,240,0.5) 0%, rgba(200,220,180,0.2) 30%, transparent 60%);
+    opacity: 0; transition: opacity 0.6s ease;
+    pointer-events: none; z-index: 0;
+  }
+  .sunlight-a.active { border-color: #7a9b8a; color: #fff; background: #7a9b8a; }
+  .sunlight-a.active::before { opacity: 1; animation-play-state: running; }
+  .sunlight-a.active::after { opacity: 1; }
+  @keyframes lightSweep {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* ══════════════════════════════════════════════
+     方案 B: 光晕绽放 — 选中时多层光环向外扩散
+     ══════════════════════════════════════════════ */
+  .sunlight-b-wrap { position: relative; display: inline-block; }
+  .sunlight-b {
+    position: relative; padding: 12px 28px; border-radius: 12px;
+    border: 1px solid rgba(58,74,63,0.2); cursor: pointer;
+    font-size: 16px; font-weight: 300; letter-spacing: 3px;
+    background: transparent; color: #3a4a3f; z-index: 2;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .sunlight-b.active { background: #7a9b8a; color: #fff; border-color: #7a9b8a; }
+  .sunlight-b-ring {
+    position: absolute; inset: -8px; border-radius: 18px; z-index: 1;
+    border: 1.5px solid rgba(122,155,138,0);
+    transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+  .sunlight-b-ring.r1 { inset: -6px; border-radius: 16px; }
+  .sunlight-b-ring.r2 { inset: -14px; border-radius: 22px; }
+  .sunlight-b-ring.r3 { inset: -22px; border-radius: 28px; }
+  .active-ring {
+    border-color: rgba(122,155,138,0.4);
+    box-shadow: 0 0 12px rgba(122,155,138,0.15);
+  }
+  .active-ring-delay { transition-delay: 0.08s; }
+  .active-ring-delay2 { transition-delay: 0.16s; }
+
+  /* ══════════════════════════════════════════════
+     方案 C: 粒子星芒 — 选中时发光粒子沿边缘爆发
+     ══════════════════════════════════════════════ */
+  .sunlight-c-wrap { position: relative; display: inline-block; }
+  .sunlight-c {
+    position: relative; padding: 12px 28px; border-radius: 12px;
+    border: 1px solid rgba(58,74,63,0.2); cursor: pointer;
+    font-size: 16px; font-weight: 300; letter-spacing: 3px;
+    background: transparent; color: #3a4a3f; z-index: 2;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .sunlight-c.active { background: #7a9b8a; color: #fff; border-color: #7a9b8a; }
+  .spark {
+    position: absolute; width: 3px; height: 3px; border-radius: 50%;
+    background: #d4e8d0; pointer-events: none; z-index: 0;
+    opacity: 0;
+  }
+  .spark.burst {
+    animation: sparkBurst 1.2s ease-out forwards;
+  }
+  @keyframes sparkBurst {
+    0% { opacity: 1; transform: translate(0, 0) scale(1); }
+    40% { opacity: 0.8; }
+    100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0); }
+  }
+
+  /* ══════════════════════════════════════════════
+     方案 D: 水光折射 — 选中时按钮表面流过水光纹理
+     ══════════════════════════════════════════════ */
+  .sunlight-d {
+    position: relative; padding: 12px 28px; border-radius: 12px;
+    border: 1px solid rgba(58,74,63,0.2); cursor: pointer;
+    font-size: 16px; font-weight: 300; letter-spacing: 3px;
+    background: transparent; color: #3a4a3f; z-index: 2;
+    overflow: hidden; transition: all 0.5s ease;
+  }
+  .sunlight-d::after {
+    content: '';
+    position: absolute; inset: -100% -50%;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 50%, rgba(200,230,190,0.2) 0%, transparent 40%),
+      radial-gradient(ellipse at 20% 70%, rgba(180,220,170,0.15) 0%, transparent 40%);
+    opacity: 0; transition: opacity 0.5s ease;
+    animation: waterShimmer 4s ease-in-out infinite paused;
+    pointer-events: none;
+  }
+  .sunlight-d.active { background: #7a9b8a; color: #fff; border-color: #7a9b8a; }
+  .sunlight-d.active::after { opacity: 1; animation-play-state: running; }
+  @keyframes waterShimmer {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(4%, -3%) scale(1.05); }
+    66% { transform: translate(-3%, 2%) scale(0.97); }
+  }
+
+  /* ══════════════════════════════════════════════
+     方案 E: 晨曦渐变 — 边缘发光 + 内部从核心向外亮起
+     ══════════════════════════════════════════════ */
+  .sunlight-e {
+    position: relative; padding: 12px 28px; border-radius: 12px;
+    border: 1px solid rgba(58,74,63,0.2); cursor: pointer;
+    font-size: 16px; font-weight: 300; letter-spacing: 3px;
+    background: transparent; color: #3a4a3f;
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 0 0 rgba(122,155,138,0);
+  }
+  .sunlight-e.active {
+    background: #7a9b8a; color: #fff; border-color: #7a9b8a;
+    box-shadow:
+      0 0 0 4px rgba(122,155,138,0.12),
+      0 0 0 12px rgba(122,155,138,0.06),
+      0 0 0 24px rgba(122,155,138,0.02),
+      0 6px 20px rgba(122,155,138,0.2);
+  }
+
+  /* 通用：点击触发 */
+  .clickable { cursor: pointer; user-select: none; }
+
+  /* 按钮组（模拟真实场景） */
+  .btn-group {
+    display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+
+<h2>💡 霁光效果 · 五种方案</h2>
+<p class="sub">点击每个按钮查看选中态效果（再次点击取消）</p>
+
+<!-- 方案 A -->
+<div class="demo-box">
+  <div class="demo-label">A · 光柱穿透 — 选中后光束旋转扫过</div>
+  <button class="sunlight-a clickable" onclick="this.classList.toggle('active')">皱眉</button>
+</div>
+
+<div style="display:flex;gap:60px;flex-wrap:wrap;justify-content:center">
+
+<!-- 方案 B -->
+<div class="demo-box">
+  <div class="demo-label">B · 光晕绽放 — 三层光环向外扩散</div>
+  <div class="sunlight-b-wrap" onclick="toggleSunlightB(this)">
+    <div class="sunlight-b-ring r3" id="ring3"></div>
+    <div class="sunlight-b-ring r2" id="ring2"></div>
+    <div class="sunlight-b-ring r1" id="ring1"></div>
+    <button class="sunlight-b" id="btnB">抿嘴</button>
+  </div>
+</div>
+
+<!-- 方案 C -->
+<div class="demo-box">
+  <div class="demo-label">C · 粒子星芒 — 选中时萤火粒子向四周飘散</div>
+  <div class="sunlight-c-wrap" id="wrapC" onclick="toggleSunlightC(this)">
+    <button class="sunlight-c" id="btnC">皱眉+抿嘴</button>
+  </div>
+</div>
+
+</div>
+
+<!-- 方案 D -->
+<div class="demo-box" style="margin-top:20px">
+  <div class="demo-label">D · 水光折射 — 选中后表面有水中光影流动</div>
+  <button class="sunlight-d clickable" onclick="this.classList.toggle('active')">听歌</button>
+</div>
+
+<!-- 方案 E -->
+<div class="demo-box" style="margin-top:20px">
+  <div class="demo-label">E · 晨曦渐变 — 多层柔和辉光扩散</div>
+  <button class="sunlight-e clickable" onclick="this.classList.toggle('active')">伞</button>
+</div>
+
+<div style="margin-top:40px">
+  <p class="sub">真实场景预览：三个选项并排</p>
+  <div class="btn-group">
+    <button class="sunlight-e clickable" onclick="this.classList.toggle('active')">左</button>
+    <button class="sunlight-e clickable active">中</button>
+    <button class="sunlight-e clickable" onclick="this.classList.toggle('active')">右</button>
+  </div>
+  <p style="font-size:11px;color:rgba(58,74,63,0.3);text-align:center;margin-top:10px;letter-spacing:1px">默认中间选中，点击可切换 · E 方案</p>
+</div>
+
+<script>
+  // 方案 B: 光环绽放
+  function toggleSunlightB(wrap) {
+    const btn = wrap.querySelector('.sunlight-b');
+    const rings = wrap.querySelectorAll('.sunlight-b-ring');
+    const active = btn.classList.toggle('active');
+    rings.forEach((r, i) => {
+      if (active) {
+        r.classList.add('active-ring');
+        if (i > 0) r.classList.add('active-ring-delay');
+        if (i > 1) r.classList.add('active-ring-delay2');
+      } else {
+        r.classList.remove('active-ring', 'active-ring-delay', 'active-ring-delay2');
+      }
+    });
+  }
+
+  // 方案 C: 粒子星芒
+  function toggleSunlightC(wrap) {
+    const btn = wrap.querySelector('.sunlight-c');
+    const active = btn.classList.toggle('active');
+    if (active) {
+      const rect = btn.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.top + rect.height/2;
+      for (let i = 0; i < 18; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'spark burst';
+        const angle = (i / 18) * Math.PI * 2;
+        const dist = 40 + Math.random() * 50;
+        spark.style.cssText = `
+          position:fixed; left:${cx}px; top:${cy}px; z-index:999;
+          --sx: ${Math.cos(angle) * dist}px;
+          --sy: ${Math.sin(angle) * dist}px;
+          animation-delay: ${Math.random() * 0.15}s;
+          width: ${2 + Math.random() * 3}px;
+          height: ${2 + Math.random() * 3}px;
+        `;
+        document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), 1400);
+      }
+    }
+  }
+</script>
+
+</body>
+</html>

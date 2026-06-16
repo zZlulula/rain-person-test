@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雨中人 · 高级交互特效</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;background:#c0c5bb;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;gap:28px}
+
+.phone{width:390px;background:#e8ebe4;border-radius:32px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.16),0 0 0 1px rgba(0,0,0,.03)}
+.phone-inner{aspect-ratio:9/18.5;position:relative;overflow:hidden;background:linear-gradient(180deg,#e8ebe4 0%,#dfe5da 55%,#e8ebe4 100%)}
+
+/* ═══════════════════════════════════════════
+   PART 1: 高级水晶按钮
+   四层结构：边框 → 表面光 → 内容 → 粒子层
+   ═══════════════════════════════════════════ */
+
+.crystal-wrap{position:relative;display:inline-block}
+
+/* 按钮主体 */
+.crystal{
+  position:relative;padding:13px 30px;border-radius:12px;
+  border:0.5px solid rgba(58,74,63,.1);
+  background:linear-gradient(135deg,
+    rgba(255,255,255,.18) 0%,
+    rgba(58,74,63,.015) 35%,
+    rgba(255,255,255,.06) 65%,
+    rgba(58,74,63,.01) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.35),
+    inset 0 -1px 0 rgba(58,74,63,.025),
+    0 1px 2px rgba(58,74,63,.03);
+  color:#3a4a3f;font-family:inherit;font-size:16px;font-weight:300;letter-spacing:2px;
+  cursor:pointer;outline:none;user-select:none;
+  transition:all .55s cubic-bezier(.16,1,.3,1);
+  overflow:hidden;
+  z-index:1;
+}
+
+/* 表面流光层 */
+.crystal::before{
+  content:'';position:absolute;inset:0;border-radius:11px;z-index:0;pointer-events:none;
+  background:linear-gradient(105deg,
+    transparent 30%,
+    rgba(255,255,255,.25) 45%,
+    rgba(255,255,255,.08) 50%,
+    transparent 65%);
+  opacity:0;transition:opacity .4s ease;
+  transform:translateX(-100%);
+}
+.crystal:hover::before{
+  opacity:1;transform:translateX(100%);
+  transition:transform .8s cubic-bezier(.4,0,.2,1),opacity .3s ease;
+}
+
+/* 底部光晕（hover 时显现） */
+.crystal::after{
+  content:'';position:absolute;bottom:-2px;left:15%;right:15%;height:1px;z-index:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(122,155,138,.25),transparent);
+  opacity:0;transition:opacity .4s ease;
+}
+.crystal:hover::after{opacity:1}
+
+/* hover */
+.crystal:hover{
+  transform:scale(1.02);
+  border-color:rgba(58,74,63,.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.4),
+    inset 0 -1px 0 rgba(58,74,63,.03),
+    0 2px 8px rgba(58,74,63,.05);
+}
+
+/* active（按下） */
+.crystal:active{
+  transform:scale(.96);
+  transition:transform .15s ease;
+  box-shadow:inset 0 2px 4px rgba(58,74,63,.04);
+}
+
+/* 选中态 */
+.crystal.sel{
+  transform:scale(1.04);
+  border-color:rgba(122,155,138,.35);
+  background:linear-gradient(135deg,
+    rgba(200,230,205,.2) 0%,
+    rgba(122,155,138,.12) 30%,
+    rgba(170,210,180,.1) 60%,
+    rgba(255,255,255,.12) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.25),
+    inset 0 -1px 0 rgba(122,155,138,.05),
+    0 0 0 3px rgba(122,155,138,.07),
+    0 0 0 10px rgba(122,155,138,.025),
+    0 3px 22px rgba(122,155,138,.12);
+  color:#3a4a3f;
+}
+/* 选中态持续微光呼吸 */
+.crystal.sel::before{
+  opacity:.6;transform:translateX(0);
+  animation:shimmerPulse 3s ease-in-out infinite;
+  background:linear-gradient(105deg,
+    transparent 20%,rgba(255,255,255,.15) 45%,transparent 70%);
+}
+@keyframes shimmerPulse{
+  0%,100%{opacity:.3;transform:translateX(-30%)}
+  50%{opacity:.7;transform:translateX(30%)}
+}
+
+/* ═══ 暗色水晶 ═══ */
+.crystal-dark-wrap{position:relative;display:inline-block}
+.crystal-dark{
+  position:relative;padding:13px 30px;border-radius:12px;
+  border:0.5px solid rgba(255,255,255,.1);
+  background:linear-gradient(135deg,
+    rgba(255,255,255,.07) 0%,
+    rgba(255,255,255,.01) 35%,
+    rgba(255,255,255,.04) 65%,
+    rgba(255,255,255,0) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1);
+  color:#fff;font-family:inherit;font-size:16px;font-weight:300;letter-spacing:2px;
+  cursor:pointer;outline:none;user-select:none;
+  transition:all .55s cubic-bezier(.16,1,.3,1);overflow:hidden;z-index:1;
+}
+.crystal-dark::before{
+  content:'';position:absolute;inset:0;border-radius:11px;z-index:0;pointer-events:none;
+  background:linear-gradient(105deg,
+    transparent 30%,rgba(255,255,255,.15) 45%,rgba(255,255,255,.04) 50%,transparent 65%);
+  opacity:0;transition:opacity .4s ease;transform:translateX(-100%);
+}
+.crystal-dark:hover::before{
+  opacity:1;transform:translateX(100%);
+  transition:transform .8s cubic-bezier(.4,0,.2,1),opacity .3s ease;
+}
+.crystal-dark:hover{transform:scale(1.02);border-color:rgba(255,255,255,.18)}
+.crystal-dark:active{transform:scale(.96);transition:transform .15s ease}
+.crystal-dark.sel{
+  transform:scale(1.04);
+  border-color:rgba(122,155,138,.4);
+  background:linear-gradient(135deg,
+    rgba(160,210,170,.18) 0%,rgba(122,155,138,.1) 30%,
+    rgba(140,190,150,.08) 60%,rgba(255,255,255,.06) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.15),
+    0 0 0 3px rgba(122,155,138,.1),0 0 0 10px rgba(122,155,138,.03),0 3px 26px rgba(122,155,138,.18);
+}
+.crystal-dark.sel::before{
+  opacity:.5;transform:translateX(0);
+  animation:shimmerPulse 3s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════
+   PART 2: 粒子 & 涟漪系统
+   ═══════════════════════════════════════════ */
+.star-particle{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:9999;
+  animation:starBurst 1.5s cubic-bezier(.16,1,.3,1) forwards;
+}
+@keyframes starBurst{
+  0%{opacity:1;transform:translate(0,0) scale(1.2)}
+  50%{opacity:.5}
+  100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0)}
+}
+/* 涟漪 — 双层 */
+.ripple-ring{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:9998;
+  border:0.5px solid rgba(122,155,138,.2);
+  animation:ripOut .9s ease-out forwards;
+}
+@keyframes ripOut{0%{width:0;height:0;opacity:.5}100%{width:160px;height:160px;opacity:0;margin-left:-80px;margin-top:-80px}}
+.ripple-ring2{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:9997;
+  border:0.5px solid rgba(122,155,138,.1);
+  animation:ripOut2 1.2s ease-out forwards;
+}
+@keyframes ripOut2{0%{width:0;height:0;opacity:.35}100%{width:220px;height:220px;opacity:0;margin-left:-110px;margin-top:-110px}}
+
+/* ═══════════════════════════════════════════
+   PART 3: 入场动画系统
+   ═══════════════════════════════════════════ */
+.fade-up{opacity:0;transform:translateY(16px);filter:blur(5px)}
+.fade-up.go{animation:fadeUpIn .7s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes fadeUpIn{to{opacity:1;transform:translateY(0);filter:blur(0)}}
+
+/* 标题专用：字间距展开 */
+.title-reveal{opacity:0;letter-spacing:16px;filter:blur(4px)}
+.title-reveal.go{animation:titleIn .9s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes titleIn{to{opacity:1;letter-spacing:10px;filter:blur(0)}}
+
+/* ═══════════════════════════════════════════
+   PART 4: 卡片倾斜 + 光斑跟随
+   ═══════════════════════════════════════════ */
+.card-tilt{
+  padding:16px 18px;border-radius:14px;
+  border:0.5px solid rgba(58,74,63,.06);
+  background:linear-gradient(135deg,
+    rgba(255,255,255,.3) 0%,
+    rgba(221,226,216,.4) 50%,
+    rgba(255,255,255,.15) 100%);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3);
+  width:100%;margin-bottom:12px;
+  transition:transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s ease;
+  cursor:pointer;opacity:0;transform:translateY(20px);
+  font-size:15px;font-weight:300;color:#3a4a3f;
+}
+.card-tilt.in{opacity:1;transform:translateY(0)}
+.card-tilt:hover{
+  transform:translateY(-2px) scale(1.01);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 4px 16px rgba(58,74,63,.06);
+}
+
+/* ═══════════════════════════════════════════
+   PART 5: 标定页
+   ═══════════════════════════════════════════ */
+.calib-outer{width:130px;height:130px;border-radius:50%;border:.5px solid rgba(58,74,63,.05);display:flex;align-items:center;justify-content:center;animation:ringBreath 3.5s ease-in-out infinite}
+.calib-mid{width:80px;height:80px;border-radius:50%;border:.5px dashed rgba(58,74,63,.07);display:flex;align-items:center;justify-content:center}
+.calib-dot{width:10px;height:10px;border-radius:50%;background:#c4736e;box-shadow:0 0 22px rgba(196,115,110,.18),0 0 44px rgba(196,115,110,.05);animation:dotSoft 2.2s ease-in-out infinite}
+@keyframes ringBreath{0%,100%{transform:scale(1);border-color:rgba(58,74,63,.03)}50%{transform:scale(1.06);border-color:rgba(58,74,63,.1)}}
+@keyframes dotSoft{0%,100%{transform:scale(1);opacity:.65}50%{transform:scale(1.35);opacity:1}}
+
+/* ═══════════════════════════════════════════
+   PART 6: 云层加载
+   ═══════════════════════════════════════════ */
+.cloud-group{display:flex;align-items:flex-end;gap:5px}
+.cloud-bar{width:3px;border-radius:1.5px;background:#7a9b8a;animation:cloudBreathe 3s ease-in-out infinite}
+@keyframes cloudBreathe{0%,100%{opacity:.1;transform:scaleY(.7)}50%{opacity:.8;transform:scaleY(1)}}
+
+/* ═══════════════════════════════════════════
+   PART 7: 雨丝背景
+   ═══════════════════════════════════════════ */
+.rain-layer{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.rain-line{position:absolute;top:-100px;width:0.5px;background:linear-gradient(180deg,transparent,rgba(58,74,63,.04),transparent);animation:rain linear infinite;transform:rotate(12deg)}
+@keyframes rain{0%{transform:translateY(-120px) rotate(12deg)}100%{transform:translateY(900px) rotate(12deg)}}
+
+.mask-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:0}
+.dark-bg{background:linear-gradient(180deg,#1a221d,#121a16 35%,#162018 65%,#0f1712)}
+
+.replay-btn{
+  padding:7px 20px;border-radius:20px;border:.5px solid rgba(58,74,63,.12);
+  background:transparent;color:rgba(58,74,63,.4);font-family:inherit;
+  font-size:11px;font-weight:300;letter-spacing:2px;cursor:pointer;
+}
+.replay-btn:hover{color:#3a4a3f;border-color:rgba(58,74,63,.2)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ 1. 首页 · 全特效 ═══════════════ -->
+<div>
+  <div style="text-align:center;margin-bottom:4px;font-size:10px;font-weight:300;letter-spacing:4px;color:rgba(58,74,63,.3)">PAGE 1 · 首页</div>
+  <div style="display:flex;justify-content:center;margin-bottom:8px"><button class="replay-btn" onclick="replay('p1')">▶ 重播</button></div>
+  <div class="phone"><div class="phone-inner" id="p1">
+    <div class="rain-layer" id="rain1"></div>
+    <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:18px">
+      <div class="title-reveal" style="font-size:34px;font-weight:200;color:#3a4a3f">雨 中 人</div>
+      <div class="fade-up" style="font-size:13px;font-weight:300;color:rgba(58,74,63,.45);letter-spacing:4px;margin-bottom:6px">一场关于内心世界的雨境之旅</div>
+      <div class="fade-up" style="display:flex;gap:16px">
+        <div class="crystal-wrap"><button class="crystal" onclick="toggleSel(this)">皱眉</button></div>
+        <div class="crystal-wrap"><button class="crystal" onclick="toggleSel(this)">抿嘴</button></div>
+        <div class="crystal-wrap"><button class="crystal" onclick="toggleSel(this)">皱眉+抿嘴</button></div>
+      </div>
+      <div class="fade-up" style="display:flex;gap:28px">
+        <div class="crystal-wrap"><button class="crystal" style="font-size:19px;padding:16px 36px;letter-spacing:3px" onclick="toggleSel(this)">伞</button></div>
+        <div class="crystal-wrap"><button class="crystal" style="font-size:19px;padding:16px 36px;letter-spacing:3px" onclick="toggleSel(this)">亭子</button></div>
+      </div>
+      <div class="fade-up">
+        <div class="crystal-wrap"><button class="crystal" style="padding:14px 52px;font-size:19px;letter-spacing:6px" onclick="toggleSel(this)">开 始</button></div>
+      </div>
+      <div class="fade-up" style="font-size:10px;color:rgba(58,74,63,.22);letter-spacing:3px">请戴上耳机，静心体验</div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══════════════ 2. 视频页 · 暗色水晶 ═══════════════ -->
+<div>
+  <div style="text-align:center;margin-bottom:4px;font-size:10px;font-weight:300;letter-spacing:4px;color:rgba(58,74,63,.3)">PAGE 3-5 · 视频交互页</div>
+  <div style="display:flex;justify-content:center;margin-bottom:8px"><button class="replay-btn" onclick="replay('p2')">▶ 重播</button></div>
+  <div class="phone"><div class="phone-inner dark-bg" id="p2">
+    <div class="mask-overlay"></div>
+    <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:22px">
+      <div class="fade-up" style="color:#fff;font-size:18px;font-weight:300;text-align:center;line-height:1.7;letter-spacing:1px;max-width:270px">
+        你遇到了一位朋友，<br>想象你在和他解释你的烦恼
+      </div>
+      <div class="fade-up" style="display:flex;gap:16px">
+        <div class="crystal-dark-wrap"><button class="crystal-dark" onclick="toggleSel(this)">皱眉</button></div>
+        <div class="crystal-dark-wrap"><button class="crystal-dark" onclick="toggleSel(this)">抿嘴</button></div>
+        <div class="crystal-dark-wrap"><button class="crystal-dark" onclick="toggleSel(this)">皱眉+抿嘴</button></div>
+      </div>
+      <div class="fade-up" style="display:flex;gap:32px">
+        <div class="crystal-dark-wrap"><button class="crystal-dark" style="font-size:20px;padding:16px 38px;letter-spacing:3px" onclick="toggleSel(this)">伞</button></div>
+        <div class="crystal-dark-wrap"><button class="crystal-dark" style="font-size:20px;padding:16px 38px;letter-spacing:3px" onclick="toggleSel(this)">亭子</button></div>
+      </div>
+      <div class="fade-up" style="font-size:10px;color:rgba(255,255,255,.2);letter-spacing:2px">将鼠标悬停在按钮上 → 流光扫过</div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══════════════ 3. 标定页 ═══════════════ -->
+<div>
+  <div style="text-align:center;margin-bottom:4px;font-size:10px;font-weight:300;letter-spacing:4px;color:rgba(58,74,63,.3)">PAGE 2 · 标定页</div>
+  <div class="phone"><div class="phone-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px">
+    <div class="fade-up go d0" style="font-size:17px;font-weight:300;letter-spacing:2px;text-align:center;line-height:1.8;padding:0 30px">放松自己，测试全程看着屏幕</div>
+    <div class="calib-outer fade-up go d1"><div class="calib-mid"><div class="calib-dot"></div></div></div>
+    <div class="fade-up go d2" style="font-size:13px;font-weight:300;color:rgba(58,74,63,.38);letter-spacing:3px">看着光点，正在标定...</div>
+  </div></div>
+</div>
+
+<!-- ═══════════════ 4. 报告页 · 卡片倾斜 ═══════════════ -->
+<div>
+  <div style="text-align:center;margin-bottom:4px;font-size:10px;font-weight:300;letter-spacing:4px;color:rgba(58,74,63,.3)">PAGE 7 · 报告页</div>
+  <div style="display:flex;justify-content:center;margin-bottom:8px"><button class="replay-btn" onclick="replayCards()">▶ 重播卡片</button></div>
+  <div class="phone"><div class="phone-inner" style="padding:32px 20px 40px;display:flex;flex-direction:column;align-items:center;overflow-y:auto">
+    <div class="title-reveal go" style="font-size:21px;font-weight:200;letter-spacing:3px;text-align:center;margin-bottom:12px;animation-delay:.05s">你的本次雨境画像</div>
+    <div class="fade-up go d1" style="font-size:13px;color:rgba(58,74,63,.45);text-align:center;line-height:1.8;margin-bottom:24px;padding:0 8px">从情绪表达来看，你在情绪表达上保持克制与清醒…</div>
+    <div class="card-tilt in" style="transition-delay:.2s" id="c0" onmousemove="tiltCard(this,event)" onmouseleave="resetCard(this)"><div style="font-size:10px;color:rgba(58,74,63,.35);letter-spacing:2px;margin-bottom:4px">第1阶段</div><div style="font-size:17px;font-weight:300">情绪压抑偏高</div></div>
+    <div class="card-tilt in" style="transition-delay:.32s" id="c1" onmousemove="tiltCard(this,event)" onmouseleave="resetCard(this)"><div style="font-size:10px;color:rgba(58,74,63,.35);letter-spacing:2px;margin-bottom:4px">第2阶段</div><div style="font-size:17px;font-weight:300">倾向独自处理情绪</div></div>
+    <div class="card-tilt in" style="transition-delay:.44s" id="c2" onmousemove="tiltCard(this,event)" onmouseleave="resetCard(this)"><div style="font-size:10px;color:rgba(58,74,63,.35);letter-spacing:2px;margin-bottom:4px">第3阶段</div><div style="font-size:17px;font-weight:300">倾向于先解决问题</div></div>
+    <div class="card-tilt in" style="transition-delay:.56s" id="c3" onmousemove="tiltCard(this,event)" onmouseleave="resetCard(this)"><div style="font-size:10px;color:rgba(58,74,63,.35);letter-spacing:2px;margin-bottom:4px">第4阶段</div><div style="font-size:17px;font-weight:300">倾向于稳定</div></div>
+    <div class="fade-up go d5" style="margin-top:18px">
+      <div class="crystal-wrap"><button class="crystal" style="font-size:17px;padding:14px 44px;letter-spacing:4px" onclick="toggleSel(this)">重新体验</button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══════════════ 5. 加载页 ═══════════════ -->
+<div>
+  <div style="text-align:center;margin-bottom:4px;font-size:10px;font-weight:300;letter-spacing:4px;color:rgba(58,74,63,.3)">PAGE 6 · 生成报告</div>
+  <div class="phone"><div class="phone-inner" style="background:#000;display:flex;align-items:center;justify-content:center">
+    <div class="cloud-group"><div class="cloud-bar" style="height:26px;animation-delay:0s"></div><div class="cloud-bar" style="height:38px;animation-delay:.35s"></div><div class="cloud-bar" style="height:20px;animation-delay:.7s"></div><div class="cloud-bar" style="height:34px;animation-delay:1.05s"></div><div class="cloud-bar" style="height:24px;animation-delay:1.4s"></div></div>
+    <span style="color:rgba(122,155,138,.65);font-size:18px;font-weight:300;letter-spacing:3px;margin-left:14px;animation:cloudBreathe 3s ease-in-out infinite">正在生成报告</span>
+  </div></div>
+</div>
+
+<script>
+// ═══ 雨丝生成 ═══
+function spawnRain(id,n){
+  const el=document.getElementById(id);if(!el)return;
+  for(let i=0;i<n;i++){
+    const l=document.createElement('div');l.className='rain-line';
+    l.style.left=Math.random()*100+'%';l.style.height=(35+Math.random()*70)+'px';
+    l.style.animationDuration=(4+Math.random()*6)+'s';l.style.animationDelay=Math.random()*8+'s';
+    l.style.opacity=(.02+Math.random()*.04);el.appendChild(l);
+  }
+}
+spawnRain('rain1',22);
+
+// ═══ 入场重播 ═══
+document.querySelectorAll('[id^="p"]').forEach(el=>replay(el.id));
+function replay(id){
+  const el=document.getElementById(id);
+  el.querySelectorAll('.fade-up,.title-reveal').forEach((item,i)=>{
+    item.classList.remove('go','d0','d1','d2','d3','d4','d5');
+    item.style.animation='none';item.offsetHeight;item.style.animation='';
+  });
+  requestAnimationFrame(()=>{
+    el.querySelectorAll('.fade-up,.title-reveal').forEach((item,i)=>{
+      item.classList.add('go','d'+Math.min(i,5));
+    });
+  });
+}
+
+// ═══ 卡片倾斜 ═══
+function tiltCard(card,e){
+  const rect=card.getBoundingClientRect();
+  const x=e.clientX-rect.left,y=e.clientY-rect.top;
+  const rx=(y-rect.height/2)/rect.height*6;
+  const ry=(x-rect.width/2)/rect.width*-6;
+  card.style.transform=`perspective(600px) translateY(-2px) scale(1.01) rotateX(${rx}deg) rotateY(${ry}deg)`;
+  card.style.boxShadow=`inset 0 1px 0 rgba(255,255,255,.4),${ry>0?'-':''}${Math.abs(ry)*1.5}px ${rx>0?'-':''}${Math.abs(rx)*1.5}px 16px rgba(58,74,63,.06)`;
+}
+function resetCard(card){
+  card.style.transform='translateY(0) scale(1) rotateX(0) rotateY(0)';
+  card.style.boxShadow='inset 0 1px 0 rgba(255,255,255,.3)';
+}
+
+function replayCards(){
+  ['c0','c1','c2','c3'].forEach((id,i)=>{
+    const c=document.getElementById(id);
+    c.classList.remove('in');c.style.transition='none';
+    c.offsetHeight;
+    c.style.transition=`all .5s cubic-bezier(.16,1,.3,1) ${.2+i*.12}s`;
+    c.classList.add('in');
+  });
+}
+
+// ═══ 选中 + 粒子 ═══
+function toggleSel(btn){
+  const was=btn.classList.contains('sel');
+  const p=btn.closest('[class*="wrap"]')?.parentElement||btn.parentElement;
+  if(p) p.querySelectorAll('.sel').forEach(b=>{if(b!==btn)b.classList.remove('sel')});
+  btn.classList.toggle('sel');
+  if(!was) burst(btn);
+}
+
+function burst(btn){
+  const rect=btn.getBoundingClientRect();
+  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  // 粒子
+  for(let i=0;i<24;i++){
+    const p=document.createElement('div');p.className='star-particle';
+    const angle=(i/24)*Math.PI*2+(Math.random()-.5)*.2;
+    const dist=35+Math.random()*50;
+    p.style.cssText=`left:${cx}px;top:${cy}px;--sx:${Math.cos(angle)*dist}px;--sy:${Math.sin(angle)*dist}px;width:${1.5+Math.random()*2}px;height:${1.5+Math.random()*2}px;background:${Math.random()>.5?'#d5ead5':'rgba(255,255,255,.9)'};animation-delay:${Math.random()*.1}s`;
+    document.body.appendChild(p);setTimeout(()=>p.remove(),1700);
+  }
+  // 双层涟漪
+  [0,80].forEach(delay=>{
+    const r=document.createElement('div');
+    r.className=delay?'ripple-ring2':'ripple-ring';
+    r.style.left=cx+'px';r.style.top=cy+'px';
+    r.style.animationDelay=delay+'ms';
+    document.body.appendChild(r);
+    setTimeout(()=>r.remove(),delay+1200);
+  });
+}
+</script>
+</body>
+</html>

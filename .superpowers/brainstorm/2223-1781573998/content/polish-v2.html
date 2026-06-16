@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雨中人 · 细节打磨</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;background:#c5cac0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px;gap:40px}
+
+.section-title{font-size:13px;font-weight:300;letter-spacing:4px;color:rgba(58,74,63,.45);text-align:center;margin-bottom:8px}
+.phone{width:360px;background:#e8ebe4;border-radius:28px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.14),0 0 0 1px rgba(0,0,0,.03)}
+.phone-inner{position:relative;aspect-ratio:9/18;overflow:hidden}
+
+/* ══════════════════════════════════════════════
+   1. 红点标定重设计
+   ══════════════════════════════════════════════ */
+.calib-bg{background:linear-gradient(180deg,#e8ebe4,#dde2d8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px}
+.calib-ring-outer{width:140px;height:140px;border-radius:50%;border:1px solid rgba(58,74,63,.08);display:flex;align-items:center;justify-content:center;animation:ringBreathe 3s ease-in-out infinite}
+.calib-ring-mid{width:90px;height:90px;border-radius:50%;border:1px dashed rgba(58,74,63,.12);display:flex;align-items:center;justify-content:center}
+.calib-dot{width:14px;height:14px;border-radius:50%;background:#c4736e;box-shadow:0 0 24px rgba(196,115,110,.25),0 0 48px rgba(196,115,110,.08);animation:dotSoft 2s ease-in-out infinite}
+@keyframes ringBreathe{0%,100%{transform:scale(1);border-color:rgba(58,74,63,.06)}50%{transform:scale(1.04);border-color:rgba(58,74,63,.14)}}
+@keyframes dotSoft{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.25);opacity:1}}
+
+/* ══════════════════════════════════════════════
+   2. 毛玻璃质感按钮基础
+   ══════════════════════════════════════════════ */
+.glass-btn{
+  position:relative;padding:13px 30px;border-radius:12px;
+  border:1px solid rgba(58,74,63,.15);
+  background:rgba(58,74,63,.03);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  color:#3a4a3f;font-family:inherit;font-size:16px;font-weight:300;letter-spacing:2px;
+  cursor:pointer;outline:none;overflow:visible;
+  transition:all .5s cubic-bezier(.16,1,.3,1);
+}
+.glass-btn:hover{background:rgba(58,74,63,.06);border-color:rgba(58,74,63,.22)}
+
+/* 选中态：毛玻璃 + 微放大 + 绿色辉光 */
+.glass-btn.sel{
+  transform:scale(1.05);
+  background:rgba(122,155,138,.18);
+  border-color:rgba(122,155,138,.45);
+  color:#3a4a3f;
+  box-shadow:
+    0 0 0 4px rgba(122,155,138,.08),
+    0 0 0 12px rgba(122,155,138,.03),
+    0 4px 24px rgba(122,155,138,.12);
+}
+.glass-btn:active{transform:scale(.95)}
+
+/* 文字按钮用 — 更轻 */
+.glass-btn-light{
+  position:relative;padding:11px 24px;border-radius:10px;
+  border:1px solid rgba(58,74,63,.1);
+  background:rgba(58,74,63,.02);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  color:#3a4a3f;font-family:inherit;font-size:15px;font-weight:300;letter-spacing:2px;
+  cursor:pointer;outline:none;
+  transition:all .45s cubic-bezier(.16,1,.3,1);
+}
+.glass-btn-light.sel{
+  transform:scale(1.06);
+  background:rgba(122,155,138,.15);
+  border-color:rgba(122,155,138,.4);
+  box-shadow:
+    0 0 0 3px rgba(122,155,138,.07),
+    0 0 0 9px rgba(122,155,138,.02),
+    0 3px 18px rgba(122,155,138,.1);
+}
+
+/* 暗色背景上的毛玻璃 */
+.glass-btn-dark{
+  position:relative;padding:13px 30px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  color:#fff;font-family:inherit;font-size:16px;font-weight:300;letter-spacing:2px;
+  cursor:pointer;outline:none;
+  transition:all .5s cubic-bezier(.16,1,.3,1);
+}
+.glass-btn-dark.sel{
+  transform:scale(1.05);
+  background:rgba(122,155,138,.22);
+  border-color:rgba(122,155,138,.55);
+  color:#fff;
+  box-shadow:
+    0 0 0 4px rgba(122,155,138,.1),
+    0 0 0 12px rgba(122,155,138,.04),
+    0 4px 28px rgba(122,155,138,.18);
+}
+
+/* ══════════════════════════════════════════════
+   3. 粒子爆发（与毛玻璃按钮配色统一）
+   ══════════════════════════════════════════════ */
+.star-particle{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:9999;
+  animation:starBurst 1.4s cubic-bezier(.16,1,.3,1) forwards;
+}
+@keyframes starBurst{
+  0%{opacity:1;transform:translate(0,0) scale(1)}
+  60%{opacity:.5}
+  100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0)}
+}
+
+/* ══════════════════════════════════════════════
+   4. 暗色背景页
+   ══════════════════════════════════════════════ */
+.dark-bg{background:linear-gradient(180deg,#1a221d,#121a16 35%,#162018 65%,#0f1712)}
+.mask-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:0}
+
+/* ══════════════════════════════════════════════
+   5. 淡入上浮文字
+   ══════════════════════════════════════════════ */
+.fade-up{opacity:0;transform:translateY(14px);filter:blur(4px);animation:fadeUpIn .7s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes fadeUpIn{to{opacity:1;transform:translateY(0);filter:blur(0)}}
+
+/* 涟漪 */
+.ripple{position:fixed;border-radius:50%;border:1px solid rgba(122,155,138,.25);pointer-events:none;z-index:9998;animation:ripOut .75s ease-out forwards}
+@keyframes ripOut{0%{width:0;height:0;opacity:.5}100%{width:150px;height:150px;opacity:0;margin-left:-75px;margin-top:-75px}}
+
+/* 加载 */
+.cloud-bars{display:flex;gap:6px;align-items:flex-end}
+.cloud-bar{width:4px;border-radius:2px;background:#7a9b8a;animation:cloudBreathe 2.8s ease-in-out infinite}
+@keyframes cloudBreathe{0%,100%{opacity:.2}50%{opacity:.85}}
+
+/* 卡片 */
+.card-glass{padding:16px 18px;border-radius:14px;border:1px solid rgba(58,74,63,.07);background:rgba(221,226,216,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);width:100%;margin-bottom:12px;opacity:0;transform:translateY(18px);transition:all .5s cubic-bezier(.16,1,.3,1)}
+.card-glass.in{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ 1. 红点标定重设计 ═══════════════ -->
+<div>
+  <div class="section-title">🎯 红点标定 · 重设计</div>
+  <div class="phone">
+    <div class="phone-inner calib-bg">
+      <div style="text-align:center;opacity:0;animation:fadeUpIn .7s .15s forwards;font-size:17px;font-weight:300;letter-spacing:2px;line-height:1.8;padding:0 28px">
+        放松自己，<br>测试全程看着屏幕以获得更准确的结果
+      </div>
+      <div class="calib-ring-outer" style="opacity:0;animation:fadeUpIn .7s .4s forwards,ringBreathe 3s ease-in-out .4s infinite">
+        <div class="calib-ring-mid">
+          <div class="calib-dot"></div>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:300;color:rgba(58,74,63,.4);letter-spacing:3px;opacity:0;animation:fadeUpIn .7s .65s forwards">
+        看着光点，正在标定...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 2. 毛玻璃按钮：浅色背景 ═══════════════ -->
+<div>
+  <div class="section-title">🔘 毛玻璃按钮 · 浅色背景</div>
+  <div class="phone">
+    <div class="phone-inner" style="background:linear-gradient(180deg,#e8ebe4,#dce3d6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px">
+      <div class="fade-up" style="animation-delay:.1s;display:flex;gap:20px">
+        <button class="glass-btn" onclick="toggleGlass(this)">皱眉</button>
+        <button class="glass-btn" onclick="toggleGlass(this)">抿嘴</button>
+        <button class="glass-btn" onclick="toggleGlass(this)">皱眉+抿嘴</button>
+      </div>
+      <div class="fade-up" style="animation-delay:.3s;display:flex;gap:24px">
+        <button class="glass-btn-light" onclick="toggleGlass(this)">听歌</button>
+        <button class="glass-btn-light" onclick="toggleGlass(this)">发呆</button>
+        <button class="glass-btn-light" onclick="toggleGlass(this)">游戏</button>
+      </div>
+      <div class="fade-up" style="animation-delay:.5s;display:flex;gap:32px">
+        <button class="glass-btn" style="font-size:20px;padding:16px 38px;letter-spacing:4px" onclick="toggleGlass(this)">伞</button>
+        <button class="glass-btn" style="font-size:20px;padding:16px 38px;letter-spacing:4px" onclick="toggleGlass(this)">亭子</button>
+      </div>
+      <div class="fade-up" style="animation-delay:.7s;font-size:11px;color:rgba(58,74,63,.3);letter-spacing:2px">点击按钮查看选中态 → 毛玻璃 + 微放大 + 星芒粒子</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 3. 毛玻璃按钮：暗色背景（视频页） ═══════════════ -->
+<div>
+  <div class="section-title">🌙 毛玻璃按钮 · 暗色背景（视频页）</div>
+  <div class="phone">
+    <div class="phone-inner dark-bg">
+      <div class="mask-overlay"></div>
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:32px">
+        <div class="fade-up" style="animation-delay:.2s;display:flex;gap:20px">
+          <button class="glass-btn-dark" onclick="toggleGlass(this)">皱眉</button>
+          <button class="glass-btn-dark" onclick="toggleGlass(this)">抿嘴</button>
+          <button class="glass-btn-dark" onclick="toggleGlass(this)">皱眉+抿嘴</button>
+        </div>
+        <div class="fade-up" style="animation-delay:.4s;display:flex;gap:36px">
+          <button class="glass-btn-dark" style="font-size:22px;padding:18px 42px;letter-spacing:4px" onclick="toggleGlass(this)">伞</button>
+          <button class="glass-btn-dark" style="font-size:22px;padding:18px 42px;letter-spacing:4px" onclick="toggleGlass(this)">亭子</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 4. 报告卡片毛玻璃 ═══════════════ -->
+<div>
+  <div class="section-title">📋 报告卡片 · 毛玻璃</div>
+  <div class="phone">
+    <div class="phone-inner" style="background:linear-gradient(180deg,#e8ebe4,#dde2d8);padding:32px 20px 40px;overflow-y:auto;display:flex;flex-direction:column;align-items:center">
+      <h2 class="fade-up" style="animation-delay:.05s;font-size:20px;font-weight:200;letter-spacing:3px;text-align:center;margin-bottom:12px">你的本次雨境画像</h2>
+      <p class="fade-up" style="animation-delay:.15s;font-size:13px;color:rgba(58,74,63,.45);text-align:center;line-height:1.8;margin-bottom:24px;padding:0 8px">从情绪表达来看，你在情绪表达上保持克制与清醒…</p>
+      <div class="card-glass fade-up" style="animation-delay:.25s" id="c0"><div style="font-size:10px;color:rgba(58,74,63,.38);letter-spacing:2px;margin-bottom:4px">第1阶段</div><div style="font-size:17px;font-weight:300">情绪压抑偏高</div></div>
+      <div class="card-glass fade-up" style="animation-delay:.37s" id="c1"><div style="font-size:10px;color:rgba(58,74,63,.38);letter-spacing:2px;margin-bottom:4px">第2阶段</div><div style="font-size:17px;font-weight:300">倾向独自处理情绪</div></div>
+      <div class="card-glass fade-up" style="animation-delay:.49s" id="c2"><div style="font-size:10px;color:rgba(58,74,63,.38);letter-spacing:2px;margin-bottom:4px">第3阶段</div><div style="font-size:17px;font-weight:300">倾向于先解决问题</div></div>
+      <div class="card-glass fade-up" style="animation-delay:.61s" id="c3"><div style="font-size:10px;color:rgba(58,74,63,.38);letter-spacing:2px;margin-bottom:4px">第4阶段</div><div style="font-size:17px;font-weight:300">倾向于稳定</div></div>
+      <div class="fade-up" style="animation-delay:.75s;margin-top:18px">
+        <button class="glass-btn" style="font-size:17px;padding:14px 44px;letter-spacing:4px" onclick="toggleGlass(this)">重新体验</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 粒子爆发
+function burst(btn){
+  const rect=btn.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  for(let i=0;i<22;i++){
+    const p=document.createElement('div');
+    p.className='star-particle';
+    const angle=(i/22)*Math.PI*2+(Math.random()-.5)*.25;
+    const dist=38+Math.random()*50;
+    p.style.cssText=`left:${cx}px;top:${cy}px;--sx:${Math.cos(angle)*dist}px;--sy:${Math.sin(angle)*dist}px;width:${2+Math.random()*3}px;height:${2+Math.random()*2.5}px;background:${Math.random()>.45?'#eaf5e6':'#fff'};animation-delay:${Math.random()*.12}s`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),1600);
+  }
+  // 涟漪
+  const r=document.createElement('div');
+  r.className='ripple';r.style.left=cx+'px';r.style.top=cy+'px';
+  document.body.appendChild(r);setTimeout(()=>r.remove(),750);
+}
+
+function toggleGlass(btn){
+  const was=btn.classList.contains('sel');
+  // 同组内取消其他选中（同一父元素下的按钮）
+  const parent=btn.parentElement;
+  if(parent){
+    parent.querySelectorAll('.glass-btn.sel,.glass-btn-light.sel,.glass-btn-dark.sel').forEach(b=>{if(b!==btn)b.classList.remove('sel')});
+  }
+  btn.classList.toggle('sel');
+  if(!was) burst(btn);
+}
+</script>
+</body>
+</html>

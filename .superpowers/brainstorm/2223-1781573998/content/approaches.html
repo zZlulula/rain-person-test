@@ -1,0 +1,36 @@
+<h2>三种实现方案</h2>
+<p class="subtitle">柔和诗意动效 + 环境氛围，逻辑代码不动</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>组件级动画增强（推荐）</h3>
+      <p>在现有 Widget 上逐层包裹 Flutter 隐式动画组件（AnimatedContainer、AnimatedOpacity、AnimatedScale、TweenAnimationBuilder），仅在复杂编排处使用 AnimationController。</p>
+      <p style="opacity:0.8;font-size:14px">改动范围：app_theme.dart（动画令牌）、gaze_choice_button.dart（重构）、6 个页面文件 + report_page.dart、main.dart（页面过渡）、新增 1 个氛围粒子 Widget</p>
+      <p style="color:#7a9b8a">✅ 最贴合"不改逻辑"原则 · 代码增量小 · 每个改动局部可控</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>集中式动画系统</h3>
+      <p>新建 AnimationTokens 类统一管理时长/曲线/样式，新建 AnimatedText、BreathingButton 等通用动画组件，各页面引用这些组件。</p>
+      <p style="opacity:0.8;font-size:14px">改动范围：新增 3-4 个动画系统文件、重构所有页面使用新组件</p>
+      <p style="color:#c4a45a">⚠️ 结构更规范但重构量大，可能引入不必要的抽象层</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>页面级时间轴编排</h3>
+      <p>每个页面持有一个 AnimationController，编排完整的入场→空闲→退场时间轴，类似影视级动效编排。</p>
+      <p style="opacity:0.8;font-size:14px">改动范围：每个页面大幅重构，动画逻辑与业务逻辑深度交织</p>
+      <p style="color:#c4736e">❌ 改动最大，容易破坏现有逻辑，过度设计</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px">
+  <p style="font-size:14px;opacity:0.7">推荐 <b>方案 A</b>：利用 Flutter 隐式动画系统做"最小侵入式增强"——给现有容器加上 Animated 前缀、给文字加上 TweenAnimationBuilder、给按钮加上缩放反馈，氛围粒子作为独立 Widget 插入页面底部。每个文件改动量约 10-30 行。</p>
+</div>

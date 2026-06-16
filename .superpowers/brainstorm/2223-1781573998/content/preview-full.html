@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雨中人 UI 动效预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    background: #e8ebe4;
+    color: #3a4a3f;
+    min-height: 100vh;
+  }
+
+  /* ═══ 页面导航 ═══ */
+  .tabs {
+    display: flex; gap: 0; background: rgba(58,74,63,0.05);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .tabs button {
+    flex: 1; padding: 14px 8px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 300; letter-spacing: 1px;
+    background: transparent; color: #3a4a3f;
+    border-bottom: 2px solid transparent;
+    transition: all 0.4s ease;
+  }
+  .tabs button.active { border-bottom-color: #7a9b8a; color: #7a9b8a; }
+
+  .tab-panel { display: none; padding: 0; }
+  .tab-panel.active { display: block; }
+
+  /* ═══ 手机外框 ═══ */
+  .phone-wrap {
+    max-width: 400px; margin: 40px auto;
+    border-radius: 28px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(58,74,63,0.12), 0 0 0 1px rgba(58,74,63,0.06);
+    background: #e8ebe4;
+    position: relative;
+  }
+  .phone-screen {
+    aspect-ratio: 9/19.5;
+    position: relative; overflow: hidden;
+  }
+
+  /* ═══ 雨丝动画 ═══ */
+  .rain-container {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .raindrop {
+    position: absolute; top: -120px;
+    width: 1px;
+    background: linear-gradient(180deg, transparent 0%, rgba(58,74,63,0.06) 40%, rgba(58,74,63,0.03) 100%);
+    animation: rainFall linear infinite;
+    transform: rotate(12deg);
+  }
+  @keyframes rainFall {
+    0% { transform: translateY(-120px) rotate(12deg); }
+    100% { transform: translateY(calc(100vh + 120px)) rotate(12deg); }
+  }
+
+  /* ═══ 光斑动画 ═══ */
+  .lightspot {
+    position: absolute; border-radius: 50%; pointer-events: none; z-index: 0;
+    animation: lightDrift ease-in-out infinite alternate;
+  }
+  @keyframes lightDrift {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(20px, -15px) scale(1.3); }
+  }
+
+  /* ═══ 雨滴按钮反馈 ═══ */
+  .btn-raindrop {
+    cursor: pointer; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative; overflow: hidden;
+  }
+  .btn-raindrop:active {
+    transform: scale(0.96);
+  }
+  .btn-raindrop .ripple {
+    position: absolute; border-radius: 50%;
+    background: rgba(122,155,138,0.2);
+    animation: rippleOut 0.6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes rippleOut {
+    0% { width: 0; height: 0; opacity: 0.5; }
+    100% { width: 200px; height: 200px; opacity: 0; margin-left: -100px; margin-top: -100px; }
+  }
+
+  /* ═══ 雾气浮现文字 ═══ */
+  .mist-text {
+    animation: mistReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes mistReveal {
+    0% { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+    100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  .mist-delay-1 { animation-delay: 0.1s; }
+  .mist-delay-2 { animation-delay: 0.25s; }
+  .mist-delay-3 { animation-delay: 0.4s; }
+  .mist-delay-4 { animation-delay: 0.55s; }
+
+  /* ═══ 霁光高亮 ═══ */
+  .sunlight-btn {
+    padding: 10px 20px; border-radius: 10px; border: 1px solid rgba(58,74,63,0.2);
+    background: transparent; cursor: pointer; text-align: center;
+    font-size: 15px; font-weight: 300; letter-spacing: 2px;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .sunlight-btn.active {
+    background: #7a9b8a; color: white; border-color: #7a9b8a;
+    box-shadow: 0 0 30px rgba(122,155,138,0.3), 0 0 60px rgba(122,155,138,0.12);
+  }
+
+  /* ═══ 云层呼吸 ═══ */
+  .cloud-breathe {
+    animation: cloudBreathe 2.8s ease-in-out infinite;
+  }
+  @keyframes cloudBreathe {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+  }
+
+  /* ═══ 风中扫过 ═══ */
+  .breeze-in {
+    animation: breezeSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  @keyframes breezeSlideIn {
+    0% { opacity: 0; transform: translateX(30px); }
+    100% { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ═══ 卡片交錯入场 ═══ */
+  .card-stagger {
+    opacity: 0; transform: translateY(20px);
+    animation: mistReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* 公用 */
+  .center-col {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .label-tag {
+    font-size: 11px; color: rgba(58,74,63,0.45); letter-spacing: 2px; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <button class="active" onclick="switchTab(0)">🏠 首页</button>
+  <button onclick="switchTab(1)">🎯 标定</button>
+  <button onclick="switchTab(2)">🎬 视频页</button>
+  <button onclick="switchTab(3)">📋 报告</button>
+  <button onclick="switchTab(4)">🔘 按钮对比</button>
+</div>
+
+<!-- ═══════════════════ Tab 0: 首页 ═══════════════════ -->
+<div class="tab-panel active">
+<div class="phone-wrap">
+  <div class="phone-screen" style="background:linear-gradient(180deg, #e8ebe4 0%, #d9e0d4 100%)">
+
+    <!-- 雨丝背景 -->
+    <div class="rain-container" id="rain-home"></div>
+
+    <!-- 光斑 -->
+    <div class="lightspot" style="width:80px;height:80px;top:60px;right:20px;background:radial-gradient(circle, rgba(122,155,138,0.05) 0%, transparent 70%);animation-duration:24s;"></div>
+    <div class="lightspot" style="width:50px;height:50px;bottom:120px;left:40px;background:radial-gradient(circle, rgba(122,155,138,0.04) 0%, transparent 70%);animation-duration:20s;animation-delay:-8s;"></div>
+
+    <!-- 主内容 -->
+    <div class="center-col" style="height:100%;position:relative;z-index:1">
+      <div class="mist-text" style="font-size:36px;font-weight:200;letter-spacing:8px;margin-bottom:16px">
+        雨 中 人
+      </div>
+      <div class="mist-text mist-delay-1" style="font-size:13px;font-weight:300;color:rgba(58,74,63,0.5);letter-spacing:3px;margin-bottom:48px">
+        一场关于内心世界的雨境之旅
+      </div>
+      <div class="mist-text mist-delay-2">
+        <button class="sunlight-btn btn-raindrop" id="startBtn"
+          style="padding:14px 48px;font-size:18px;letter-spacing:6px;">
+          开 始
+        </button>
+      </div>
+      <div class="mist-text mist-delay-3" style="margin-top:60px;font-size:11px;color:rgba(58,74,63,0.3);letter-spacing:2px">
+        请戴上耳机，静心体验
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════ Tab 1: 标定页 ═══════════════════ -->
+<div class="tab-panel">
+<div class="phone-wrap">
+  <div class="phone-screen" style="background:#e8ebe4">
+    <div class="center-col" style="height:100%;position:relative;z-index:1;padding:40px 32px;text-align:center">
+      <div class="mist-text" style="font-size:20px;font-weight:300;letter-spacing:2px;line-height:1.8;margin-bottom:40px">
+        放松自己，<br>测试全程看着屏幕<br>以获得更准确的结果
+      </div>
+      <!-- 模拟红点标定 -->
+      <div style="position:relative;width:180px;height:180px;margin-bottom:30px">
+        <!-- 十字准星 -->
+        <div style="position:absolute;inset:0;border:2px dashed rgba(58,74,63,0.1);border-radius:50%"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">
+          <div style="width:24px;height:24px;background:#c4736e;border-radius:50%;
+            box-shadow:0 0 30px rgba(196,115,110,0.4),0 0 60px rgba(196,115,110,0.15);
+            animation:cloudBreathe 1.5s ease-in-out infinite;"></div>
+        </div>
+      </div>
+      <div class="cloud-breathe" style="font-size:14px;color:rgba(58,74,63,0.5);letter-spacing:2px">
+        看着红点，正在标定...
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════ Tab 2: 视频页（模拟） ═══════════════════ -->
+<div class="tab-panel">
+<div class="phone-wrap">
+  <div class="phone-screen" style="background:#1a1f1b;position:relative">
+    <!-- 模拟视频层 -->
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,
+      rgba(30,40,32,0.9) 0%, rgba(20,28,22,0.95) 30%, rgba(25,35,28,0.9) 60%, rgba(15,22,18,0.95) 100%)"></div>
+
+    <!-- 半透明蒙版 -->
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);z-index:1"></div>
+
+    <!-- 引导文案 -->
+    <div class="center-col" style="height:100%;position:relative;z-index:2;padding:40px 24px">
+      <p class="mist-text" style="color:white;font-size:21px;font-weight:300;text-align:center;line-height:1.7;letter-spacing:2px">
+        你遇到了一位朋友，<br>想象你在和他解释你的烦恼
+      </p>
+
+      <!-- 三个选项按钮 — 演示霁光效果 -->
+      <div style="display:flex;gap:16px;margin-top:48px;width:100%;justify-content:center">
+        <button class="sunlight-btn" style="color:white;border-color:rgba(255,255,255,0.3);min-width:90px"
+          onclick="this.classList.toggle('active')">皱眉</button>
+        <button class="sunlight-btn active" style="min-width:90px">抿嘴</button>
+        <button class="sunlight-btn" style="color:white;border-color:rgba(255,255,255,0.3);min-width:90px"
+          onclick="this.classList.toggle('active')">皱眉+抿嘴</button>
+      </div>
+      <p style="color:rgba(255,255,255,0.4);font-size:11px;margin-top:16px;letter-spacing:1px">↑ 点击按钮查看霁光效果</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════ Tab 3: 报告页 ═══════════════════ -->
+<div class="tab-panel">
+<div class="phone-wrap">
+  <div class="phone-screen" style="background:#e8ebe4;overflow-y:auto;padding:40px 20px 80px;position:relative">
+
+    <!-- 光斑 -->
+    <div class="lightspot" style="width:90px;height:90px;top:20px;right:-10px;background:radial-gradient(circle, rgba(122,155,138,0.06) 0%, transparent 70%);animation-duration:26s;"></div>
+
+    <div style="position:relative;z-index:1">
+      <h2 class="mist-text" style="font-size:22px;font-weight:200;letter-spacing:3px;text-align:center;margin-bottom:16px">
+        你的本次雨境画像
+      </h2>
+      <p class="mist-text mist-delay-1" style="font-size:13px;color:rgba(58,74,63,0.5);text-align:center;line-height:1.8;margin-bottom:32px">
+        从情绪表达来看，你在情绪表达上保持克制与清醒...
+      </p>
+
+      <!-- 4 张卡片交錯入场 -->
+      <div class="card-stagger mist-delay-1" style="padding:16px;margin-bottom:14px;
+        background:rgba(221,226,216,0.6);border:1px solid rgba(58,74,63,0.06);border-radius:14px">
+        <div class="label-tag">第1阶段</div>
+        <div style="font-size:18px;font-weight:300;margin-top:6px">情绪压抑偏高</div>
+        <div style="font-size:13px;color:rgba(58,74,63,0.45);margin-top:8px;line-height:1.6">每段情绪都是真实的倒影。</div>
+      </div>
+
+      <div class="card-stagger mist-delay-2" style="padding:16px;margin-bottom:14px;
+        background:rgba(221,226,216,0.6);border:1px solid rgba(58,74,63,0.06);border-radius:14px">
+        <div class="label-tag">第2阶段</div>
+        <div style="font-size:18px;font-weight:300;margin-top:6px">倾向独自处理情绪</div>
+        <div style="font-size:13px;color:rgba(58,74,63,0.45);margin-top:8px;line-height:1.6">安静是一种力量。</div>
+      </div>
+
+      <div class="card-stagger mist-delay-3" style="padding:16px;margin-bottom:14px;
+        background:rgba(221,226,216,0.6);border:1px solid rgba(58,74,63,0.06);border-radius:14px">
+        <div class="label-tag">第3阶段</div>
+        <div style="font-size:18px;font-weight:300;margin-top:6px">倾向于先解决问题，理性倾向者</div>
+        <div style="font-size:13px;color:rgba(58,74,63,0.45);margin-top:8px;line-height:1.6">伞下的你，始终清醒。</div>
+      </div>
+
+      <div class="card-stagger mist-delay-4" style="padding:16px;margin-bottom:14px;
+        background:rgba(221,226,216,0.6);border:1px solid rgba(58,74,63,0.06);border-radius:14px">
+        <div class="label-tag">第4阶段</div>
+        <div style="font-size:18px;font-weight:300;margin-top:6px">倾向于稳定</div>
+        <div style="font-size:13px;color:rgba(58,74,63,0.45);margin-top:8px;line-height:1.6">了解当前情况，对你是重要的。</div>
+      </div>
+
+      <!-- 重新体验按钮 -->
+      <div class="mist-text mist-delay-4" style="text-align:center;margin-top:16px">
+        <button class="sunlight-btn btn-raindrop"
+          style="padding:14px 48px;font-size:16px;letter-spacing:4px;">
+          重新体验
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════ Tab 4: 按钮对比 ═══════════════════ -->
+<div class="tab-panel">
+<div class="phone-wrap">
+  <div class="phone-screen" style="background:#e8ebe4;padding:32px 20px;overflow-y:auto">
+
+    <h3 style="font-size:16px;font-weight:300;letter-spacing:3px;margin-bottom:24px;text-align:center">
+      交互特效演示
+    </h3>
+
+    <!-- 雨滴按钮（含涟漪） -->
+    <div style="margin-bottom:28px">
+      <div class="label-tag" style="margin-bottom:8px">💧 雨滴反馈 — 点击下方按钮</div>
+      <button class="sunlight-btn btn-raindrop" id="demoRaindrop"
+        style="display:block;width:100%;padding:16px;font-size:18px;letter-spacing:4px;">
+        点 击 我
+      </button>
+    </div>
+
+    <!-- 霁光高亮对比 -->
+    <div style="margin-bottom:28px">
+      <div class="label-tag" style="margin-bottom:8px">💡 霁光高亮 — 正常 / 选中</div>
+      <div style="display:flex;gap:16px">
+        <button class="sunlight-btn" style="flex:1">未选中</button>
+        <button class="sunlight-btn active" style="flex:1">已选中</button>
+      </div>
+    </div>
+
+    <!-- 雾气浮现 -->
+    <div style="margin-bottom:28px">
+      <div class="label-tag" style="margin-bottom:8px">🌫️ 雾气浮现 — 点击刷新动画</div>
+      <button class="sunlight-btn" style="width:100%;padding:12px;font-size:14px;letter-spacing:2px;margin-bottom:16px"
+        onclick="replayMist()">重播浮现动画</button>
+      <div id="mistReplay" style="display:flex;align-items:center;justify-content:center;height:60px;
+        background:rgba(221,226,216,0.4);border-radius:10px;font-size:16px;font-weight:300;letter-spacing:2px">
+        雾气散去，文字显现
+      </div>
+    </div>
+
+    <!-- 云层加载 -->
+    <div style="margin-bottom:28px">
+      <div class="label-tag" style="margin-bottom:8px">☁️ 云层呼吸 — 替代系统加载圈</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:20px;
+        background:rgba(58,74,63,0.04);border-radius:12px">
+        <div class="cloud-breathe" style="width:40px;height:2px;background:#7a9b8a;border-radius:1px"></div>
+        <div class="cloud-breathe" style="width:40px;height:2px;background:#7a9b8a;border-radius:1px;animation-delay:0.6s"></div>
+        <div class="cloud-breathe" style="width:40px;height:2px;background:#7a9b8a;border-radius:1px;animation-delay:1.2s"></div>
+        <span class="cloud-breathe" style="font-size:14px;font-weight:300;color:#7a9b8a;letter-spacing:1px">生成中</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+  // Tab 切换
+  function switchTab(i) {
+    document.querySelectorAll('.tabs button').forEach((b, j) => b.classList.toggle('active', j===i));
+    document.querySelectorAll('.tab-panel').forEach((p, j) => p.classList.toggle('active', j===i));
+  }
+
+  // 生成雨丝
+  function spawnRain(containerId, count) {
+    const c = document.getElementById(containerId);
+    if (!c) return;
+    c.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'raindrop';
+      drop.style.left = Math.random() * 100 + '%';
+      drop.style.height = (40 + Math.random() * 80) + 'px';
+      drop.style.animationDuration = (3 + Math.random() * 5) + 's';
+      drop.style.animationDelay = Math.random() * 6 + 's';
+      drop.style.opacity = (0.03 + Math.random() * 0.06);
+      c.appendChild(drop);
+    }
+  }
+  spawnRain('rain-home', 22);
+
+  // 按钮涟漪
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-raindrop');
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    ripple.style.left = (e.clientX - rect.left) + 'px';
+    ripple.style.top = (e.clientY - rect.top) + 'px';
+    btn.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  });
+
+  // 重播雾气浮现
+  function replayMist() {
+    const el = document.getElementById('mistReplay');
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = 'mistReveal 0.8s cubic-bezier(0.16,1,0.3,1) both';
+  }
+</script>
+
+</body>
+</html>
