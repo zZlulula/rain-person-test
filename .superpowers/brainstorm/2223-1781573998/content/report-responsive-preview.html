@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>报告页自适应预览</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0f0a; font-family:'Microsoft YaHei','微软雅黑','PingFang SC',sans-serif; display:flex; height:100vh; overflow:hidden; }
+.col { flex:1; display:flex; flex-direction:column; align-items:center; overflow-y:auto; border-right:1px solid #1a2a1a; position:relative; }
+.col:last-child { border-right:none; }
+.col-label { position:sticky; top:0; z-index:20; padding:8px 20px; background:rgba(10,15,10,0.95); text-align:center; font-size:10px; letter-spacing:2px; color:#5a7a5a; width:100%; border-bottom:1px solid #1a2a1a; }
+.col-label span { display:block; font-size:14px; color:#8aaa8a; }
+.bg { position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,#f8faf6,#f3f6f1 40%,#eef1ec); }
+.bg::after { content:''; position:absolute; top:-20%; left:-20%; right:-20%; height:50%; background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.35),transparent 70%); }
+.content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; padding-bottom:120px; width:100%; }
+
+.title { font-weight:200; color:#2a3a2e; opacity:0.85; }
+.sub { color:rgba(42,58,46,0.65); text-align:center; line-height:1.7; }
+.card { border-radius:14px; border:1px solid rgba(58,74,63,0.06); background:rgba(255,255,255,0.42); margin-bottom:1vh; }
+.card-h { display:flex; align-items:center; margin-bottom:0.5em; }
+.card-icon { display:inline-flex; border-radius:50%; align-items:center; justify-content:center; margin-right:0.6em; }
+.card-stage { color:#4a5a4a; letter-spacing:2px; }
+.card-result { font-weight:400; font-family:'Microsoft YaHei',sans-serif; color:#1e2d22; margin-top:0.4em; }
+.card-line { height:1px; background:rgba(58,74,63,0.04); margin:0.5em 0; }
+.card-insight { color:rgba(42,58,46,0.88); line-height:1.65; }
+.btn { font-weight:300; color:#b8a070; font-family:'Microsoft YaHei',sans-serif; text-align:center; }
+.btn-line { width:60%; height:1px; margin:6px auto 0; background:linear-gradient(90deg,transparent,rgba(200,168,96,0.3),transparent); }
+
+.val { font-size:9px; color:#8a9a8a; display:inline-block; margin-left:4px; opacity:0.6; }
+</style>
+</head>
+<body>
+
+<!-- ── 手机 375×812 ── -->
+<div class="col" style="max-width:380px;">
+  <div class="col-label">📱 手机<span>375×812 · 6.1"</span></div>
+  <div class="bg"></div>
+  <div class="content">
+    <div style="height:7vh"></div>
+    <div class="title" style="font-size:26px;letter-spacing:5px;">你的本次雨境画像</div>
+    <div class="sub" style="font-size:13px;margin-top:1.5vh;padding:0 8vw;width:84vw;max-width:320px;">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+    <div style="height:4vh"></div>
+
+    <div class="card" style="width:90%;padding:18px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:26px;height:26px;font-size:12px;background:rgba(138,170,138,0.12);color:#7a9a78;">①</span>
+        <span class="card-stage" style="font-size:10px;">第1阶段 · 表情</span>
+      </div>
+      <div class="card-result" style="font-size:19px;">皱眉</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:13px;">面对烦恼时，你倾向于将情绪收敛在眉间。皱眉往往意味着你在认真思考和消化，而非逃避。</div>
+    </div>
+
+    <div class="card" style="width:90%;padding:18px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:26px;height:26px;font-size:12px;background:rgba(155,175,148,0.12);color:#85a07e;">②</span>
+        <span class="card-stage" style="font-size:10px;">第2阶段 · 关键词</span>
+      </div>
+      <div class="card-result" style="font-size:19px;">家人、发呆</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:13px;">在压力时刻，你想到的是家人和放空。这是你内心深处的避风港。</div>
+    </div>
+
+    <div class="card" style="width:90%;padding:18px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:26px;height:26px;font-size:12px;background:rgba(185,170,130,0.12);color:#a09060;">③</span>
+        <span class="card-stage" style="font-size:10px;">第3阶段 · 庇护所</span>
+      </div>
+      <div class="card-result" style="font-size:19px;">选择了伞</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:13px;">伞是主动的庇护——你选择亲手撑起自己的保护。你更愿意把力量握在自己手中。</div>
+    </div>
+
+    <div class="card" style="width:90%;padding:18px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:26px;height:26px;font-size:12px;background:rgba(148,170,168,0.12);color:#789a92;">④</span>
+        <span class="card-stage" style="font-size:10px;">第4阶段 · 方向</span>
+      </div>
+      <div class="card-result" style="font-size:19px;">望向了中间</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:13px;">雨后天晴，你选择留在原地。此刻的停留，是内心安定最好的证明。</div>
+    </div>
+
+    <div class="btn" style="font-size:20px;letter-spacing:8px;margin-top:4vh;">重新体验<div class="btn-line"></div></div>
+  </div>
+</div>
+
+<!-- ── 大屏手机 430×932 ── -->
+<div class="col" style="max-width:440px;">
+  <div class="col-label">📱+ 大屏手机<span>430×932 · 6.7"</span></div>
+  <div class="bg"></div>
+  <div class="content">
+    <div style="height:7vh"></div>
+    <div class="title" style="font-size:29px;letter-spacing:5px;">你的本次雨境画像</div>
+    <div class="sub" style="font-size:15px;margin-top:1.5vh;padding:0 8vw;width:84vw;max-width:360px;">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+    <div style="height:4vh"></div>
+
+    <div class="card" style="width:90%;padding:22px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:28px;height:28px;font-size:13px;background:rgba(138,170,138,0.12);color:#7a9a78;">①</span>
+        <span class="card-stage" style="font-size:11px;">第1阶段 · 表情</span>
+      </div>
+      <div class="card-result" style="font-size:22px;">皱眉</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:14px;">面对烦恼时，你倾向于将情绪收敛在眉间。皱眉往往意味着你在认真思考和消化，而非逃避。</div>
+    </div>
+
+    <div class="card" style="width:90%;padding:22px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:28px;height:28px;font-size:13px;background:rgba(155,175,148,0.12);color:#85a07e;">②</span>
+        <span class="card-stage" style="font-size:11px;">第2阶段 · 关键词</span>
+      </div>
+      <div class="card-result" style="font-size:22px;">家人、发呆</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:14px;">在压力时刻，你想到的是家人和放空。这是你内心深处的避风港。</div>
+    </div>
+
+    <div class="card" style="width:90%;padding:22px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:28px;height:28px;font-size:13px;background:rgba(185,170,130,0.12);color:#a09060;">③</span>
+        <span class="card-stage" style="font-size:11px;">第3阶段 · 庇护所</span>
+      </div>
+      <div class="card-result" style="font-size:22px;">选择了伞</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:14px;">伞是主动的庇护——你选择亲手撑起自己的保护。你更愿意把力量握在自己手中。</div>
+    </div>
+
+    <div class="card" style="width:90%;padding:22px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:28px;height:28px;font-size:13px;background:rgba(148,170,168,0.12);color:#789a92;">④</span>
+        <span class="card-stage" style="font-size:11px;">第4阶段 · 方向</span>
+      </div>
+      <div class="card-result" style="font-size:22px;">望向了中间</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:14px;">雨后天晴，你选择留在原地。此刻的停留，是内心安定最好的证明。</div>
+    </div>
+
+    <div class="btn" style="font-size:23px;letter-spacing:9px;margin-top:4vh;">重新体验<div class="btn-line"></div></div>
+  </div>
+</div>
+
+<!-- ── 平板 768×1024 ── -->
+<div class="col" style="max-width:780px;">
+  <div class="col-label">📋 平板<span>768×1024 · iPad Mini</span></div>
+  <div class="bg"></div>
+  <div class="content">
+    <div style="height:7vh"></div>
+    <div class="title" style="font-size:34px;letter-spacing:6px;">你的本次雨境画像</div>
+    <div class="sub" style="font-size:16px;margin-top:1.5vh;padding:0 8vw;width:84vw;max-width:640px;">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+    <div style="height:4vh"></div>
+
+    <div class="card" style="width:90%;padding:26px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:32px;height:32px;font-size:15px;background:rgba(138,170,138,0.12);color:#7a9a78;">①</span>
+        <span class="card-stage" style="font-size:12px;">第1阶段 · 表情</span>
+      </div>
+      <div class="card-result" style="font-size:24px;">皱眉</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:15px;">面对烦恼时，你倾向于将情绪收敛在眉间。皱眉往往意味着你在认真思考和消化，而非逃避。</div>
+    </div>
+
+    <div class="card" style="width:90%;padding:26px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:32px;height:32px;font-size:15px;background:rgba(155,175,148,0.12);color:#85a07e;">②</span>
+        <span class="card-stage" style="font-size:12px;">第2阶段 · 关键词</span>
+      </div>
+      <div class="card-result" style="font-size:24px;">家人、发呆</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:15px;">在压力时刻，你想到的是家人和放空。这是你内心深处的避风港。</div>
+    </div>
+
+    <div class="card" style="width:90%;padding:26px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:32px;height:32px;font-size:15px;background:rgba(185,170,130,0.12);color:#a09060;">③</span>
+        <span class="card-stage" style="font-size:12px;">第3阶段 · 庇护所</span>
+      </div>
+      <div class="card-result" style="font-size:24px;">选择了伞</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:15px;">伞是主动的庇护——你选择亲手撑起自己的保护。你更愿意把力量握在自己手中。</div>
+    </div>
+
+    <div class="card" style="width:90%;padding:26px;">
+      <div class="card-h">
+        <span class="card-icon" style="width:32px;height:32px;font-size:15px;background:rgba(148,170,168,0.12);color:#789a92;">④</span>
+        <span class="card-stage" style="font-size:12px;">第4阶段 · 方向</span>
+      </div>
+      <div class="card-result" style="font-size:24px;">望向了中间</div>
+      <div class="card-line"></div>
+      <div class="card-insight" style="font-size:15px;">雨后天晴，你选择留在原地。此刻的停留，是内心安定最好的证明。</div>
+    </div>
+
+    <div class="btn" style="font-size:25px;letter-spacing:10px;margin-top:4vh;">重新体验<div class="btn-line"></div></div>
+  </div>
+</div>
+
+</body>
+</html>

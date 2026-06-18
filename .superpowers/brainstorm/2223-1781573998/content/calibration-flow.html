@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>标定流程 — 红点居中 → 移动预览</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#e8ebe4; font-family:'Microsoft YaHei',sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; overflow:hidden; }
+  .stage { position:relative; width:800px; height:600px; background:#e8ebe4; }
+
+  /* ── 提示文字 ── */
+  .hint {
+    position:absolute; left:50%; top:14%; transform:translate(-50%,-50%);
+    font-size:30px; color:#2a3a2e; letter-spacing:3px; font-weight:300;
+    white-space:nowrap;
+    opacity:0; transition:opacity 1.5s;
+  }
+  #hint { top:22%; }
+  .hint.show { opacity:1; }
+
+  /* ── 眼睛 ── */
+  .eye-wrap {
+    position:absolute; left:50%; top:26%; transform:translate(-50%,-50%);
+    display:flex; gap:22px; opacity:0; transition:opacity 1s;
+  }
+  .eye-wrap.show { opacity:1; }
+
+  .eye {
+    width:72px; height:72px; position:relative;
+    background:radial-gradient(ellipse at 50% 46%, #fefefb 0%, #f5f7ef 60%, #eaede2 100%);
+    border-radius:50%; overflow:hidden;
+    box-shadow:0 3px 10px rgba(100,120,80,0.04);
+  }
+  .blush {
+    position:absolute; bottom:2px; left:50%; transform:translateX(-50%);
+    width:30px; height:9px; background:rgba(240,170,155,0.28);
+    border-radius:50%; filter:blur(4px);
+    animation:blushP 2.8s ease-in-out infinite; z-index:1;
+  }
+  @keyframes blushP { 0%,100%{opacity:0.40} 52%{opacity:0.88} }
+
+  .bean {
+    position:absolute;
+    width:26px; height:29px;
+    border-radius:50%;
+    background:radial-gradient(circle at 43% 37%, #483830, #0a0604);
+    top:21px; left:23px;
+    box-shadow:0 0 5px rgba(60,40,30,0.12);
+    animation:drift 5.0s ease-in-out infinite;
+  }
+  .bean::after {
+    content:'';
+    position:absolute;
+    width:9px; height:9px;
+    background:white;
+    border-radius:50%;
+    top:2px; left:3px;
+    box-shadow:0 0 3px white;
+  }
+
+  @keyframes drift {
+    0%,100%{transform:translate(0,0.4px)}
+    15%{transform:translate(-3px,-1.5px)}
+    30%{transform:translate(2px,2px)}
+    45%{transform:translate(-1.5px,-3px)}
+    60%{transform:translate(4px,-0.5px)}
+    75%{transform:translate(-3px,1.5px)}
+    88%{transform:translate(0.8px,0)}
+  }
+
+  .lids { position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:50%; }
+  .lids::before, .lids::after {
+    content:''; position:absolute; left:0; right:0; background:#e8ebe4;
+  }
+  .lids::before {
+    top:0; height:0; border-radius:0 0 48% 48%;
+    animation:blinkTop 5.5s cubic-bezier(0.65,0,0.35,1) infinite;
+  }
+  .lids::after {
+    bottom:0; height:0; border-radius:48% 48% 0 0;
+    animation:blinkBot 5.5s cubic-bezier(0.65,0,0.35,1) infinite;
+  }
+  @keyframes blinkTop { 0%,48%,56%,100%{height:0} 52%{height:54%} }
+  @keyframes blinkBot { 0%,48%,56%,100%{height:0} 52%{height:46%} }
+
+  /* ── 红点：鲜艳激光红 ── */
+  .red-dot {
+    position:absolute;
+    width:22px; height:22px;
+    border-radius:50%;
+    background:#e8645a;
+    box-shadow:
+      0 0 22px 4px rgba(232,100,90,0.88),
+      0 0 56px 12px rgba(232,100,90,0.44),
+      0 0 90px 20px rgba(232,100,90,0.15);
+    transform:translate(-50%,-50%);
+    opacity:0;
+    transition:opacity 0.5s;
+    z-index:10;
+    pointer-events:none;
+  }
+  .red-dot.show { opacity:1; }
+  .red-dot.moving {
+    transition: left 0.8s cubic-bezier(0.34,1.56,0.64,1),
+                top  0.8s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes dotPulse {
+    0%,100%{ transform:translate(-50%,-50%) scale(0.88); }
+    50%     { transform:translate(-50%,-50%) scale(1.10); }
+  }
+  .red-dot.pulse { animation:dotPulse 2.4s ease-in-out infinite; }
+
+  /* ── 控制按钮 ── */
+  .controls {
+    position:fixed; bottom:48px; display:flex; gap:16px; z-index:20;
+  }
+  .btn {
+    padding:12px 28px; border-radius:22px; border:none;
+    font-size:16px; font-family:'Microsoft YaHei',sans-serif;
+    cursor:pointer; letter-spacing:1px;
+    transition:all 0.3s;
+  }
+  .btn-go {
+    background:rgba(200,100,80,0.12); color:#8a5040;
+    border:1px solid rgba(200,100,80,0.25);
+  }
+  .btn-go:hover { background:rgba(200,100,80,0.22); }
+  .btn-reset {
+    background:rgba(100,120,80,0.1); color:#5a6a50;
+    border:1px solid rgba(100,120,80,0.2);
+  }
+  .btn-reset:hover { background:rgba(100,120,80,0.18); }
+
+  .status {
+    position:fixed; top:32px; font-size:14px; color:rgba(42,58,46,0.5);
+    letter-spacing:2px;
+  }
+</style>
+</head>
+<body>
+<div class="status" id="status">就绪</div>
+<div class="stage" id="stage">
+  <!-- 眼睛 -->
+  <div class="eye-wrap" id="eyeWrap">
+    <div class="eye"><div class="blush"></div><div class="bean"></div><div class="lids"></div></div>
+    <div class="eye"><div class="blush"></div><div class="bean"></div><div class="lids"></div></div>
+  </div>
+  <!-- 文字1：引导 -->
+  <div class="hint" id="introText" style="top:14%;">放松自己，测试全程看着屏幕以获得更准确的结果</div>
+  <!-- 文字2：标定提示 -->
+  <div class="hint" id="hint">看着红点，现在开始标定</div>
+  <!-- 红点 -->
+  <div class="red-dot pulse" id="redDot"></div>
+</div>
+<div class="controls">
+  <button class="btn btn-go" onclick="startFlow()">开始流程</button>
+  <button class="btn btn-reset" onclick="resetFlow()">重置</button>
+</div>
+
+<script>
+const stage  = document.getElementById('stage');
+const hint   = document.getElementById('hint');
+const eyes   = document.getElementById('eyeWrap');
+const dot    = document.getElementById('redDot');
+const status = document.getElementById('status');
+
+// 标定点位（比例坐标）
+const points = [
+  {x:0.10, y:0.10}, // 左上
+  {x:0.90, y:0.10}, // 右上
+  {x:0.10, y:0.90}, // 左下
+  {x:0.90, y:0.90}, // 右下
+  {x:0.50, y:0.50}, // 中间
+];
+let pointIdx = 0;
+let timer = null;
+
+function resetFlow() {
+  clearTimeout(timer);
+  document.getElementById('introText').classList.remove('show');
+  hint.classList.remove('show');
+  eyes.classList.remove('show');
+  dot.classList.remove('show','pulse');
+  dot.style.left = '50%';
+  dot.style.top  = '50%';
+  pointIdx = 0;
+  status.textContent = '就绪';
+}
+
+function centerDot() {
+  const sw = stage.clientWidth;
+  const sh = stage.clientHeight;
+  dot.style.left = (sw * 0.5) + 'px';
+  dot.style.top  = (sh * 0.5) + 'px';
+}
+
+function startFlow() {
+  resetFlow();
+  const sw = stage.clientWidth;
+  const sh = stage.clientHeight;
+
+  centerDot();
+  status.textContent = '阶段1：提示文字淡入（1.5s）';
+
+  // ══ 文字1 淡入 → 停留 → 淡出 → 停顿 → 标定元素淡入 ══
+  timer = setTimeout(() => {
+    // 3s后文字1淡入
+    document.getElementById('introText').classList.add('show');
+    status.textContent = '文字1显示中（4s）';
+
+    timer = setTimeout(() => {
+      // 4s后文字1淡出
+      document.getElementById('introText').classList.remove('show');
+      status.textContent = '文字1淡出，准备标定...';
+
+      timer = setTimeout(() => {
+        // 600ms停顿后标定元素同时淡入
+        dot.classList.add('show','pulse');
+        eyes.classList.add('show');
+        hint.classList.add('show');
+        status.textContent = '标定阶段：眼睛 + 中央红点（5秒）';
+
+        // ══ 5s后红点开始移动 ══
+        timer = setTimeout(() => {
+          eyes.classList.remove('show');
+          hint.classList.remove('show');
+          dot.classList.remove('pulse');
+          dot.classList.add('moving');
+          status.textContent = '红点移动标定 → 左上';
+          moveToNextPoint();
+        }, 5000);
+
+      }, 600);
+    }, 4000);
+  }, 3000);
+}
+
+function moveToNextPoint() {
+  if (pointIdx >= points.length) {
+    // 标定完成
+    status.textContent = '标定完成';
+    dot.classList.remove('show','moving');
+    return;
+  }
+
+  const p = points[pointIdx];
+  const sw = stage.clientWidth;
+  const sh = stage.clientHeight;
+  dot.style.left = (sw * p.x) + 'px';
+  dot.style.top  = (sh * p.y) + 'px';
+
+  const labels = ['左上','右上','左下','右下','中间'];
+  status.textContent = '红点 → ' + labels[pointIdx];
+
+  pointIdx++;
+  timer = setTimeout(() => moveToNextPoint(), 2000);
+}
+
+// 初始居中
+centerDot();
+</script>
+</body>
+</html>

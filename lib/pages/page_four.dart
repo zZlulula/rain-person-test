@@ -11,7 +11,7 @@ import '../widgets/full_screen_video_stack.dart';
 import '../widgets/gaze_choice_button.dart';
 import '../app_theme.dart';
 
-/// 页面四：词汇观察页 — 禅意灰绿
+/// 页面四：词汇观察页 — 六词六边形布局
 class PageFourView extends StatefulWidget {
   final VoidCallback onComplete;
   const PageFourView({super.key, required this.onComplete});
@@ -28,6 +28,7 @@ class _PageFourViewState extends State<PageFourView> {
   final List<String> _words = ['听歌', '发呆', '娱乐', '游戏', '家人', '朋友'];
   Timer? _durationTimer;
   Timer? _detectionTimer;
+  bool _wordsCaptured = false;
   VideoPlayerController? _videoController;
   String? _currentVideoPath;
   late final String _stageOnePromptText;
@@ -128,13 +129,13 @@ class _PageFourViewState extends State<PageFourView> {
   }
 
   Future<void> _pollFocusedWords() async {
-    if (!mounted) return;
+    if (!mounted || _wordsCaptured) return;
     try {
       final words = await BackendService.instance.detectFocusedWords();
-      if (words.isNotEmpty && mounted) {
-        final h = Set<String>.from(words);
-        if (h.length != _highlightedWords.value.length || !h.containsAll(_highlightedWords.value))
-          _highlightedWords.value = h;
+      if (words.isNotEmpty && mounted && !_wordsCaptured) {
+        _wordsCaptured = true;
+        _detectionTimer?.cancel();
+        _highlightedWords.value = Set<String>.from(words);
       }
     } catch (_) {}
   }

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>报告页预览 — 动态呼吸版</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #222;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; font-family: 'Microsoft YaHei','PingFang SC',sans-serif;
+  }
+  .phone {
+    width: 390px; height: 844px;
+    background:
+      radial-gradient(ellipse at 80% 10%, rgba(122,155,138,.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 15% 75%, rgba(122,155,138,.08) 0%, transparent 50%),
+      #eaf0e8;
+    position: relative; overflow: hidden;
+    border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+
+  .content {
+    position: absolute; inset: 0;
+    overflow-y: auto; padding: 60px 24px 120px;
+    scroll-behavior: smooth;
+  }
+
+  /* ── 标题呼吸 ── */
+  .title {
+    text-align: center; font-size: 28px; font-weight: 300;
+    letter-spacing: 2px; color: rgba(42,58,46,.85);
+    animation: title-breathe 4s ease-in-out infinite;
+  }
+  @keyframes title-breathe {
+    0%,100% { opacity: .80; letter-spacing: 2px; }
+    50%     { opacity: .95; letter-spacing: 4px; }
+  }
+
+  /* ── 摘要 ── */
+  .summary {
+    margin-top: 20px; text-align: center; font-size: 16px;
+    color: rgba(42,58,46,.55); line-height: 1.8;
+  }
+
+  /* ── 卡片 — 毛玻璃 + 入场 + 微呼吸 ── */
+  .cards { margin-top: 32px; }
+  .card {
+    background: rgba(221,226,216,.55);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(58,74,63,.10);
+    border-radius: 14px; padding: 20px; margin-bottom: 18px;
+    animation: card-in .6s ease-out both, card-float 5s ease-in-out infinite;
+    position: relative; overflow: hidden;
+  }
+  .card:nth-child(1) { animation-delay: .1s, .7s; }
+  .card:nth-child(2) { animation-delay: .25s, .85s; }
+  .card:nth-child(3) { animation-delay: .4s, 1s; }
+  .card:nth-child(4) { animation-delay: .55s, 1.15s; }
+
+  @keyframes card-in {
+    0%   { opacity: 0; transform: translateY(28px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes card-float {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-3px); }
+  }
+
+  .card-stage { font-size: 14px; color: rgba(42,58,46,.42); margin-bottom: 6px; }
+  .card-type  { font-size: 20px; font-weight: 400; color: rgba(42,58,46,.82); margin-bottom: 10px; }
+  .card-desc  { font-size: 15px; color: rgba(42,58,46,.50); line-height: 1.6; }
+
+  /* ── 卡片微光 ── */
+  .card::before {
+    content: ''; position: absolute; top: -30%; right: -20%;
+    width: 100px; height: 100px; border-radius: 50%;
+    background: rgba(122,155,138,.06);
+    animation: shimmer 6s ease-in-out infinite;
+  }
+  .card:nth-child(2)::before { animation-delay: 1.5s; }
+  .card:nth-child(3)::before { animation-delay: 3s; }
+  .card:nth-child(4)::before { animation-delay: 4.5s; }
+  @keyframes shimmer {
+    0%,100% { transform: translate(0,0) scale(1); opacity: .3; }
+    50%     { transform: translate(-40px,20px) scale(1.4); opacity: .7; }
+  }
+
+  /* ── 按钮 ── */
+  .btn-wrap {
+    position: absolute; bottom: 30px; left: 0; right: 0;
+    display: flex; justify-content: center;
+  }
+  .btn {
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 18px; font-weight: 300;
+    letter-spacing: 4px; color: #8a9c8a;
+    padding: 12px 36px; position: relative;
+    transition: all .4s cubic-bezier(.25,.8,.25,1);
+  }
+  .btn::after {
+    content: ''; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+    width: 28px; height: 1.5px; border-radius: 1px;
+    background: rgba(58,74,63,.20);
+    transition: all .4s cubic-bezier(.25,.8,.25,1);
+    animation: line-pulse 3.2s ease-in-out infinite;
+  }
+  @keyframes line-pulse {
+    0%,100% { width: 28px; }
+    50%     { width: 52px; }
+  }
+  .btn:hover, .btn.highlight {
+    color: #fef4ca; font-weight: 400; letter-spacing: 8px;
+    text-shadow: 0 0 10px rgba(252,208,128,.65), 0 0 22px rgba(250,192,112,.50);
+  }
+  .btn:hover::after, .btn.highlight::after {
+    width: 80%; animation: none;
+    background: linear-gradient(to right, transparent, rgba(252,208,128,.7) 15%, rgba(252,208,128,.7) 85%, transparent);
+    box-shadow: 0 0 8px rgba(252,208,128,.5);
+  }
+
+  .info { position:absolute; bottom:8px; right:16px; font-size:10px; color:rgba(42,58,46,.18); }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="content">
+    <div class="title">你的本次雨境画像</div>
+    <div class="summary">你在风雨中仍然保持清晰与克制，当下的选择是你对自己的保护。</div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-stage">第1阶段</div>
+        <div class="card-type">微表情 — 抿嘴</div>
+        <div class="card-desc">你的表情透露出轻微的压抑，但你选择在他人面前保持温和。</div>
+      </div>
+      <div class="card">
+        <div class="card-stage">第2阶段</div>
+        <div class="card-type">关注 — 游戏 + 家人</div>
+        <div class="card-desc">面对压力时，你在逃避和依靠之间寻找平衡。</div>
+      </div>
+      <div class="card">
+        <div class="card-stage">第3阶段</div>
+        <div class="card-type">庇护 — 伞</div>
+        <div class="card-desc">你选择了一把伞而不是亭子——你倾向于带着保护前行，而非停留。</div>
+      </div>
+      <div class="card">
+        <div class="card-stage">第4阶段</div>
+        <div class="card-type">方向 — 森林</div>
+        <div class="card-desc">你的视线投向了更深处，那是你对未来的方向感。</div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-wrap">
+    <button class="btn" onclick="this.classList.toggle('highlight')">重新体验</button>
+  </div>
+  <div class="info">卡片入场+呼吸浮动 · 微光游移 · 按钮底线</div>
+</div>
+</body>
+</html>

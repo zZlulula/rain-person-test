@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>按钮 + 标定光点预览</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #222;
+    display: flex; justify-content: center; align-items: center; gap: 24px;
+    min-height: 100vh; font-family: 'Microsoft YaHei','PingFang SC',sans-serif;
+    flex-wrap: wrap; padding: 20px;
+  }
+
+  .phone {
+    width: 390px; height: 844px; position: relative; overflow: hidden;
+    border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+
+  /* ═══ 背景 ═══ */
+  .bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 25%, rgba(255,255,255,.60) 0%, transparent 55%),
+      radial-gradient(ellipse at 15% 75%, rgba(190,210,190,.35) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 55%, rgba(195,210,195,.30) 0%, transparent 45%),
+      #eaf0e8;
+  }
+  .light-spot {
+    position: absolute; border-radius: 50%; filter: blur(40px); pointer-events: none;
+  }
+
+  /* ═══ 雨 ═══ */
+  .rain-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+  .drop {
+    position: absolute; width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(42,58,46,.18), rgba(42,58,46,.08), transparent);
+    animation: fall linear infinite;
+  }
+  @keyframes fall {
+    0%   { transform: translateY(-120px) rotate(8deg); opacity: 0; }
+    5%   { opacity: 1; }
+    85%  { opacity: 1; }
+    100% { transform: translateY(920px) rotate(8deg); opacity: 0; }
+  }
+
+  .content { position: relative; z-index: 2; height: 100%; }
+  .title {
+    position: absolute; left:0; right:0; top: 30%;
+    text-align: center; font-size: 64px; font-weight: 200;
+    letter-spacing: 16px; color: rgba(42,58,46,.86);
+  }
+  .sub {
+    position: absolute; left:0; right:0; top: 40%;
+    text-align: center; font-size: 18px; font-weight: 300;
+    letter-spacing: 6px; color: rgba(42,58,46,.54);
+  }
+
+  /* ═══ 按钮 ═══ */
+  .btn-wrap {
+    position: absolute; left:0; right:0; top: 55%;
+    display: flex; justify-content: center;
+  }
+  .btn {
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 26px; font-weight: 300;
+    letter-spacing: 8px; color: #8a9c8a;
+    padding: 10px 36px; position: relative;
+    transition: all .4s cubic-bezier(.25,.8,.25,1);
+  }
+  .btn::after {
+    content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+    width: 32px; height: 1.5px; border-radius: 1px;
+    background: rgba(58,74,63,.22);
+    transition: all .4s cubic-bezier(.25,.8,.25,1);
+    animation: line-pulse 3.2s ease-in-out infinite;
+  }
+  @keyframes line-pulse {
+    0%,100% { width: 32px; }
+    50%     { width: 56px; }
+  }
+  .btn:hover, .btn.highlight {
+    color: #fef4ca; font-weight: 400; letter-spacing: 14px;
+    text-shadow:
+      0 0 10px rgba(252,208,128,.65),
+      0 0 24px rgba(250,192,112,.50),
+      0 0 44px rgba(238,172,95,.26),
+      0 0 66px rgba(222,158,80,.14);
+  }
+  .btn:hover::after, .btn.highlight::after {
+    width: 100%; animation: none;
+    background: linear-gradient(to right, transparent, rgba(252,208,128,.8) 15%, rgba(252,208,128,.8) 85%, transparent);
+    box-shadow: 0 0 8px rgba(252,208,128,.5), 0 0 18px rgba(250,192,112,.25);
+  }
+
+  .tag {
+    position: absolute; top: 12px; left: 16px; z-index: 5;
+    font-size: 13px; font-weight: 600; letter-spacing: 1px;
+    color: rgba(42,58,46,.35);
+  }
+
+  /* ═══ 标定光点页 ═══ */
+  .phone-b .bg { background: #e8ebe4; }
+  .dot-label {
+    position: absolute; top: 44%; left:0; right:0;
+    text-align: center; font-size: 22px; color: rgba(42,58,46,.7);
+  }
+
+  .calib-dot {
+    position: absolute; left: 50%; top: 52%;
+    width: 80px; height: 80px; transform: translate(-50%, -50%);
+  }
+  .dot-core {
+    position: absolute; top: 50%; left: 50%;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #e84545;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 12px rgba(232,69,69,.9), 0 0 36px rgba(232,69,69,.5), 0 0 68px rgba(232,69,69,.22);
+    animation: dot-pulse 1.8s ease-in-out infinite;
+  }
+  .dot-glow-1 {
+    position: absolute; top: 50%; left: 50%;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: rgba(232,69,69,.15);
+    transform: translate(-50%, -50%);
+    animation: glow1 1.8s ease-in-out infinite;
+  }
+  .dot-glow-2 {
+    position: absolute; top: 50%; left: 50%;
+    width: 90px; height: 90px; border-radius: 50%;
+    background: rgba(232,69,69,.06);
+    transform: translate(-50%, -50%);
+    animation: glow2 1.8s ease-in-out infinite .2s;
+  }
+  @keyframes dot-pulse {
+    0%,100% { transform: translate(-50%,-50%) scale(.88); opacity: .75; }
+    50%     { transform: translate(-50%,-50%) scale(1.10); opacity: 1; }
+  }
+  @keyframes glow1 {
+    0%,100% { transform: translate(-50%,-50%) scale(.85); opacity: .5; }
+    50%     { transform: translate(-50%,-50%) scale(1.18); opacity: 1; }
+  }
+  @keyframes glow2 {
+    0%,100% { transform: translate(-50%,-50%) scale(.9); opacity: .3; }
+    50%     { transform: translate(-50%,-50%) scale(1.10); opacity: .8; }
+  }
+
+  .info { position: absolute; bottom: 28px; left:0; right:0; text-align: center; font-size: 12px; color: rgba(42,58,46,.22); }
+</style>
+</head>
+<body>
+
+<!-- ═══ A: 首页按钮 ═══ -->
+<div class="phone">
+  <div class="tag">A · 首页按钮</div>
+  <div class="bg"></div>
+  <div class="light-spot" style="width:180px;height:180px;top:8%;left:60%;background:rgba(122,155,138,.10)"></div>
+  <div class="light-spot" style="width:120px;height:120px;top:65%;left:10%;background:rgba(140,170,150,.08)"></div>
+  <div class="light-spot" style="width:150px;height:150px;top:70%;left:70%;background:rgba(122,155,138,.06)"></div>
+  <div class="rain-layer" id="rainA"></div>
+  <div class="content">
+    <div class="title">雨中人</div>
+    <div class="sub">一场关于内心世界的雨境之旅</div>
+    <div class="btn-wrap">
+      <button class="btn" onclick="this.classList.toggle('highlight')">开&emsp;始</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ B: 标定光点 ═══ -->
+<div class="phone phone-b">
+  <div class="tag">B · 标定光点（简化）</div>
+  <div class="bg"></div>
+  <div class="dot-label">看着光点，现在开始标定</div>
+  <div class="calib-dot">
+    <div class="dot-glow-2"></div>
+    <div class="dot-glow-1"></div>
+    <div class="dot-core"></div>
+  </div>
+  <div class="info">22px 深红实心 · 56px/90px 光晕 · 0.88↔1.10 脉动</div>
+</div>
+
+<script>
+(function fill(id, n, l1,l2, s1,s2) {
+  const L=document.getElementById(id);
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');
+    d.className='drop'; d.style.left=Math.random()*100+'%';
+    d.style.animationDuration=(s1+Math.random()*s2)+'s';
+    d.style.animationDelay=Math.random()*5+'s';
+    d.style.height=(l1+Math.random()*l2)+'px';
+    L.appendChild(d);
+  }
+})('rainA',40,55,100,1.2,2.6);
+</script>
+</body>
+</html>

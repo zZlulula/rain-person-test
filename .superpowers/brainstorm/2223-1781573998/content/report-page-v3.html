@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>报告页 V3 — 更多呼吸动画</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0f0a; display:flex; height:100vh; overflow:hidden; font-family:'Noto Serif SC','Noto Sans SC',serif; }
+.half { flex:1; display:flex; flex-direction:column; overflow-y:auto; position:relative; border-right:1px solid #1a2a1a; }
+.half:last-child { border-right:none; }
+.half::-webkit-scrollbar { width:0; }
+.label { position:sticky; top:0; z-index:20; padding:10px 20px; background:rgba(10,15,10,0.95); text-align:center; font-size:11px; letter-spacing:3px; color:#5a7a5a; border-bottom:1px solid #1a2a1a; }
+.label span { display:block; font-size:15px; color:#8aaa8a; margin-top:1px; }
+
+/* ── 背景 ── */
+.bg { position:absolute; inset:0; pointer-events:none; }
+.half:first-child .bg { background:linear-gradient(180deg,#e8ebe4,#e5e8e0); }
+.half:last-child .bg {
+  background:linear-gradient(180deg,#f2f5f0 0%,#eef1ec 40%,#e8ebe4 100%);
+}
+.half:last-child .bg::before {
+  content:''; position:absolute; top:-80px; left:-20%; right:-20%; height:340px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.30),transparent 70%);
+}
+.ls { position:absolute; border-radius:50%; pointer-events:none; }
+.ls1 { bottom:60px; left:-30px; width:220px; height:220px; background:radial-gradient(circle,rgba(180,195,170,0.12),transparent); animation:lsFloat 8s ease-in-out infinite; }
+.ls2 { bottom:120px; right:-20px; width:200px; height:200px; background:radial-gradient(circle,rgba(185,200,178,0.10),transparent); animation:lsFloat 10s ease-in-out infinite 3s; }
+.ls3 { top:30%; left:-50px; width:160px; height:160px; background:radial-gradient(circle,rgba(200,195,160,0.06),transparent); animation:lsFloat 12s ease-in-out infinite 5s; }
+@keyframes lsFloat {
+  0%,100% { transform:translate(0,0); }
+  33% { transform:translate(12px,-8px); }
+  66% { transform:translate(-8px,10px); }
+}
+
+.content { position:relative; z-index:1; padding:34px 22px 100px; display:flex; flex-direction:column; align-items:center; }
+
+/* ── 标题：slide-up 入场 + 呼吸 ── */
+.title {
+  font-family:'Noto Serif SC',serif; font-size:28px; font-weight:200; letter-spacing:6px;
+  color:#2a3a2e; margin:20px 0 6px;
+  opacity:0; transform:translateY(18px);
+  transition:all 0.9s cubic-bezier(0.16,1,0.3,1);
+}
+.title.enter { opacity:1; transform:translateY(0); }
+.half:last-child .title {
+  animation:titleBr 4s ease-in-out infinite;
+  text-shadow:0 0 20px rgba(100,130,90,0.04),0 0 50px rgba(80,110,70,0.02);
+}
+@keyframes titleBr {
+  0%,100% { transform:scale(1); letter-spacing:6px; text-shadow:0 0 15px rgba(100,130,90,0.03),0 0 40px rgba(80,110,70,0.01); }
+  50% { transform:scale(1.022); letter-spacing:10px; text-shadow:0 0 40px rgba(100,130,90,0.12),0 0 75px rgba(80,110,70,0.05); }
+}
+
+.subtitle {
+  font-size:13px; color:rgba(42,58,46,0.40); text-align:center; line-height:1.7;
+  max-width:280px; margin-bottom:30px; opacity:0; transform:translateY(12px);
+  transition:all 0.9s cubic-bezier(0.16,1,0.3,1) 0.15s;
+}
+.subtitle.enter { opacity:1; transform:translateY(0); }
+.half:last-child .subtitle {
+  font-family:'Noto Serif SC',serif; letter-spacing:2px;
+  animation:subFl 4.5s ease-in-out infinite 0.3s;
+}
+@keyframes subFl {
+  0%,100% { opacity:0.40; transform:translateY(0); }
+  50% { opacity:0.58; transform:translateY(-3px); }
+}
+
+/* ── 卡片通用 ── */
+.card {
+  width:100%; max-width:320px; padding:24px; margin-bottom:18px; border-radius:14px;
+  border:1px solid rgba(58,74,63,0.07); background:rgba(255,255,255,0.30);
+  opacity:0; transform:translateY(40px) scale(0.94);
+  transition:all 0.75s cubic-bezier(0.16,1,0.3,1);
+  position:relative; overflow:hidden;
+}
+.card.reveal { opacity:1; transform:translateY(0) scale(1); }
+
+.card-header { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+.card-icon {
+  width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:13px; transition:all 0.5s ease;
+}
+.card-icon.s1 { background:rgba(138,170,138,0.12); color:#7a9a78; }
+.card-icon.s2 { background:rgba(155,175,148,0.12); color:#85a07e; }
+.card-icon.s3 { background:rgba(185,170,130,0.12); color:#a09060; }
+.card-icon.s4 { background:rgba(148,170,168,0.12); color:#789a92; }
+.card-icon.pulse { transform:scale(1.15); }
+
+.card-stage { font-size:10px; color:#8a9a8a; letter-spacing:2px; }
+.card-result { font-size:20px; font-weight:400; color:#2a3a2e; margin-top:4px; }
+.card-insight { font-size:12px; color:#6a7a6a; margin-top:10px; line-height:1.65; padding-top:10px; border-top:1px solid rgba(58,74,63,0.05); }
+
+/* 卡片呼吸微光 */
+.card-glow {
+  position:absolute; top:-60%; left:-60%; width:220%; height:220%;
+  background:radial-gradient(ellipse at 30% 20%,rgba(210,190,140,0.05),transparent 60%);
+  pointer-events:none; opacity:0;
+}
+.card.reveal .card-glow {
+  animation:cGlow 5s ease-in-out infinite;
+}
+.card:nth-child(2) .card-glow { animation-delay:1.2s; }
+.card:nth-child(3) .card-glow { animation-delay:2.6s; }
+.card:nth-child(4) .card-glow { animation-delay:3.8s; }
+@keyframes cGlow {
+  0%,100% { opacity:0.08; }
+  40% { opacity:0.28; }
+  60% { opacity:0.12; }
+}
+
+/* 卡片呼吸缩放 */
+.half:last-child .card {
+  animation:none;
+}
+.half:last-child .card.reveal {
+  animation:cScale 5.5s ease-in-out infinite;
+}
+.card:nth-child(1).reveal { animation-delay:0.8s; }
+.card:nth-child(2).reveal { animation-delay:2.0s; }
+.card:nth-child(3).reveal { animation-delay:3.4s; }
+.card:nth-child(4).reveal { animation-delay:4.6s; }
+@keyframes cScale {
+  0%,100% { transform:translateY(0) scale(1); }
+  50% { transform:translateY(-2px) scale(1.008); }
+}
+
+/* ── 底部淡出 ── */
+.bottom-fade {
+  position:sticky; bottom:0; left:0; right:0; height:80px; z-index:5; pointer-events:none;
+  background:linear-gradient(180deg,transparent,#eef1ec 70%);
+}
+
+/* ── 浮游光点（更多、更丰富）── */
+.spark { position:absolute; border-radius:50%; pointer-events:none; animation:spFloat 3.5s ease-in-out infinite; opacity:0; }
+@keyframes spFloat {
+  0%,100% { opacity:0; transform:translateY(0) scale(0.4); }
+  15% { opacity:0.45; }
+  50% { opacity:0.65; transform:translateY(-32px) scale(1.3); }
+  85% { opacity:0.25; }
+}
+.spark.large { width:3px; height:3px; background:#d4b870; animation-duration:4s; }
+.spark.medium { width:2px; height:2px; background:#e0cc90; animation-duration:3.2s; }
+.spark.small { width:1.5px; height:1.5px; background:#ead8a0; animation-duration:2.8s; }
+
+/* 光点辉光 */
+.spark::after {
+  content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:200%; height:200%; border-radius:50%;
+  background:radial-gradient(circle,rgba(210,180,110,0.4),transparent);
+}
+
+/* ── 卡片间装饰线 ── */
+.card-divider {
+  width:40px; height:1px; margin:-4px auto 14px;
+  background:linear-gradient(90deg,transparent,rgba(180,160,110,0.15),transparent);
+  opacity:0; transition:opacity 0.6s ease 0.4s;
+}
+.card-divider.show { opacity:1; }
+
+/* ── 按钮 ── */
+.btn-wrap { margin-top:44px; text-align:center; position:relative; }
+.btn {
+  border:none; background:transparent; color:#8a7a5a; font-family:'Noto Serif SC',serif;
+  letter-spacing:10px; font-size:20px; font-weight:300; padding:16px 56px;
+  cursor:pointer; position:relative; display:inline-block;
+  animation:btnBr 3.2s ease-in-out infinite;
+}
+@keyframes btnBr {
+  0%,100% { text-shadow:0 0 0 rgba(180,150,80,0); transform:scale(1); }
+  50% { text-shadow:0 0 24px rgba(180,150,80,0.18),0 0 48px rgba(160,130,70,0.06); transform:scale(1.014); }
+}
+.btn-line { position:absolute; bottom:4px; left:18%; width:64%; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(180,150,80,0.32),transparent);
+  animation:lnBr 3.2s ease-in-out infinite; }
+@keyframes lnBr {
+  0%,100% { opacity:0.12; width:40%; left:30%; }
+  50% { opacity:0.50; width:68%; left:16%; }
+}
+.btn-stars { position:absolute; top:-20px; left:50%; transform:translateX(-50%); display:flex; gap:10px; }
+.btn-star { width:2.5px; height:2.5px; border-radius:50%; background:#d4b870; animation:stPu 2.8s ease-in-out infinite; }
+.btn-star:nth-child(2) { animation-delay:0.5s; width:3.5px; height:3.5px; }
+.btn-star:nth-child(3) { animation-delay:1.0s; }
+@keyframes stPu {
+  0%,100% { opacity:0.12; transform:scale(0.5); }
+  50% { opacity:0.75; transform:scale(1.4); }
+}
+
+/* 雨丝 */
+.rain { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.raindrop { position:absolute; width:0.5px; background:rgba(90,120,90,0.06); animation:rain linear infinite; }
+@keyframes rain { 0%{transform:translateY(-100vh);} 100%{transform:translateY(100vh);} }
+.half:last-child .raindrop { background:rgba(90,120,90,0.10); }
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════ BEFORE ═══════════ -->
+<div class="half">
+  <div class="label">BEFORE<span>当前报告页</span></div>
+  <div class="bg"></div>
+  <div class="ls ls1"></div><div class="ls ls2"></div>
+  <div class="rain" id="rain-before"></div>
+  <div class="content">
+    <div class="title" id="title-b">你的本次雨境画像</div>
+    <div class="subtitle" id="sub-b">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+
+    <div class="card" id="cb0"><div class="card-header"><div class="card-icon s1">①</div><div class="card-stage">第1阶段 · 表情</div></div><div class="card-result">皱眉</div><div style="font-size:13px;color:#8a9a8a;margin-top:8px;">每个选择都是你内心的一次回应。</div></div>
+    <div class="card" id="cb1"><div class="card-header"><div class="card-icon s2">②</div><div class="card-stage">第2阶段 · 关键词</div></div><div class="card-result">家人、发呆</div><div style="font-size:13px;color:#8a9a8a;margin-top:8px;">每个选择都是你内心的一次回应。</div></div>
+    <div class="card" id="cb2"><div class="card-header"><div class="card-icon s3">③</div><div class="card-stage">第3阶段 · 庇护所</div></div><div class="card-result">伞</div><div style="font-size:13px;color:#8a9a8a;margin-top:8px;">每个选择都是你内心的一次回应。</div></div>
+    <div class="card" id="cb3"><div class="card-header"><div class="card-icon s4">④</div><div class="card-stage">第4阶段 · 方向</div></div><div class="card-result">中间</div><div style="font-size:13px;color:#8a9a8a;margin-top:8px;">每个选择都是你内心的一次回应。</div></div>
+    <div class="btn-wrap"><div class="btn" style="border:1px solid rgba(58,74,63,0.25);color:rgba(42,58,46,0.65);font-family:sans-serif;letter-spacing:4px;font-size:17px;animation:none;">重新体验</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ AFTER ═══════════ -->
+<div class="half">
+  <div class="label">AFTER<span>呼吸动画 + 呼应首页</span></div>
+  <div class="bg"></div>
+  <div class="ls ls1"></div><div class="ls ls2"></div><div class="ls ls3"></div>
+  <div class="rain" id="rain-after"></div>
+
+  <!-- 8 颗浮游光点 -->
+  <div class="spark large" style="top:10%;left:11%;animation-delay:0s;"></div>
+  <div class="spark medium" style="top:18%;left:84%;animation-delay:1.3s;"></div>
+  <div class="spark small" style="top:38%;left:6%;animation-delay:2.5s;"></div>
+  <div class="spark large" style="top:52%;left:90%;animation-delay:0.7s;"></div>
+  <div class="spark medium" style="top:62%;left:14%;animation-delay:1.9s;"></div>
+  <div class="spark small" style="top:72%;left:86%;animation-delay:3.1s;"></div>
+  <div class="spark large" style="top:82%;left:8%;animation-delay:2.2s;"></div>
+  <div class="spark medium" style="top:88%;left:80%;animation-delay:0.4s;"></div>
+
+  <div class="content">
+    <div class="title" id="title-a">你的本次雨境画像</div>
+    <div class="subtitle" id="sub-a">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+
+    <div class="card" id="ca0">
+      <div class="card-glow"></div>
+      <div class="card-header"><div class="card-icon s1">①</div><div class="card-stage">第1阶段 · 表情</div></div>
+      <div class="card-result">皱眉</div>
+      <div class="card-insight">面对烦恼时，你倾向于将情绪收敛在眉间。皱眉往往意味着你在认真思考和消化，而非逃避。</div>
+    </div>
+    <div class="card-divider" id="div0"></div>
+
+    <div class="card" id="ca1">
+      <div class="card-glow"></div>
+      <div class="card-header"><div class="card-icon s2">②</div><div class="card-stage">第2阶段 · 关键词</div></div>
+      <div class="card-result">家人、发呆</div>
+      <div class="card-insight">在压力时刻，你想到的是家人和放空。这是你内心深处的避风港——亲情的连接和自我独处的空间。</div>
+    </div>
+    <div class="card-divider" id="div1"></div>
+
+    <div class="card" id="ca2">
+      <div class="card-glow"></div>
+      <div class="card-header"><div class="card-icon s3">③</div><div class="card-stage">第3阶段 · 庇护所</div></div>
+      <div class="card-result">伞</div>
+      <div class="card-insight">伞是主动的庇护——你选择亲手撑起自己的保护。比起躲进亭子，你更愿意握紧自己能够掌控的东西。</div>
+    </div>
+    <div class="card-divider" id="div2"></div>
+
+    <div class="card" id="ca3">
+      <div class="card-glow"></div>
+      <div class="card-header"><div class="card-icon s4">④</div><div class="card-stage">第4阶段 · 方向</div></div>
+      <div class="card-result">中间</div>
+      <div class="card-insight">雨后天晴，你选择留在原地。你没有急于奔向某个方向——此刻的停留，是内心安定最好的证明。</div>
+    </div>
+
+    <div class="btn-wrap">
+      <div class="btn">
+        重新体验
+        <div class="btn-line"></div>
+        <div class="btn-stars">
+          <div class="btn-star"></div><div class="btn-star"></div><div class="btn-star"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-fade"></div>
+</div>
+
+<script>
+// ── 雨丝 ──
+function makeRain(id, count, opacity) {
+  const c = document.getElementById(id);
+  for (let i=0;i<count;i++) {
+    const d = document.createElement('div'); d.className='raindrop';
+    d.style.left = Math.random()*100+'%';
+    d.style.animationDuration = (0.8+Math.random()*2.2)+'s';
+    d.style.animationDelay = Math.random()*4+'s';
+    d.style.height = (8+Math.random()*20)+'px';
+    d.style.opacity = opacity;
+    c.appendChild(d);
+  }
+}
+makeRain('rain-before', 16, 0.5);
+makeRain('rain-after', 20, 1.0);
+
+// ── BEFORE: 所有卡片同时显示 ──
+setTimeout(() => {
+  document.getElementById('title-b').classList.add('enter');
+  document.getElementById('sub-b').classList.add('enter');
+  ['cb0','cb1','cb2','cb3'].forEach(id => {
+    document.getElementById(id).classList.add('reveal');
+  });
+}, 300);
+
+// ── AFTER: 标题入场 + 卡片 stagger ──
+setTimeout(() => {
+  document.getElementById('title-a').classList.add('enter');
+  document.getElementById('sub-a').classList.add('enter');
+}, 200);
+
+// 卡片 stagger + 分隔线 + 图标脉动
+async function animateAfter() {
+  const cards = ['ca0','ca1','ca2','ca3'];
+  for (let i=0; i<cards.length; i++) {
+    await new Promise(r => setTimeout(r, 220));
+    const card = document.getElementById(cards[i]);
+    card.classList.add('reveal');
+
+    // 图标脉动
+    const icon = card.querySelector('.card-icon');
+    if (icon) {
+      setTimeout(() => { icon.classList.add('pulse'); }, 100);
+      setTimeout(() => { icon.classList.remove('pulse'); }, 600);
+    }
+
+    // 分隔线
+    if (i < 3) {
+      setTimeout(() => {
+        document.getElementById('div'+i).classList.add('show');
+      }, 150);
+    }
+  }
+}
+animateAfter();
+</script>
+</body>
+</html>

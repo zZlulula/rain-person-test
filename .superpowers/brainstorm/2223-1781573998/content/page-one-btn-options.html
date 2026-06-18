@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>按钮风格选项</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #e8ebe4;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; font-family: 'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif;
+  }
+  .phone { width: 390px; height: 844px; background: #e8ebe4; position: relative; overflow: hidden; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.18); }
+
+  .title {
+    position: absolute; left:0; right:0; top: 28%;
+    text-align: center;
+    font-size: 44px; font-weight: 200; letter-spacing: 8px;
+    color: rgba(42,58,46,.86);
+  }
+  .sub {
+    position: absolute; left:0; right:0; top: 36%;
+    text-align: center;
+    font-size: 14px; font-weight: 300; color: rgba(42,58,46,.50);
+  }
+
+  .btn-row {
+    position: absolute; left:0; right:0; top: 52%;
+    display: flex; justify-content: center; gap: 28px;
+    flex-wrap: wrap; padding: 0 24px;
+  }
+
+  .btn { background: none; cursor: pointer; font-family: inherit; font-size: 20px; letter-spacing: 4px; transition: all .5s cubic-bezier(.25,.8,.25,1); padding: 10px 32px; }
+
+  /* A: 底线 */
+  .btn-a {
+    color: #8a9c8a; font-weight: 300;
+    border: none; border-bottom: 1.5px solid rgba(58,74,63,.18);
+    border-radius: 0;
+  }
+  .btn-a.highlight, .btn-a:hover {
+    color: #fef4ca; font-weight: 500; letter-spacing: 8px;
+    border-bottom-color: rgba(252,208,128,.55);
+    text-shadow: 0 0 10px rgba(252,208,128,.72), 0 0 24px rgba(250,192,112,.50), 0 0 44px rgba(238,172,95,.26);
+  }
+
+  /* B: 纯文字无框 */
+  .btn-b {
+    color: #8a9c8a; font-weight: 300;
+    border: none;
+  }
+  .btn-b.highlight, .btn-b:hover {
+    color: #fef4ca; font-weight: 500; letter-spacing: 8px;
+    text-shadow: 0 0 10px rgba(252,208,128,.72), 0 0 24px rgba(250,192,112,.50), 0 0 44px rgba(238,172,95,.26), 0 0 66px rgba(222,158,80,.14);
+  }
+
+  /* C: 圆点指示器 */
+  .btn-c {
+    color: #8a9c8a; font-weight: 300; border: none;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .btn-c .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(58,74,63,.25);
+    transition: all .5s cubic-bezier(.25,.8,.25,1);
+  }
+  .btn-c.highlight, .btn-c:hover {
+    color: #fef4ca; font-weight: 500; letter-spacing: 8px;
+    text-shadow: 0 0 10px rgba(252,208,128,.72), 0 0 24px rgba(250,192,112,.50), 0 0 44px rgba(238,172,95,.26);
+  }
+  .btn-c.highlight .dot, .btn-c:hover .dot {
+    background: rgba(252,208,128,.8);
+    box-shadow: 0 0 8px rgba(252,208,128,.6);
+  }
+
+  .btn.highlight { outline: none; }
+
+  .label {
+    position: absolute; top: 68%;
+    left: 0; right: 0; text-align: center;
+    font-size: 12px; color: rgba(42,58,46,.30);
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="title">雨中人</div>
+  <div class="sub">一场关于内心世界的雨境之旅</div>
+
+  <div class="btn-row">
+    <button class="btn btn-a" onclick="toggle(this)">开&emsp;始</button>
+    <button class="btn btn-b" onclick="toggle(this)">开&emsp;始</button>
+    <button class="btn btn-c" onclick="toggle(this)"><span class="dot"></span>开&emsp;始</button>
+  </div>
+
+  <div class="label">底线 / 纯文字 / 圆点 · 点击切换高亮</div>
+</div>
+
+<script>
+function toggle(btn) {
+  btn.classList.toggle('highlight');
+}
+</script>
+</body>
+</html>

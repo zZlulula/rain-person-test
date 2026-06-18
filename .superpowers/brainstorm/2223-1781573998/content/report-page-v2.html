@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>报告页优化 V2 — 呼应首页呼吸感</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0f0a; display:flex; height:100vh; overflow:hidden; }
+.half { flex:1; display:flex; flex-direction:column; overflow-y:auto; position:relative; border-right:1px solid #1a2a1a; }
+.half:last-child { border-right:none; }
+.half::-webkit-scrollbar { width:0; }
+.label { position:sticky; top:0; z-index:10; padding:12px 20px; background:rgba(10,15,10,0.95); text-align:center; font-size:11px; letter-spacing:3px; color:#5a7a5a; border-bottom:1px solid #1a2a1a; }
+.label span { display:block; font-size:15px; color:#8aaa8a; margin-top:1px; }
+
+/* ── 背景 ── */
+.bg { position:absolute; inset:0; pointer-events:none; }
+.half:first-child .bg { background:linear-gradient(180deg,#e8ebe4,#e5e8e0); }
+.half:last-child .bg {
+  background:linear-gradient(180deg,#f2f5f0 0%,#eef1ec 40%,#e8ebe4 100%);
+}
+.half:last-child .bg::before {
+  content:''; position:absolute; top:-60px; left:0; right:0; height:300px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.25),transparent 70%);
+}
+.ls { position:absolute; border-radius:50%; pointer-events:none; }
+.ls1 { bottom:60px; left:-20px; width:200px; height:200px; background:radial-gradient(circle,rgba(180,195,170,0.10),transparent); }
+.ls2 { bottom:100px; right:-15px; width:180px; height:180px; background:radial-gradient(circle,rgba(185,200,178,0.09),transparent); }
+
+.content { position:relative; z-index:1; padding:30px 22px 80px; display:flex; flex-direction:column; align-items:center; }
+
+/* ── 标题 ── */
+.title {
+  font-family:'Noto Serif SC',serif; font-size:28px; font-weight:200; letter-spacing:6px;
+  color:#2a3a2e; margin:16px 0 6px;
+}
+.half:first-child .title {
+  font-family:'Noto Sans SC',sans-serif; letter-spacing:2px; font-weight:300;
+  animation:none;
+}
+.half:last-child .title {
+  animation:titleBreath 3.6s ease-in-out infinite;
+  text-shadow:0 0 30px rgba(100,130,90,0.06),0 0 60px rgba(80,110,70,0.03);
+}
+@keyframes titleBreath {
+  0%,100% { transform:scale(1); opacity:0.86; letter-spacing:6px; text-shadow:0 0 20px rgba(100,130,90,0.04),0 0 50px rgba(80,110,70,0.02); }
+  50% { transform:scale(1.018); opacity:0.96; letter-spacing:9px; text-shadow:0 0 40px rgba(100,130,90,0.10),0 0 70px rgba(80,110,70,0.05); }
+}
+.subtitle { font-size:13px; color:rgba(42,58,46,0.42); text-align:center; line-height:1.7; max-width:280px; margin-bottom:28px; }
+.half:last-child .subtitle {
+  font-family:'Noto Serif SC',serif; letter-spacing:2px;
+  animation:subFloat 4.2s ease-in-out infinite;
+}
+@keyframes subFloat {
+  0%,100% { opacity:0.40; transform:translateY(0); }
+  50% { opacity:0.55; transform:translateY(-2px); }
+}
+
+/* ── 卡片 ── */
+.card {
+  width:100%; max-width:320px; padding:22px; margin-bottom:16px; border-radius:14px;
+  border:1px solid rgba(58,74,63,0.08); background:rgba(255,255,255,0.28);
+  opacity:0; transform:translateY(36px); transition:all 0.7s cubic-bezier(0.16,1,0.3,1);
+  position:relative; overflow:hidden;
+}
+.card.reveal { opacity:1; transform:translateY(0); }
+.card-header { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+.card-icon { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; }
+.card-icon.s1 { background:rgba(138,170,138,0.10); color:#7a9a78; }
+.card-icon.s2 { background:rgba(155,175,148,0.10); color:#85a07e; }
+.card-icon.s3 { background:rgba(185,170,130,0.10); color:#a09060; }
+.card-icon.s4 { background:rgba(148,170,168,0.10); color:#789a92; }
+.card-stage { font-size:10px; color:#8a9a8a; letter-spacing:2px; }
+.card-result { font-size:20px; font-weight:400; color:#2a3a2e; margin-top:4px; }
+.card-insight { font-size:12px; color:#6a7a6a; margin-top:8px; line-height:1.65; padding-top:8px; border-top:1px solid rgba(58,74,63,0.05); }
+
+/* AFTER 卡片呼吸微光 */
+.half:last-child .card { background:rgba(255,255,255,0.32); }
+.half:last-child .card:nth-child(1) { transition-delay:0.05s; }
+.half:last-child .card:nth-child(2) { animation-delay:0.3s; }
+
+.card-glow {
+  position:absolute; top:-50%; left:-50%; width:200%; height:200%;
+  background:radial-gradient(ellipse at var(--gx) var(--gy),rgba(200,180,120,0.04),transparent 60%);
+  pointer-events:none; opacity:0;
+}
+.half:last-child .card-glow {
+  animation:cardGlow 4.8s ease-in-out infinite;
+}
+.card:nth-child(2) .card-glow { animation-delay:1.2s; }
+.card:nth-child(3) .card-glow { animation-delay:2.4s; }
+.card:nth-child(4) .card-glow { animation-delay:3.6s; }
+@keyframes cardGlow {
+  0%,100% { opacity:0.15; --gx:50%; --gy:30%; }
+  33% { opacity:0.30; --gx:30%; --gy:60%; }
+  66% { opacity:0.18; --gx:70%; --gy:40%; }
+}
+
+/* ── 浮游光点 ── */
+.spark { position:absolute; width:2px; height:2px; border-radius:50%; pointer-events:none;
+  background:#d4b870; animation:sparkFloat 3s ease-in-out infinite; opacity:0; }
+@keyframes sparkFloat {
+  0%,100% { opacity:0; transform:translateY(0) scale(0.5); }
+  20% { opacity:0.5; }
+  50% { opacity:0.7; transform:translateY(-28px) scale(1.2); }
+  80% { opacity:0.3; }
+}
+
+/* ── 按钮 ── */
+.btn-wrap { margin-top:40px; text-align:center; }
+.btn { padding:14px 48px; border-radius:12px; font-size:17px; font-weight:300; letter-spacing:4px; cursor:pointer; position:relative; display:inline-block; }
+.half:first-child .btn { border:1px solid rgba(58,74,63,0.25); color:rgba(42,58,46,0.65); background:transparent; }
+.half:last-child .btn {
+  border:none; background:transparent; color:#8a7a5a; font-family:'Noto Serif SC',serif;
+  letter-spacing:10px; font-size:20px; font-weight:300; padding:16px 56px;
+  animation:btnBreath 3.2s ease-in-out infinite;
+}
+@keyframes btnBreath {
+  0%,100% { text-shadow:0 0 0 rgba(180,150,80,0); transform:scale(1); }
+  50% { text-shadow:0 0 22px rgba(180,150,80,0.15),0 0 44px rgba(160,130,70,0.05); transform:scale(1.012); }
+}
+.btn-line { position:absolute; bottom:4px; left:18%; width:64%; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(180,150,80,0.30),transparent);
+  animation:lineBreathe 3.2s ease-in-out infinite; }
+@keyframes lineBreathe {
+  0%,100% { opacity:0.15; width:45%; left:27.5%; }
+  50% { opacity:0.45; width:65%; left:17.5%; }
+}
+.btn-stars { position:absolute; top:-22px; left:50%; transform:translateX(-50%); display:flex; gap:10px; }
+.btn-star { width:2.5px; height:2.5px; border-radius:50%; background:#d4b870; animation:starPulse 2.8s ease-in-out infinite; }
+.btn-star:nth-child(2) { animation-delay:0.5s; width:3.5px; height:3.5px; }
+.btn-star:nth-child(3) { animation-delay:1.0s; }
+@keyframes starPulse {
+  0%,100% { opacity:0.15; transform:scale(0.6); }
+  50% { opacity:0.7; transform:scale(1.3); }
+}
+
+/* ── 雨丝 ── */
+.rain { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.raindrop { position:absolute; width:0.5px; background:rgba(90,120,90,0.06); animation:rain linear infinite; }
+@keyframes rain { 0%{transform:translateY(-100vh);} 100%{transform:translateY(100vh);} }
+.half:last-child .raindrop { background:rgba(90,120,90,0.10); }
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════ BEFORE ═══════════ -->
+<div class="half">
+  <div class="label">BEFORE<span>当前</span></div>
+  <div class="bg"></div>
+  <div class="ls ls1"></div><div class="ls ls2"></div>
+  <div class="rain" id="rain-before"></div>
+  <div class="content">
+    <div class="title">你的本次雨境画像</div>
+    <div class="subtitle">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+    <div class="card" id="cb0"><div class="card-header"><div class="card-icon s1">①</div><div class="card-stage">第1阶段 · 表情</div></div><div class="card-result">皱眉</div><div style="font-size:13px;color:#8a9a8a;margin-top:8px;">每个选择都是你内心的一次回应。</div></div>
+    <div class="card" id="cb1"><div class="card-header"><div class="card-icon s2">②</div><div class="card-stage">第2阶段 · 关键词</div></div><div class="card-result">家人、发呆</div><div style="font-size:13px;color:#8a9a8a;margin-top:8px;">每个选择都是你内心的一次回应。</div></div>
+    <div class="card" id="cb2"><div class="card-header"><div class="card-icon s3">③</div><div class="card-stage">第3阶段 · 庇护所</div></div><div class="card-result">伞</div><div style="font-size:13px;color:#8a9a8a;margin-top:8px;">每个选择都是你内心的一次回应。</div></div>
+    <div class="card" id="cb3"><div class="card-header"><div class="card-icon s4">④</div><div class="card-stage">第4阶段 · 方向</div></div><div class="card-result">中间</div><div style="font-size:13px;color:#8a9a8a;margin-top:8px;">每个选择都是你内心的一次回应。</div></div>
+    <div class="btn-wrap"><div class="btn">重新体验</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ AFTER ═══════════ -->
+<div class="half">
+  <div class="label">AFTER<span>呼吸感 + 呼应首页</span></div>
+  <div class="bg"></div>
+  <div class="ls ls1"></div><div class="ls ls2"></div>
+  <div class="rain" id="rain-after"></div>
+  <!-- 浮游光点 -->
+  <div class="spark" style="top:18%;left:12%;animation-delay:0s;"></div>
+  <div class="spark" style="top:24%;left:84%;animation-delay:1.2s;"></div>
+  <div class="spark" style="top:52%;left:8%;animation-delay:2.3s;"></div>
+  <div class="spark" style="top:62%;left:88%;animation-delay:0.7s;"></div>
+  <div class="spark" style="top:78%;left:16%;animation-delay:1.8s;"></div>
+  <div class="content">
+    <div class="title">你的本次雨境画像</div>
+    <div class="subtitle">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+    <div class="card" id="ca0">
+      <div class="card-glow"></div>
+      <div class="card-header"><div class="card-icon s1">①</div><div class="card-stage">第1阶段 · 表情</div></div>
+      <div class="card-result">皱眉</div>
+      <div class="card-insight">面对烦恼时，你倾向于将情绪收敛在眉间。皱眉往往意味着你在认真思考和消化，而非逃避。</div>
+    </div>
+    <div class="card" id="ca1">
+      <div class="card-glow"></div>
+      <div class="card-header"><div class="card-icon s2">②</div><div class="card-stage">第2阶段 · 关键词</div></div>
+      <div class="card-result">家人、发呆</div>
+      <div class="card-insight">在压力时刻，你想到的是家人和放空。这是你内心深处的避风港——亲情的连接和自我独处的空间。</div>
+    </div>
+    <div class="card" id="ca2">
+      <div class="card-glow"></div>
+      <div class="card-header"><div class="card-icon s3">③</div><div class="card-stage">第3阶段 · 庇护所</div></div>
+      <div class="card-result">伞</div>
+      <div class="card-insight">伞是主动的庇护——你选择亲手撑起自己的保护。比起躲进亭子，你更愿意握紧自己能够掌控的东西。</div>
+    </div>
+    <div class="card" id="ca3">
+      <div class="card-glow"></div>
+      <div class="card-header"><div class="card-icon s4">④</div><div class="card-stage">第4阶段 · 方向</div></div>
+      <div class="card-result">中间</div>
+      <div class="card-insight">雨后天晴，你选择留在原地。你没有急于奔向某个方向——此刻的停留，是内心安定最好的证明。</div>
+    </div>
+    <div class="btn-wrap">
+      <div class="btn">
+        重新体验
+        <div class="btn-line"></div>
+        <div class="btn-stars">
+          <div class="btn-star"></div><div class="btn-star"></div><div class="btn-star"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 雨丝 ──
+function makeRain(id, count, opacity) {
+  const c = document.getElementById(id);
+  for (let i=0;i<count;i++) {
+    const d = document.createElement('div'); d.className='raindrop';
+    d.style.left = Math.random()*100+'%';
+    d.style.animationDuration = (0.8+Math.random()*2.2)+'s';
+    d.style.animationDelay = Math.random()*4+'s';
+    d.style.height = (8+Math.random()*20)+'px';
+    d.style.opacity = opacity;
+    c.appendChild(d);
+  }
+}
+makeRain('rain-before', 18, 0.5);
+makeRain('rain-after', 22, 1.0);
+
+// ── AFTER 卡片 staggered 入场 ──
+async function staggerIn() {
+  for (let i=0;i<4;i++) {
+    await new Promise(r => setTimeout(r, 180));
+    const card = document.getElementById('ca'+i);
+    if (card) card.classList.add('reveal');
+  }
+}
+staggerIn();
+
+// ── BEFORE 卡片一次全显 ──
+setTimeout(() => {
+  ['cb0','cb1','cb2','cb3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('reveal');
+  });
+}, 400);
+</script>
+</body>
+</html>

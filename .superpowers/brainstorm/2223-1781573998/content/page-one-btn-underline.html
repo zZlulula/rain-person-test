@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>底线按钮优化</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #2a2a2a;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; font-family: 'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif;
+  }
+  .phone { width: 390px; height: 844px; background: #e8ebe4; position: relative; overflow: hidden; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.18); }
+
+  /* rain */
+  .rain-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+  .drop {
+    position: absolute; width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(42,58,46,.12), transparent);
+    animation: fall linear infinite;
+  }
+  @keyframes fall {
+    0%   { transform: translateY(-100px); opacity: 0; }
+    5%   { opacity: .5; }
+    85%  { opacity: .5; }
+    100% { transform: translateY(880px); opacity: 0; }
+  }
+
+  .content { position: relative; z-index: 1; height: 100%; }
+
+  .title {
+    position: absolute; left:0; right:0; top: 30%;
+    text-align: center;
+    font-size: 44px; font-weight: 200; letter-spacing: 8px;
+    color: rgba(42,58,46,.86);
+  }
+  .sub {
+    position: absolute; left:0; right:0; top: 38%;
+    text-align: center;
+    font-size: 14px; font-weight: 300; color: rgba(42,58,46,.48);
+  }
+
+  .btn-area {
+    position: absolute; left:0; right:0; top: 54%;
+    display: flex; flex-direction: column; align-items: center; gap: 18px;
+  }
+  .row-label {
+    font-size: 11px; color: rgba(42,58,46,.22); letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  /* ═══ 方案 1: 细线 → 发光扩展 ═══ */
+  .btn-1 {
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 20px; font-weight: 300;
+    letter-spacing: 4px; color: #8a9c8a;
+    padding: 10px 36px;
+    position: relative;
+    transition: all .5s cubic-bezier(.25,.8,.25,1);
+  }
+  .btn-1::after {
+    content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+    width: 36px; height: 1px;
+    background: rgba(58,74,63,.22);
+    transition: all .5s cubic-bezier(.25,.8,.25,1);
+  }
+  .btn-1.highlight, .btn-1:hover {
+    color: #fef4ca; font-weight: 400; letter-spacing: 7px;
+    text-shadow: 0 0 10px rgba(252,208,128,.65), 0 0 22px rgba(250,192,112,.45);
+  }
+  .btn-1.highlight::after, .btn-1:hover::after {
+    width: 60px; height: 1.5px;
+    background: rgba(252,208,128,.7);
+    box-shadow: 0 0 6px rgba(252,208,128,.5), 0 0 14px rgba(250,192,112,.25);
+  }
+
+  /* ═══ 方案 2: 双线夹层 ═══ */
+  .btn-2 {
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 20px; font-weight: 300;
+    letter-spacing: 4px; color: #8a9c8a;
+    padding: 12px 36px;
+    position: relative;
+    transition: all .5s cubic-bezier(.25,.8,.25,1);
+  }
+  .btn-2::before, .btn-2::after {
+    content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+    height: 1px; background: rgba(58,74,63,.18);
+    transition: all .5s cubic-bezier(.25,.8,.25,1);
+  }
+  .btn-2::before { bottom: 12px; width: 28px; }
+  .btn-2::after  { bottom: 4px;  width: 40px; }
+  .btn-2.highlight, .btn-2:hover {
+    color: #fef4ca; font-weight: 400; letter-spacing: 7px;
+    text-shadow: 0 0 10px rgba(252,208,128,.65), 0 0 22px rgba(250,192,112,.45);
+  }
+  .btn-2.highlight::before, .btn-2:hover::before {
+    width: 44px; background: rgba(252,208,128,.55);
+    box-shadow: 0 0 5px rgba(252,208,128,.35);
+  }
+  .btn-2.highlight::after, .btn-2:hover::after {
+    width: 54px; background: rgba(252,208,128,.75);
+    box-shadow: 0 0 8px rgba(252,208,128,.45);
+  }
+
+  /* ═══ 方案 3: 中间短线 + 两端延长 ═══ */
+  .btn-3 {
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 20px; font-weight: 300;
+    letter-spacing: 4px; color: #8a9c8a;
+    padding: 10px 36px;
+    position: relative;
+    transition: all .5s cubic-bezier(.25,.8,.25,1);
+  }
+  .btn-3::after {
+    content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 1.5px; border-radius: 1px;
+    background: rgba(58,74,63,.22);
+    transition: all .6s cubic-bezier(.25,.8,.25,1);
+  }
+  .btn-3.highlight, .btn-3:hover {
+    color: #fef4ca; font-weight: 400; letter-spacing: 7px;
+    text-shadow: 0 0 10px rgba(252,208,128,.65), 0 0 22px rgba(250,192,112,.45);
+  }
+  .btn-3.highlight::after, .btn-3:hover::after {
+    width: 100%; height: 1.5px;
+    background: linear-gradient(to right, transparent, rgba(252,208,128,.8) 15%, rgba(252,208,128,.8) 85%, transparent);
+    box-shadow: 0 0 8px rgba(252,208,128,.5);
+  }
+
+  .note {
+    position: absolute; bottom: 28px; left:0; right:0;
+    text-align: center; font-size: 12px; color: rgba(42,58,46,.22);
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="rain-layer" id="rain"></div>
+  <div class="content">
+    <div class="title">雨中人</div>
+    <div class="sub">一场关于内心世界的雨境之旅</div>
+
+    <div class="btn-area">
+      <button class="btn-1" onclick="this.classList.toggle('highlight')">开&emsp;始</button>
+      <button class="btn-2" onclick="this.classList.toggle('highlight')">开&emsp;始</button>
+      <button class="btn-3" onclick="this.classList.toggle('highlight')">开&emsp;始</button>
+    </div>
+  </div>
+  <div class="note">① 细线→发光扩展 / ② 双线夹层 / ③ 短线段→两端延长渐变 · 点击切换</div>
+</div>
+
+<script>
+const rain = document.getElementById('rain');
+for (let i=0; i<80; i++) {
+  const d = document.createElement('div');
+  d.className = 'drop';
+  d.style.left = Math.random()*100+'%';
+  d.style.animationDuration = (1.1+Math.random()*2.6)+'s';
+  d.style.animationDelay = Math.random()*3+'s';
+  d.style.height = (40+Math.random()*85)+'px';
+  rain.appendChild(d);
+}
+</script>
+</body>
+</html>

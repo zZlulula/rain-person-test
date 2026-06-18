@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>问题文字颜色方案对比</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0f0a; font-family:'Microsoft YaHei','微软雅黑','PingFang SC',sans-serif; display:flex; height:100vh; }
+.col { flex:1; display:flex; flex-direction:column; align-items:center; padding:30px 16px; border-right:1px solid #1a2a1a; }
+.col:last-child { border-right:none; }
+.label { font-size:11px; letter-spacing:2px; color:#5a7a5a; margin-bottom:8px; text-align:center; }
+.hex { font-size:13px; color:#8aaa8a; margin-bottom:20px; font-family:monospace; }
+.dark-bg { background:rgba(0,0,0,0.55); border-radius:12px; padding:28px 20px; width:100%; max-width:300px; margin-bottom:16px; }
+.question { font-family:'Microsoft YaHei',sans-serif; font-size:26px; font-weight:300; letter-spacing:2px; text-align:center; line-height:1.6; }
+.rating { font-size:11px; margin-top:8px; letter-spacing:1px; padding:3px 8px; border-radius:3px; }
+.good { background:rgba(100,160,100,0.12); color:#6aa060; }
+.bad  { background:rgba(200,80,60,0.12); color:#c8503c; }
+.note { font-size:10px; color:#6a7a6a; margin-top:2px; }
+</style>
+</head>
+<body>
+
+<!-- A: 当前 -->
+<div class="col">
+  <div class="label">A · 当前</div>
+  <div class="hex">#e2efe0</div>
+  <div class="dark-bg">
+    <div class="question" style="color:#e2efe0;">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+  </div>
+  <div class="dark-bg">
+    <div class="question" style="color:#e2efe0;">放松好了吗？场景还在下雨，你的前方出现了一把伞和一个小亭子</div>
+  </div>
+  <span class="rating bad">偏绿，刺眼</span>
+</div>
+
+<!-- B: 暖白 -->
+<div class="col">
+  <div class="label">B · 暖白</div>
+  <div class="hex">#f0ebe0</div>
+  <div class="dark-bg">
+    <div class="question" style="color:#f0ebe0;">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+  </div>
+  <div class="dark-bg">
+    <div class="question" style="color:#f0ebe0;">放松好了吗？场景还在下雨，你的前方出现了一把伞和一个小亭子</div>
+  </div>
+  <span class="note">暖调，自然柔和</span>
+</div>
+
+<!-- C: 中性浅灰 -->
+<div class="col">
+  <div class="label">C · 淡灰白</div>
+  <div class="hex">#e8e8e4</div>
+  <div class="dark-bg">
+    <div class="question" style="color:#e8e8e4;">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+  </div>
+  <div class="dark-bg">
+    <div class="question" style="color:#e8e8e4;">放松好了吗？场景还在下雨，你的前方出现了一把伞和一个小亭子</div>
+  </div>
+  <span class="note">中性，干净清晰</span>
+</div>
+
+<!-- D: 微暖象牙白 -->
+<div class="col">
+  <div class="label">D · 象牙白</div>
+  <div class="hex">#f2edde</div>
+  <div class="dark-bg">
+    <div class="question" style="color:#f2edde;">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+  </div>
+  <div class="dark-bg">
+    <div class="question" style="color:#f2edde;">放松好了吗？场景还在下雨，你的前方出现了一把伞和一个小亭子</div>
+  </div>
+  <span class="rating good">暖而不黄，温润</span>
+</div>
+
+</body>
+</html>

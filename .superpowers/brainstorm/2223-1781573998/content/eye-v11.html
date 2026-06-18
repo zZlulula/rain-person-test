@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>眼睛 v11 — 灵动可爱版</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#e8ebe4; font-family:'Microsoft YaHei',sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .scene { display:flex; flex-direction:column; align-items:center; gap:36px; }
+  .hint { font-size:28px; color:#2a3a2e; letter-spacing:3px; font-weight:300; animation:hf 3s ease-in-out infinite; }
+  @keyframes hf { 0%,100%{opacity:0.50} 50%{opacity:0.88} }
+
+  .eye-wrap { position:relative; width:210px; height:90px; display:flex; align-items:center; justify-content:center; gap:24px; }
+
+  /* 辉光 */
+  .glow-bg {
+    position:absolute; inset:-16px -10px; border-radius:50%;
+    background:
+      radial-gradient(ellipse at 32% 48%, rgba(165,195,142,0.10) 0%, transparent 42%),
+      radial-gradient(ellipse at 68% 48%, rgba(165,195,142,0.10) 0%, transparent 42%);
+    animation:glowP 2.6s ease-in-out infinite;
+  }
+  @keyframes glowP { 0%,100%{opacity:0.35} 52%{opacity:0.90} }
+
+  /* 单眼 — 大圆 + 弹跳 */
+  .eye {
+    width:50px; height:50px;
+    background:radial-gradient(ellipse at 50% 44%, #fdfefc 0%, #f4f6ef 50%, #eaede3 100%);
+    border-radius:50%;
+    position:relative;
+    box-shadow:
+      0 0 0 0.4px rgba(80,90,60,0.05),
+      0 0 14px 3px rgba(100,120,80,0.04),
+      inset 0 0.2px 0.4px rgba(0,0,0,0.015);
+    overflow:hidden;
+    animation:eyeBounce 2.4s ease-in-out infinite;
+  }
+  @keyframes eyeBounce {
+    0%,100%{transform:scaleY(1) scaleX(1)}
+    30%{transform:scaleY(1.04) scaleX(0.97)}
+    60%{transform:scaleY(0.97) scaleX(1.03)}
+  }
+
+  /* 腮红 */
+  .blush {
+    position:absolute;
+    width:16px; height:7px;
+    background:rgba(235,175,165,0.30);
+    border-radius:50%;
+    bottom:3px; left:17px;
+    filter:blur(3.5px);
+    animation:blushP 3s ease-in-out infinite;
+    z-index:2;
+  }
+  @keyframes blushP { 0%,100%{opacity:0.4} 55%{opacity:0.90} }
+
+  /* 虹膜 */
+  .iris {
+    position:absolute;
+    width:32px; height:32px;
+    background:radial-gradient(circle at 38% 32%,
+      #a4c48a 0%, #82a466 15%, #608446 32%,
+      #3e5c2a 54%, #1e2e14 76%, #0b1008 100%);
+    border-radius:50%;
+    top:9px; left:9px;
+    box-shadow:
+      inset 0 1.2px 2px rgba(255,255,255,0.18),
+      inset 0 -1.2px 2px rgba(0,0,0,0.18),
+      0 0 0.5px rgba(0,0,0,0.06);
+    animation:drift 4.2s ease-in-out infinite;
+  }
+  @keyframes drift {
+    0%,100%{transform:translate(0,0.5px)}
+    14%{transform:translate(-3px,-1.5px)}
+    28%{transform:translate(2px,2.5px)}
+    44%{transform:translate(-1.5px,-3px)}
+    58%{transform:translate(3.5px,-0.5px)}
+    72%{transform:translate(-2.5px,2px)}
+    86%{transform:translate(1px,0)}
+  }
+
+  /* 瞳孔 */
+  .pupil {
+    position:absolute;
+    width:15px; height:15px;
+    background:radial-gradient(circle at 43% 36%, #1a1f14, #040604);
+    border-radius:50%;
+    top:8.5px; left:8.5px;
+  }
+
+  /* 高光 1 — 大圆，左上方 */
+  .h1 {
+    position:absolute;
+    width:8px; height:8px;
+    background:white;
+    border-radius:50%;
+    top:0px; left:1px;
+    box-shadow:0 0 3px white,0 0 6px rgba(255,255,255,0.6);
+    animation:twinkle1 3.5s ease-in-out infinite;
+  }
+  @keyframes twinkle1 {
+    0%,100%{opacity:0.82;transform:scale(1)}
+    15%{opacity:0.98;transform:scale(1.15)}
+    30%{opacity:0.80;transform:scale(1)}
+  }
+
+  /* 高光 2 — 中圆，中间 */
+  .h2 {
+    position:absolute;
+    width:5px; height:5px;
+    background:white;
+    border-radius:50%;
+    top:7px; left:14px;
+    box-shadow:0 0 1.5px white,0 0 3px rgba(255,255,255,0.45);
+    animation:twinkle2 4.0s ease-in-out infinite;
+  }
+  @keyframes twinkle2 {
+    0%,100%{opacity:0.65;transform:scale(1)}
+    22%{opacity:0.92;transform:scale(1.20)}
+    44%{opacity:0.62;transform:scale(1)}
+  }
+
+  /* 高光 3 — 小点，底部反光 */
+  .h3 {
+    position:absolute;
+    width:2.5px; height:2px;
+    background:rgba(255,255,255,0.55);
+    border-radius:50%;
+    top:16px; left:9px;
+    animation:twinkle3 5.5s ease-in-out infinite;
+  }
+  @keyframes twinkle3 {
+    0%,100%{opacity:0.30}
+    35%{opacity:0.62}
+    70%{opacity:0.28}
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="hint">看着红点，现在开始标定</div>
+  <div class="eye-wrap">
+    <div class="glow-bg"></div>
+    <div class="eye">
+      <div class="blush"></div>
+      <div class="iris">
+        <div class="pupil"></div>
+        <div class="h1"></div>
+        <div class="h2"></div>
+        <div class="h3"></div>
+      </div>
+    </div>
+    <div class="eye">
+      <div class="blush"></div>
+      <div class="iris">
+        <div class="pupil"></div>
+        <div class="h1"></div>
+        <div class="h2"></div>
+        <div class="h3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

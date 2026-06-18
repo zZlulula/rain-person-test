@@ -6,10 +6,9 @@ import '../config/experience_flow.dart';
 import '../utils/video_loader.dart';
 import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
-import '../widgets/gaze_choice_button.dart';
 import '../app_theme.dart';
 
-/// 页面三：入场动画 + AU 表情检测 — 禅意灰绿
+/// 页面三：入场动画 + AU 表情检测（Mock 自动选择）
 class PageThreeView extends StatefulWidget {
   final VoidCallback onComplete;
   const PageThreeView({super.key, required this.onComplete});
@@ -20,9 +19,6 @@ class PageThreeView extends StatefulWidget {
 class _PageThreeViewState extends State<PageThreeView> {
   double _maskOpacity = 0;
   double _promptOpacity = 0;
-  bool _showButtons = false;
-  double _buttonsOpacity = 0;
-  String? _highlightedExpression;
   String? _confirmedExpression;
 
   VideoPlayerController? _videoController;
@@ -30,8 +26,6 @@ class _PageThreeViewState extends State<PageThreeView> {
   bool _videoFinished = false;
   Timer? _detectionTimer;
   Timer? _timeoutTimer;
-
-  static const List<String> _expressions = ['皱眉', '抿嘴', '皱眉+抿嘴'];
 
   @override
   Widget build(BuildContext context) {
@@ -41,53 +35,30 @@ class _PageThreeViewState extends State<PageThreeView> {
       body: FullScreenVideoStack(
         videoController: _videoController,
         maskOpacity: _maskOpacity,
-        blockInteraction: !_showButtons,
+        blockInteraction: false,
         overlays: [
-          Positioned(
-            left: 0, right: 0, top: screenSize.height * 0.32,
-            child: Center(
-              child: AnimatedOpacity(
-                opacity: _promptOpacity, duration: ExperienceMask.fadeDuration,
-                child: SizedBox(
-                  width: screenSize.width * 0.8,
-                  child: Text(
-                    '你遇到了一位朋友，想象你在和他解释你的烦恼',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 26, color: Color(0xFFd5e5d2), height: 1.6, fontWeight: FontWeight.w300, letterSpacing: 2),
+          if (_promptOpacity > 0)
+            Positioned(
+              left: 0, right: 0, top: screenSize.height * 0.32,
+              child: Center(
+                child: AnimatedOpacity(
+                  opacity: _promptOpacity, duration: ExperienceMask.fadeDuration,
+                  child: SizedBox(
+                    width: screenSize.width * 0.8,
+                    child: Text(
+                      '你遇到了一位朋友，想象你在和他解释你的烦恼',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 26, color: Color(0xFFd5e5d2), height: 1.6, fontWeight: FontWeight.w300, letterSpacing: 2),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          if (_showButtons) _buildButtons(screenSize),
         ],
       ),
     );
   }
 
-  Widget _buildButtons(Size screenSize) {
-    return Positioned(
-      left: 16, right: 16, bottom: screenSize.height * 0.22,
-      child: AnimatedOpacity(
-        opacity: _buttonsOpacity, duration: ExperienceMask.fadeDuration,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: _expressions.map((label) {
-            return GazeChoiceButton(
-              label: label,
-              highlighted: _highlightedExpression == label,
-              minWidth: screenSize.width * 0.28,
-              onDark: true,
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  // （_initVideo, _onVideoUpdate, _onVideoComplete, _startBackendDetection,
-  //  _pollDetection, _onDetectionComplete, _fallbackExpression,
-  //  _transitionToNextPage, initState, dispose — 逻辑不变）
   Future<void> _initVideo(String assetPath) async {
     if (_currentVideoPath != null) disposeAssetVideoController(_videoController, _currentVideoPath!);
     _currentVideoPath = assetPath;
@@ -103,11 +74,15 @@ class _PageThreeViewState extends State<PageThreeView> {
   }
 
   void _onVideoUpdate() {
-    if (_videoController == null || !_videoController!.value.isInitialized) return;
     if (_videoFinished) return;
-    final pos = _videoController!.value.position;
-    final dur = _videoController!.value.duration;
-    if (dur > Duration.zero && pos >= dur - const Duration(milliseconds: 200)) _onVideoComplete();
+    final ctrl = _videoController;
+    if (ctrl == null) return;
+    try {
+      if (!ctrl.value.isInitialized) return;
+      final pos = ctrl.value.position;
+      final dur = ctrl.value.duration;
+      if (dur > Duration.zero && pos >= dur - const Duration(milliseconds: 200)) _onVideoComplete();
+    } catch (_) {}
   }
 
   void _onVideoComplete() {
@@ -118,7 +93,7 @@ class _PageThreeViewState extends State<PageThreeView> {
     setState(() { _maskOpacity = ExperienceMask.guideOpacity; _promptOpacity = 1; });
     Future.delayed(const Duration(seconds: 5), () {
       if (!mounted || _confirmedExpression != null) return;
-      setState(() { _promptOpacity = 0; _showButtons = true; _buttonsOpacity = 1; });
+      setState(() => _promptOpacity = 0);
       _startBackendDetection();
     });
   }
@@ -148,15 +123,18 @@ class _PageThreeViewState extends State<PageThreeView> {
     _detectionTimer?.cancel(); _timeoutTimer?.cancel();
     final normalized = ExperienceFlow.normalizeExpression(expression);
     BackendService.instance.userData.stageOneExpression = normalized;
-    setState(() { _confirmedExpression = normalized; _highlightedExpression = normalized; });
+    setState(() => _confirmedExpression = normalized);
     Future.delayed(const Duration(milliseconds: 1500), () { if (mounted) _transitionToNextPage(); });
   }
 
-  String _fallbackExpression() => ExperienceFlow.normalizeExpression(
-    _expressions[DateTime.now().millisecondsSinceEpoch % _expressions.length]);
+  String _fallbackExpression() {
+    const exps = ['皱眉', '抿嘴', '皱眉+抿嘴'];
+    return ExperienceFlow.normalizeExpression(
+      exps[DateTime.now().millisecondsSinceEpoch % exps.length]);
+  }
 
   void _transitionToNextPage() {
-    setState(() { _maskOpacity = 0; _promptOpacity = 0; _buttonsOpacity = 0; });
+    setState(() { _maskOpacity = 0; _promptOpacity = 0; });
     Future.delayed(ExperienceMask.fadeDuration, () { if (mounted) widget.onComplete(); });
   }
 

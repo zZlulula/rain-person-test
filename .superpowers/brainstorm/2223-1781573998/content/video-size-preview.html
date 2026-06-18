@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>视频尺寸预览</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; min-height:100vh; display:flex; justify-content:center; align-items:center; font-family:'Microsoft YaHei',sans-serif; }
+  .wrap { text-align:center; width:100%; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .video-box {
+    background:#000;
+    position:relative;
+    border:1px dashed rgba(255,255,255,.12);
+    display:flex; align-items:center; justify-content:center;
+    color:rgba(255,255,255,.25); font-size:18px; letter-spacing:2px;
+  }
+  .controls { margin-top:24px; display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+  .controls input { width:80px; padding:6px 10px; background:#222; border:1px solid #444; color:#ccc; border-radius:4px; text-align:center; font-size:14px; }
+  .controls label { color:#888; font-size:13px; display:flex; align-items:center; gap:6px; }
+  .controls .preset { padding:6px 16px; background:#222; border:1px solid #444; color:#aaa; border-radius:4px; cursor:pointer; font-size:12px; }
+  .controls .preset:hover { border-color:#888; color:#ddd; }
+  .info { margin-top:12px; color:#666; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="video-box" id="box" style="width:80vw; height:60vh;">视频区域</div>
+  <div class="controls">
+    <label>宽 <input id="w" type="number" value="80" oninput="resize()"> vw</label>
+    <label>高 <input id="h" type="number" value="60" oninput="resize()"> vh</label>
+  </div>
+  <div class="info" id="info">80vw × 60vh</div>
+</div>
+<script>
+function resize() {
+  const w = document.getElementById('w').value;
+  const h = document.getElementById('h').value;
+  const box = document.getElementById('box');
+  box.style.width = w + 'vw';
+  box.style.height = h + 'vh';
+  document.getElementById('info').textContent = w + 'vw × ' + h + 'vh';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>对比度增强预览 — Item 3</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0f0a; font-family:'Microsoft YaHei','微软雅黑','PingFang SC',sans-serif; display:flex; height:100vh; overflow:hidden; }
+.half { flex:1; display:flex; flex-direction:column; overflow-y:auto; position:relative; border-right:1px solid #1a2a1a; }
+.half:last-child { border-right:none; }
+.half::-webkit-scrollbar { width:0; }
+.label { position:sticky; top:0; z-index:20; padding:10px 20px; background:rgba(10,15,10,0.95); text-align:center; font-size:11px; letter-spacing:3px; color:#5a7a5a; border-bottom:1px solid #1a2a1a; }
+.label span { display:block; font-size:15px; color:#8aaa8a; }
+.bg { position:absolute; inset:0; pointer-events:none; }
+.half:first-child .bg { background:#e8ebe4; }
+.half:last-child .bg { background:linear-gradient(180deg,#f8faf6,#f3f6f1 40%,#eef1ec); }
+.half:last-child .bg::after { content:''; position:absolute; top:-80px; left:-20%; right:-20%; height:340px; background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.35),transparent 70%); }
+.content { position:relative; z-index:1; padding:30px 22px 100px; display:flex; flex-direction:column; align-items:center; }
+.section-tag { font-size:9px; letter-spacing:3px; color:#8a9a8a; margin:16px 0 6px; opacity:0.6; }
+
+/* ── 首页 ── */
+.home-title { font-family:'Microsoft YaHei',sans-serif; font-size:48px; font-weight:200; letter-spacing:8px; color:#2a3a2e; opacity:0.85; text-shadow:0 0 30px rgba(100,130,90,0.06),0 0 60px rgba(80,110,70,0.03); }
+.home-sub { font-size:18px; letter-spacing:3px; margin-top:8px; font-family:'Microsoft YaHei',sans-serif; }
+.home-btn { margin-top:40px; font-size:28px; color:#b8a070; letter-spacing:10px; position:relative; padding:14px 48px; }
+.home-btn::after { content:''; position:absolute; bottom:6px; left:24%; width:52%; height:1px; background:linear-gradient(90deg,transparent,rgba(180,150,80,0.32),transparent); }
+
+/* ── 暗底问题 ── */
+.dark-bg { background:rgba(0,0,0,0.55); border-radius:12px; padding:30px 22px; width:100%; max-width:340px; margin:8px 0; }
+.dark-bg .question { font-family:'Microsoft YaHei',sans-serif; font-size:30px; font-weight:300; letter-spacing:2px; text-align:center; line-height:1.6; }
+.dark-bg .question.before { color:#d5e5d2; }
+.dark-bg .question.after  { color:#e2efe0; }
+
+/* ── 选项 ── */
+.opt-row { display:flex; gap:20px; margin-top:12px; }
+.opt-btn { padding:12px 28px; min-width:100px; text-align:center; border-radius:6px; font-family:'Microsoft YaHei',sans-serif; font-size:30px; font-weight:300; letter-spacing:2px; border:1px solid rgba(216,220,214,0.08); background:rgba(0,0,0,0.12); }
+.opt-btn.before { color:#d8dcd6; }
+.opt-btn.after  { color:#e4e8e2; }
+.opt-btn.hl { font-size:32px; font-weight:400; letter-spacing:5px; color:#f0dea0; text-shadow:0 0 18px rgba(240,200,110,0.55),0 0 38px rgba(220,170,70,0.25),0 0 56px rgba(200,150,50,0.1); }
+
+/* ── 报告页 ── */
+.rpt-title { font-family:'Microsoft YaHei',sans-serif; font-size:32px; font-weight:200; letter-spacing:6px; color:#2a3a2e; margin-bottom:4px; }
+.rpt-sub { font-size:16px; letter-spacing:2px; text-align:center; max-width:280px; margin-bottom:20px; line-height:1.6; font-family:'Microsoft YaHei',sans-serif; }
+.rpt-sub.before { color:rgba(42,58,46,0.50); }
+.rpt-sub.after  { color:rgba(42,58,46,0.65); }
+.card-w { width:100%; max-width:340px; margin-bottom:14px; padding:22px; border-radius:14px; border:1px solid rgba(58,74,63,0.06); background:rgba(255,255,255,0.42); }
+.c-icon { display:inline-flex; width:28px; height:28px; border-radius:50%; align-items:center; justify-content:center; font-size:13px; margin-right:8px; }
+.c-icon.s1 { background:rgba(138,170,138,0.12); color:#7a9a78; }
+.c-icon.s2 { background:rgba(155,175,148,0.12); color:#85a07e; }
+.c-icon.s3 { background:rgba(185,170,130,0.12); color:#a09060; }
+.c-stage { font-size:10px; letter-spacing:2px; }
+.c-stage.before { color:#6a7a6a; }
+.c-stage.after  { color:#4a5a4a; }
+.c-result { font-size:24px; font-weight:400; margin:4px 0; font-family:'Microsoft YaHei',sans-serif; }
+.c-result.before { color:#2a3a2e; }
+.c-result.after  { color:#1e2d22; }
+.c-insight { font-size:15px; line-height:1.65; padding-top:8px; border-top:1px solid rgba(58,74,63,0.06); font-family:'Microsoft YaHei',sans-serif; }
+.c-insight.before { color:rgba(42,58,46,0.75); }
+.c-insight.after  { color:rgba(42,58,46,0.88); }
+
+/* ── 对比度标注 ── */
+.wcag-badge { display:inline-block; font-size:9px; padding:2px 6px; border-radius:3px; margin-left:4px; letter-spacing:1px; }
+.wcag-fail { background:rgba(200,80,60,0.15); color:#c8503c; }
+.wcag-aa   { background:rgba(100,160,100,0.15); color:#6aa060; }
+.wcag-aaa  { background:rgba(80,140,200,0.15); color:#5a90cc; }
+.contrast-row { display:flex; align-items:center; justify-content:space-between; width:100%; max-width:340px; padding:6px 12px; margin:2px 0; border-radius:4px; background:rgba(255,255,255,0.3); font-size:12px; letter-spacing:1px; }
+.contrast-row .val { font-family:monospace; font-size:11px; }
+
+/* ── 方向按钮 ── */
+.dir-btn { display:inline-block; padding:8px 20px; margin:4px; border-radius:6px; font-family:'Microsoft YaHei',sans-serif; font-size:22px; font-weight:300; letter-spacing:2px; }
+.dir-btn.before { color:#c8dcc6; background:rgba(255,255,255,0.06); border:1px solid rgba(200,220,198,0.10); }
+.dir-btn.after  { color:#daf0d8; background:rgba(255,255,255,0.08); border:1px solid rgba(218,240,216,0.14); }
+
+.small-note { font-size:10px; color:#8a8a8a; margin-top:2px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════ BEFORE ═══════ -->
+<div class="half">
+  <div class="label">BEFORE<span>当前对比度</span></div>
+  <div class="bg"></div>
+  <div class="content">
+
+    <div class="section-tag">— 首页副标题 —</div>
+    <div class="home-sub before" style="color:rgba(42,58,46,0.40);">一场关于内心世界的雨境之旅</div>
+    <div class="contrast-row"><span>副标题 vs 背景</span><span class="val" style="color:#c8503c;">~2.8:1</span><span class="wcag-badge wcag-fail">FAIL</span></div>
+
+    <div class="section-tag" style="margin-top:16px;">— 暗底问题文字 —</div>
+    <div class="dark-bg"><div class="question before">你遇到了一位朋友，想象你在和他解释你的烦恼</div></div>
+    <div class="contrast-row"><span>问题 vs 暗底</span><span class="val" style="color:#6aa060;">~5.8:1</span><span class="wcag-badge wcag-aa">AA</span></div>
+
+    <div class="section-tag" style="margin-top:12px;">— 未选中选项 —</div>
+    <div class="dark-bg" style="padding:16px 22px;"><div class="opt-row">
+      <div class="opt-btn before">抿嘴</div>
+      <div class="opt-btn before">皱眉+抿嘴</div>
+    </div></div>
+    <div class="contrast-row"><span>未选中 vs 暗底</span><span class="val" style="color:#c8503c;">~3.1:1</span><span class="wcag-badge wcag-fail">FAIL</span></div>
+
+    <div class="section-tag" style="margin-top:16px;">— 报告页副标题 —</div>
+    <div class="rpt-sub before">在雨中的这段时间里，你的潜意识<br>通过选择展现了内心的一面。</div>
+    <div class="contrast-row"><span>副标题 vs 背景</span><span class="val" style="color:#c8503c;">~3.5:1</span><span class="wcag-badge wcag-fail">FAIL</span></div>
+
+    <div class="section-tag" style="margin-top:10px;">— 报告卡片 —</div>
+    <div class="card-w">
+      <div><span class="c-icon s1">①</span><span class="c-stage before">第1阶段 · 表情</span></div>
+      <div class="c-result before">皱眉</div>
+      <div class="c-insight before">面对烦恼时，你倾向于将情绪收敛在眉间。</div>
+    </div>
+    <div class="contrast-row" style="margin-bottom:1px;"><span>阶段标签</span><span class="val" style="color:#6aa060;">~4.5:1</span><span class="wcag-badge wcag-aa">AA</span></div>
+    <div class="contrast-row" style="margin-bottom:1px;"><span>结果文字</span><span class="val" style="color:#6aa060;">~6.2:1</span><span class="wcag-badge wcag-aa">AA</span></div>
+    <div class="contrast-row"><span>洞察文字</span><span class="val" style="color:#6aa060;">~4.8:1</span><span class="wcag-badge wcag-aa">AA</span></div>
+
+    <div class="section-tag" style="margin-top:12px;">— page_six 方向按钮 —</div>
+    <div class="dark-bg" style="padding:14px 22px; text-align:center;">
+      <span class="dir-btn before">← 左边</span>
+      <span class="dir-btn before">右边 →</span>
+    </div>
+    <div class="contrast-row"><span>按钮 vs 暗底</span><span class="val" style="color:#c8503c;">~3.8:1</span><span class="wcag-badge wcag-fail">FAIL</span></div>
+
+  </div>
+</div>
+
+<!-- ═══════ AFTER ═══════ -->
+<div class="half">
+  <div class="label">AFTER<span>增强对比度</span></div>
+  <div class="bg"></div>
+  <div class="content">
+
+    <div class="section-tag">— 首页副标题 —</div>
+    <div class="home-sub after" style="color:rgba(42,58,46,0.65);">一场关于内心世界的雨境之旅</div>
+    <div class="contrast-row"><span>副标题 vs 背景</span><span class="val" style="color:#6aa060;">~5.2:1</span><span class="wcag-badge wcag-aa">AA ✓</span></div>
+
+    <div class="section-tag" style="margin-top:16px;">— 暗底问题文字 —</div>
+    <div class="dark-bg"><div class="question after">你遇到了一位朋友，想象你在和他解释你的烦恼</div></div>
+    <div class="contrast-row"><span>问题 vs 暗底</span><span class="val" style="color:#5a90cc;">~7.2:1</span><span class="wcag-badge wcag-aaa">AAA</span></div>
+
+    <div class="section-tag" style="margin-top:12px;">— 未选中选项 —</div>
+    <div class="dark-bg" style="padding:16px 22px;"><div class="opt-row">
+      <div class="opt-btn after">抿嘴</div>
+      <div class="opt-btn after">皱眉+抿嘴</div>
+    </div></div>
+    <div class="contrast-row"><span>未选中 vs 暗底</span><span class="val" style="color:#6aa060;">~4.8:1</span><span class="wcag-badge wcag-aa">AA ✓</span></div>
+
+    <div class="section-tag" style="margin-top:16px;">— 报告页副标题 —</div>
+    <div class="rpt-sub after">在雨中的这段时间里，你的潜意识<br>通过选择展现了内心的一面。</div>
+    <div class="contrast-row"><span>副标题 vs 背景</span><span class="val" style="color:#6aa060;">~5.8:1</span><span class="wcag-badge wcag-aa">AA ✓</span></div>
+
+    <div class="section-tag" style="margin-top:10px;">— 报告卡片 —</div>
+    <div class="card-w">
+      <div><span class="c-icon s1">①</span><span class="c-stage after">第1阶段 · 表情</span></div>
+      <div class="c-result after">皱眉</div>
+      <div class="c-insight after">面对烦恼时，你倾向于将情绪收敛在眉间。</div>
+    </div>
+    <div class="contrast-row" style="margin-bottom:1px;"><span>阶段标签</span><span class="val" style="color:#5a90cc;">~7.0:1</span><span class="wcag-badge wcag-aaa">AAA</span></div>
+    <div class="contrast-row" style="margin-bottom:1px;"><span>结果文字</span><span class="val" style="color:#5a90cc;">~8.5:1</span><span class="wcag-badge wcag-aaa">AAA</span></div>
+    <div class="contrast-row"><span>洞察文字</span><span class="val" style="color:#5a90cc;">~6.8:1</span><span class="wcag-badge wcag-aaa">AAA</span></div>
+
+    <div class="section-tag" style="margin-top:12px;">— page_six 方向按钮 —</div>
+    <div class="dark-bg" style="padding:14px 22px; text-align:center;">
+      <span class="dir-btn after">← 左边</span>
+      <span class="dir-btn after">右边 →</span>
+    </div>
+    <div class="contrast-row"><span>按钮 vs 暗底</span><span class="val" style="color:#6aa060;">~5.2:1</span><span class="wcag-badge wcag-aa">AA ✓</span></div>
+
+  </div>
+</div>
+
+</body>
+</html>

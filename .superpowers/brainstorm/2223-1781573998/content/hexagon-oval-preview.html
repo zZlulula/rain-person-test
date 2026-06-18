@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>椭圆形词语选项 v6 — 氛围边框</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0f0c;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; font-family: 'Microsoft YaHei', sans-serif;
+    overflow: hidden;
+  }
+  .scene {
+    width: 100vw; height: 100vh;
+    position: relative;
+    display: flex; justify-content: center; align-items: center;
+  }
+  .bg-video-sim {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 25% 35%, rgba(70,85,60,0.20) 0%, transparent 55%),
+      radial-gradient(ellipse at 70% 50%, rgba(60,75,50,0.16) 0%, transparent 50%),
+      radial-gradient(ellipse at 45% 65%, rgba(85,95,75,0.13) 0%, transparent 45%),
+      radial-gradient(ellipse at 55% 25%, rgba(75,90,65,0.10) 0%, transparent 40%);
+    animation: bgShift 10s ease-in-out infinite;
+  }
+  @keyframes bgShift {
+    0%, 100% { opacity: 0.65; }
+    50% { opacity: 1.0; }
+  }
+  .hex-container {
+    position: relative;
+    width: min(80vw, 80vh);
+    height: min(80vw, 80vh);
+  }
+
+  /* ── 连线环 ── */
+  .ring-outer, .ring-inner, .ring-mid {
+    position: absolute; left: 50%; top: 50%;
+    pointer-events: none;
+    border-radius: 50%;
+  }
+  .ring-outer {
+    border: 0.4px solid rgba(190,200,180,0.05);
+    box-shadow: 0 0 24px rgba(180,195,170,0.03), 0 0 48px rgba(170,185,160,0.02);
+    animation: ringGlow 6s ease-in-out infinite;
+  }
+  .ring-mid {
+    border: 0.3px solid rgba(175,190,165,0.07);
+    box-shadow: 0 0 16px rgba(170,185,160,0.04);
+    animation: ringGlow 4.5s ease-in-out infinite 0.8s;
+  }
+  .ring-inner {
+    border: 0.2px solid rgba(185,195,175,0.05);
+    box-shadow: 0 0 12px rgba(180,190,170,0.03);
+    animation: ringGlow 5s ease-in-out infinite 1.6s;
+  }
+  @keyframes ringGlow {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 1.0; }
+  }
+
+  /* ── 中心柔光 ── */
+  .center-glow {
+    position: absolute; left: 50%; top: 50%;
+    width: 70px; height: 70px;
+    margin-left: -35px; margin-top: -35px;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,185,140,0.08) 0%, rgba(180,165,120,0.03) 30%, transparent 70%);
+    animation: centerBreath 4.5s ease-in-out infinite;
+  }
+  .center-glow::after {
+    content: '';
+    position: absolute; inset: -18px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(195,180,145,0.05) 0%, transparent 65%);
+    animation: centerBreath 3.8s ease-in-out infinite 1s;
+  }
+  @keyframes centerBreath {
+    0%, 100% { transform: scale(0.6); opacity: 0.25; }
+    50% { transform: scale(1.6); opacity: 0.9; }
+  }
+
+  /* ═══════════════════════════════════════════════
+     椭圆选项 — 氛围边框版
+     ═══════════════════════════════════════════════ */
+  .word-oval {
+    position: absolute; left: 50%; top: 50%;
+    display: flex; flex-direction: row;
+    align-items: center; justify-content: center;
+    gap: 10px;
+    padding: 16px 26px;
+    border-radius: 40px;
+    border: none;
+    background: rgba(26,32,24,0.56);
+    backdrop-filter: blur(16px);
+    cursor: pointer;
+    transition: all 0.45s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+    animation: ovalBreathe 3.6s ease-in-out infinite;
+    white-space: nowrap;
+    overflow: visible;
+  }
+  .word-oval:nth-child(1) { animation-delay: 0.0s; }
+  .word-oval:nth-child(2) { animation-delay: 0.5s; }
+  .word-oval:nth-child(3) { animation-delay: 1.0s; }
+  .word-oval:nth-child(4) { animation-delay: 1.5s; }
+  .word-oval:nth-child(5) { animation-delay: 2.0s; }
+  .word-oval:nth-child(6) { animation-delay: 2.5s; }
+
+  /* ── 边框层1：外光晕（柔和扩散） ── */
+  .word-oval::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 46px;
+    background: transparent;
+    box-shadow:
+      0 0 8px 2px rgba(185,170,135,0.10),
+      0 0 20px 6px rgba(175,160,125,0.05),
+      0 0 36px 12px rgba(165,150,115,0.03);
+    pointer-events: none;
+    z-index: -1;
+    transition: all 0.5s;
+  }
+
+  /* ── 边框层2：渐变描边环 ── */
+  .word-oval::after {
+    content: '';
+    position: absolute;
+    inset: -1.5px;
+    border-radius: 42px;
+    padding: 1.5px;
+    background: linear-gradient(
+      135deg,
+      rgba(190,210,180,0.20) 0%,
+      rgba(200,195,155,0.28) 20%,
+      rgba(210,220,195,0.22) 40%,
+      rgba(195,185,150,0.30) 55%,
+      rgba(200,215,185,0.24) 70%,
+      rgba(190,200,170,0.18) 85%,
+      rgba(185,205,175,0.20) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    animation: borderShimmer 4s linear infinite;
+  }
+  @keyframes borderShimmer {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(25deg); }
+  }
+
+  @keyframes ovalBreathe {
+    0%, 100% {
+      box-shadow:
+        inset 0 0 6px rgba(150,140,110,0.03),
+        inset 0 0 0 0.5px rgba(210,220,200,0.06);
+    }
+    40% {
+      box-shadow:
+        inset 0 0 12px rgba(160,150,115,0.06),
+        inset 0 0 0 0.8px rgba(215,225,210,0.14);
+    }
+    70% {
+      box-shadow:
+        inset 0 0 18px rgba(168,155,120,0.08),
+        inset 0 0 0 0.8px rgba(220,230,218,0.16);
+    }
+  }
+  /* 呼吸时外光晕也跟着变 */
+  @keyframes outerGlowBreathe {
+    0%, 100% {
+      box-shadow:
+        0 0 6px 2px rgba(180,165,130,0.08),
+        0 0 16px 5px rgba(170,155,120,0.04),
+        0 0 28px 10px rgba(160,145,110,0.02);
+    }
+    40% {
+      box-shadow:
+        0 0 10px 3px rgba(190,175,138,0.14),
+        0 0 24px 8px rgba(180,165,128,0.08),
+        0 0 40px 14px rgba(170,155,118,0.04);
+    }
+    70% {
+      box-shadow:
+        0 0 14px 4px rgba(195,180,142,0.18),
+        0 0 30px 10px rgba(185,170,132,0.10),
+        0 0 48px 16px rgba(175,160,122,0.05);
+    }
+  }
+
+  .word-oval:hover {
+    background: rgba(36,44,32,0.76) !important;
+    transform: translate(-50%, -50%) scale(1.05) !important;
+    z-index: 2;
+  }
+  .word-oval:hover::before {
+    box-shadow:
+      0 0 14px 4px rgba(200,180,140,0.22),
+      0 0 30px 10px rgba(185,165,125,0.12),
+      0 0 50px 18px rgba(170,150,110,0.06) !important;
+  }
+  .word-oval:hover::after {
+    animation-duration: 2s;
+  }
+
+  /* ── 选中态 ── */
+  .word-oval.highlighted {
+    background: rgba(42,50,36,0.82) !important;
+    animation: ovalHL 2.8s ease-in-out infinite !important;
+    z-index: 3 !important;
+    transform: translate(-50%, -50%) scale(1.04) !important;
+  }
+  .word-oval.highlighted::before {
+    animation: outerGlowHL 2.8s ease-in-out infinite;
+    z-index: -1;
+  }
+  @keyframes outerGlowHL {
+    0%, 100% {
+      box-shadow:
+        0 0 12px 3px rgba(230,195,140,0.18),
+        0 0 24px 8px rgba(215,180,125,0.10),
+        0 0 40px 14px rgba(200,165,110,0.05),
+        0 0 60px 20px rgba(190,155,100,0.03);
+    }
+    50% {
+      box-shadow:
+        0 0 20px 5px rgba(245,215,155,0.30),
+        0 0 38px 12px rgba(235,200,140,0.18),
+        0 0 58px 20px rgba(220,185,130,0.10),
+        0 0 84px 30px rgba(210,175,120,0.06);
+    }
+  }
+  .word-oval.highlighted::after {
+    background: linear-gradient(
+      135deg,
+      rgba(230,210,165,0.40) 0%,
+      rgba(245,220,170,0.55) 20%,
+      rgba(240,225,175,0.42) 40%,
+      rgba(250,225,168,0.58) 55%,
+      rgba(235,215,165,0.45) 70%,
+      rgba(225,205,160,0.38) 85%,
+      rgba(220,200,155,0.35) 100%
+    );
+    animation: borderShimmer 1.8s linear infinite, borderPulse 2.8s ease-in-out infinite;
+  }
+  @keyframes borderPulse {
+    0%, 100% { padding: 2px; inset: -2px; }
+    50% { padding: 3px; inset: -3px; }
+  }
+
+  @keyframes ovalHL {
+    0%, 100% {
+      box-shadow:
+        inset 0 0 12px rgba(200,160,100,0.07),
+        inset 0 0 0 1px rgba(235,210,150,0.18);
+    }
+    50% {
+      box-shadow:
+        inset 0 0 22px rgba(215,175,115,0.14),
+        inset 0 0 0 1.2px rgba(248,225,165,0.30);
+      transform: translate(-50%, -50%) scale(1.08) !important;
+    }
+  }
+
+  /* 选中时星点 */
+  .word-oval.highlighted .spark {
+    animation-duration: 1.3s !important;
+    background: #fcecb8 !important;
+    box-shadow: 0 0 6px rgba(250,220,150,0.75), 0 0 14px rgba(245,208,130,0.35);
+  }
+  .word-oval.highlighted .spark.outer {
+    background: #faf0c8 !important;
+    box-shadow: 0 0 8px rgba(252,228,160,0.65), 0 0 18px rgba(248,215,145,0.25);
+  }
+
+  /* 选中底部暖线 */
+  .word-oval.highlighted .underline {
+    opacity: 1 !important;
+  }
+  .underline {
+    position: absolute; bottom: 6px; left: 20%; right: 20%;
+    height: 0.8px;
+    opacity: 0;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(240,200,130,0.40) 15%,
+      rgba(250,218,158,0.70) 50%,
+      rgba(240,200,130,0.40) 85%,
+      transparent);
+    border-radius: 1px;
+    animation: lineGlow 2.8s ease-in-out infinite;
+    transition: opacity 0.5s;
+    z-index: 1; pointer-events: none;
+  }
+  @keyframes lineGlow {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 0.90; }
+  }
+
+  /* ── 文字 ── */
+  .word-content { position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; }
+  .word-icon {
+    font-size: 24px; line-height: 1;
+    transition: all 0.4s;
+    filter: drop-shadow(0 0 4px rgba(190,170,120,0.10));
+  }
+  .word-oval.highlighted .word-icon {
+    transform: scale(1.22);
+    filter: drop-shadow(0 0 8px rgba(240,210,140,0.45));
+  }
+  .word-label {
+    font-size: 19px; font-weight: 300;
+    letter-spacing: 5px;
+    color: #dde5d8;
+    transition: all 0.5s;
+  }
+  .word-oval.highlighted .word-label {
+    color: #f4e4ae;
+    letter-spacing: 8px;
+    font-weight: 400;
+    text-shadow:
+      0 0 10px rgba(235,195,115,0.40),
+      0 0 24px rgba(215,175,95,0.20),
+      0 0 40px rgba(200,160,80,0.10);
+  }
+
+  /* ── 星点 ── */
+  .spark {
+    position: absolute; z-index: 0;
+    width: 2.5px; height: 2.5px;
+    background: #d8c898;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkFloat 2.2s ease-in-out infinite;
+    box-shadow: 0 0 3px rgba(200,180,130,0.4);
+  }
+  .spark.outer {
+    width: 1.8px; height: 1.8px;
+    animation-duration: 2.8s;
+  }
+  @keyframes sparkFloat {
+    0%, 100% { opacity: 0.06; transform: translateY(0) scale(0.4); }
+    50% { opacity: 0.65; transform: translateY(-14px) scale(1.4); }
+  }
+
+  /* ── 六边形顶点 ── */
+  .vertex {
+    position: absolute; left: 50%; top: 50%;
+    pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .vertex-core {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: rgba(185,175,140,0.30);
+    box-shadow: 0 0 8px rgba(185,170,130,0.22), 0 0 18px rgba(180,165,125,0.08);
+    animation: vertexPulse 3.2s ease-in-out infinite;
+  }
+  @keyframes vertexPulse {
+    0%, 100% { opacity: 0.10; transform: scale(0.4); }
+    50% { opacity: 0.55; transform: scale(1.5); }
+  }
+
+  /* ── 外圈星点（在椭圆外面浮动的小光点）── */
+  .orbit-spark {
+    position: absolute; z-index: 0;
+    width: 1.5px; height: 1.5px;
+    background: #e0d0a0;
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: 0 0 5px rgba(210,190,140,0.50);
+    animation: orbitFloat 3s ease-in-out infinite;
+  }
+  @keyframes orbitFloat {
+    0%, 100% { opacity: 0.05; transform: translate(0, 0) scale(0.4); }
+    25% { opacity: 0.45; transform: translate(12px, -18px) scale(1.2); }
+    50% { opacity: 0.08; transform: translate(-5px, -30px) scale(0.6); }
+    75% { opacity: 0.40; transform: translate(-15px, -10px) scale(1.1); }
+  }
+
+  /* ── 漂浮光点 ── */
+  .ambient-dot {
+    position: absolute; pointer-events: none;
+    width: 2px; height: 2px;
+    background: #c0b080;
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(190,170,120,0.28);
+    animation: ambientFloat 6s ease-in-out infinite;
+  }
+  @keyframes ambientFloat {
+    0%, 100% { opacity: 0.02; transform: translate(0, 0); }
+    25% { opacity: 0.25; transform: translate(15px, -18px); }
+    50% { opacity: 0.04; transform: translate(-8px, -32px); }
+    75% { opacity: 0.28; transform: translate(-18px, -8px); }
+  }
+
+  /* 细小雨丝 */
+  .mist-line {
+    position: absolute; pointer-events: none;
+    width: 0.3px;
+    background: linear-gradient(to bottom, transparent, rgba(180,190,160,0.08), transparent);
+    animation: mistDrift 8s linear infinite;
+  }
+  @keyframes mistDrift {
+    0% { transform: translateY(-40px); opacity: 0; }
+    15% { opacity: 0.45; }
+    85% { opacity: 0.45; }
+    100% { transform: translateY(calc(100vh + 40px)); opacity: 0; }
+  }
+
+  .center-hint {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(210,220,205,0.70);
+    font-size: 16px; letter-spacing: 4px;
+    pointer-events: none; z-index: 0;
+    text-shadow: 0 0 10px rgba(200,210,190,0.30);
+    animation: hintFade 3.5s ease-in-out infinite;
+  }
+  @keyframes hintFade {
+    0%, 100% { opacity: 0.40; }
+    50% { opacity: 0.80; }
+  }
+
+  /* 选中波纹 */
+  .ripple {
+    position: absolute; left: 50%; top: 50%;
+    width: 0; height: 0;
+    margin-left: 0; margin-top: 0;
+    border-radius: 50%;
+    border: 0.4px solid rgba(240,210,150,0.35);
+    pointer-events: none;
+    animation: rippleOut 1.5s ease-out forwards;
+    z-index: -1;
+  }
+  @keyframes rippleOut {
+    0% { width: 6px; height: 6px; margin-left: -3px; margin-top: -3px; opacity: 0.6; }
+    100% { width: 160px; height: 160px; margin-left: -80px; margin-top: -80px; opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="bg-video-sim"></div>
+  <div class="hex-container" id="hexContainer">
+    <div class="center-glow"></div>
+    <div class="center-hint">看着你想选的选项</div>
+    <div class="ring-outer" id="ringOuter"></div>
+    <div class="ring-mid" id="ringMid"></div>
+    <div class="ring-inner" id="ringInner"></div>
+  </div>
+</div>
+
+<script>
+const words = [
+  { label: '听歌', icon: '🎧' },
+  { label: '发呆', icon: '💭' },
+  { label: '娱乐', icon: '🎭' },
+  { label: '游戏', icon: '🎮' },
+  { label: '家人', icon: '🏠' },
+  { label: '朋友', icon: '🤝' },
+];
+
+const container = document.getElementById('hexContainer');
+const radius = Math.min(container.offsetWidth, container.offsetHeight) * 0.35;
+
+['ringOuter', 'ringMid', 'ringInner'].forEach((id, i) => {
+  const r = radius + i * 8;
+  const el = document.getElementById(id);
+  el.style.width = (r * 2) + 'px';
+  el.style.height = (r * 2) + 'px';
+  el.style.marginLeft = (-r) + 'px';
+  el.style.marginTop = (-r) + 'px';
+});
+
+// 漂浮光点
+for (let a = 0; a < 14; a++) {
+  const dot = document.createElement('div');
+  dot.className = 'ambient-dot';
+  dot.style.left = (10 + Math.random() * 80) + '%';
+  dot.style.top = (5 + Math.random() * 90) + '%';
+  dot.style.animationDelay = (a * 0.7) + 's';
+  dot.style.animationDuration = (4.5 + Math.random() * 5.5) + 's';
+  container.appendChild(dot);
+}
+
+// 雨丝
+for (let m = 0; m < 18; m++) {
+  const line = document.createElement('div');
+  line.className = 'mist-line';
+  line.style.left = (Math.random() * 100) + '%';
+  line.style.height = (20 + Math.random() * 50) + 'px';
+  line.style.animationDelay = (Math.random() * 8) + 's';
+  line.style.animationDuration = (5 + Math.random() * 7) + 's';
+  container.appendChild(line);
+}
+
+// 顶点
+for (let v = 0; v < 6; v++) {
+  const angle = (v * 60 - 90) * Math.PI / 180;
+  const vx = Math.cos(angle) * (radius + 12);
+  const vy = Math.sin(angle) * (radius + 12);
+  const dot = document.createElement('div');
+  dot.className = 'vertex';
+  dot.style.marginLeft = vx + 'px';
+  dot.style.marginTop = vy + 'px';
+  dot.innerHTML = '<div class="vertex-core"></div>';
+  dot.querySelector('.vertex-core').style.animationDelay = (v * 0.5) + 's';
+  container.appendChild(dot);
+}
+
+words.forEach((w, i) => {
+  const angle = (i * 60 - 90) * Math.PI / 180;
+  const x = Math.cos(angle) * radius;
+  const y = Math.sin(angle) * radius;
+
+  const el = document.createElement('div');
+  el.className = 'word-oval';
+  el.style.marginLeft = x + 'px';
+  el.style.marginTop = y + 'px';
+  el.style.transform = 'translate(-50%, -50%)';
+  el.innerHTML = `
+    <div class="word-content">
+      <span class="word-icon">${w.icon}</span>
+      <span class="word-label">${w.label}</span>
+    </div>
+    <div class="underline"></div>
+  `;
+
+  // 内部星点
+  for (let s = 0; s < 3; s++) {
+    const spark = document.createElement('div');
+    spark.className = 'spark';
+    spark.style.left = (10 + Math.random() * 80) + '%';
+    spark.style.top = (-14 + Math.random() * 28) + 'px';
+    spark.style.animationDelay = (s * 0.5 + i * 0.25) + 's';
+    spark.style.animationDuration = (1.4 + Math.random() * 1.8) + 's';
+    el.appendChild(spark);
+  }
+  // 外部环绕星点
+  for (let o = 0; o < 3; o++) {
+    const ospark = document.createElement('div');
+    ospark.className = 'orbit-spark';
+    ospark.style.left = (Math.random() * 100) + '%';
+    ospark.style.top = (-20 + Math.random() * 40) + 'px';
+    ospark.style.animationDelay = (o * 0.7 + i * 0.3) + 's';
+    ospark.style.animationDuration = (2.2 + Math.random() * 2.5) + 's';
+    el.appendChild(ospark);
+  }
+
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.word-oval').forEach(ov => ov.classList.remove('highlighted'));
+    el.classList.add('highlighted');
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    el.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 1600);
+  });
+
+  container.appendChild(el);
+});
+</script>
+</body>
+</html>

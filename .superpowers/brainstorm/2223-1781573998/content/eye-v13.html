@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>眼睛 v13 — 电子萌眼</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#e8ebe4; font-family:'Microsoft YaHei',sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .scene { display:flex; flex-direction:column; align-items:center; gap:40px; }
+  .hint { font-size:28px; color:#2a3a2e; letter-spacing:3px; font-weight:300; animation:hf 3s ease-in-out infinite; }
+  @keyframes hf { 0%,100%{opacity:0.50} 50%{opacity:0.88} }
+
+  .eye-wrap {
+    position:relative; width:180px; height:70px;
+    display:flex; align-items:center; justify-content:center; gap:28px;
+    animation:scan 4.8s ease-in-out infinite;
+  }
+  @keyframes scan {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-6px)}
+    45%{transform:translateX(7px)}
+    70%{transform:translateX(-3px)}
+    85%{transform:translateX(2px)}
+  }
+
+  /* 柔光底 */
+  .glow-bg {
+    position:absolute; inset:-8px -4px; border-radius:50%;
+    background:radial-gradient(ellipse at 50% 50%, rgba(200,180,140,0.07) 0%, transparent 58%);
+    animation:bgPulse 2.8s ease-in-out infinite;
+  }
+  @keyframes bgPulse { 0%,100%{opacity:0.3} 52%{opacity:0.80} }
+
+  /* 单眼 — 柔光椭圆 */
+  .eye {
+    width:32px; height:22px;
+    border-radius:50%;
+    background:radial-gradient(ellipse at 48% 38%,
+      #fffef5 0%, #f5edc8 25%, #e8d898 60%, #c8b068 100%);
+    box-shadow:
+      0 0 6px 2px rgba(220,200,140,0.45),
+      0 0 16px 4px rgba(210,185,120,0.22),
+      0 0 28px 6px rgba(200,175,110,0.08),
+      inset 0 0 5px rgba(255,252,235,0.40);
+    position:relative;
+    animation:eyeBreathe 2.4s ease-in-out infinite;
+  }
+  @keyframes eyeBreathe {
+    0%,100%{transform:scale(1);box-shadow:0 0 6px 2px rgba(220,200,140,0.45),0 0 16px 4px rgba(210,185,120,0.22),0 0 28px 6px rgba(200,175,110,0.08),inset 0 0 5px rgba(255,252,235,0.40)}
+    50%{transform:scale(1.08,1.04);box-shadow:0 0 10px 3px rgba(230,210,150,0.55),0 0 22px 6px rgba(220,195,130,0.28),0 0 34px 8px rgba(210,185,120,0.10),inset 0 0 7px rgba(255,254,242,0.50)}
+  }
+
+  /* 高光点 */
+  .eye::after {
+    content:'';
+    position:absolute;
+    width:8px; height:6px;
+    background:white;
+    border-radius:50%;
+    top:3px; left:6px;
+    box-shadow:0 0 2px white,0 0 5px rgba(255,255,255,0.55);
+    animation:hlShift 3.2s ease-in-out infinite;
+  }
+  @keyframes hlShift {
+    0%,100%{transform:translate(0,0);opacity:0.78}
+    25%{transform:translate(2px,0.5px);opacity:0.95}
+    50%{transform:translate(0.5px,1px);opacity:0.72}
+    75%{transform:translate(-1.5px,0);opacity:0.88}
+  }
+
+  /* 眨眼 */
+  .lid {
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+    overflow:hidden; border-radius:50%;
+  }
+  .lid::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:0;
+    background:#e8ebe4;
+    border-radius:0 0 50% 50%;
+    animation:blinkClose 4.2s ease-in-out infinite;
+  }
+  @keyframes blinkClose {
+    0%,43%,54%,100%{height:0;top:0}
+    48.5%{height:100%;top:0}
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="hint">看着红点，现在开始标定</div>
+  <div class="eye-wrap">
+    <div class="glow-bg"></div>
+    <div class="eye"><div class="lid"></div></div>
+    <div class="eye"><div class="lid"></div></div>
+  </div>
+</div>
+</body>
+</html>

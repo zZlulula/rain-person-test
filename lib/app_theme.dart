@@ -10,12 +10,12 @@ class AppTheme {
   static const Color bg = Color(0xFFe8ebe4);
   static const Color surface = Color(0xFFdde2d8);
   static const Color textPrimary = Color(0xFF2a3a2e);     // 主文字 — 加深
-  static const Color textSecondary = Color(0xB32a3a2e);   // 次要文字 (~70%)
+  static const Color textSecondary = Color(0xF02a3a2e);   // 次要文字 (~94%，增强对比)
   static const Color textOnDark = Color(0xFFc8dcc6);      // 暗底文字
   static const Color accent = Color(0xFF7a9b8a);
   static const Color border = Color(0x1a3a4a3f);
   static const Color borderStrong = Color(0x403a4a3f);
-  static const Color calibGlow = Color(0xFFc48565);       // 标定光点暖色
+  static const Color calibGlow = Color(0xFFe84545);       // 标定光点 — 明亮深红
 
   // ── 动效时长 ──
   static const Duration durMist = Duration(milliseconds: 600);
@@ -46,12 +46,12 @@ class AppTheme {
         seedColor: accent,
         brightness: Brightness.light,
       ),
-      fontFamily: GoogleFonts.notoSansSc().fontFamily,
+      fontFamily: 'Microsoft YaHei',
       fontFamilyFallback: const [
-        'Microsoft YaHei',
         '微软雅黑',
         'PingFang SC',
         'Noto Sans SC',
+        'Microsoft YaHei',
         'SimHei',
         'sans-serif',
       ],
@@ -74,6 +74,9 @@ class AppTheme {
   }
 
   static Future<void> preloadFonts() {
-    return GoogleFonts.pendingFonts([GoogleFonts.notoSansSc()]);
+    return GoogleFonts.pendingFonts([
+      GoogleFonts.notoSansSc(),
+      GoogleFonts.notoSerifSc(),
+    ]);
   }
 }

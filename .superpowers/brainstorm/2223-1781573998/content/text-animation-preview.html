@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>问题文字动效预览</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#1a1a1a;
+    font-family:'Microsoft YaHei',sans-serif;
+    display:flex; align-items:center; justify-content:center; min-height:100vh;
+    overflow:hidden;
+  }
+  .stage {
+    position:relative; width:800px; height:500px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ═══════════════ 入场：模糊→清晰 + 字距收拢 ═══════════════ */
+  .text-enter {
+    font-size:36px; color:#f2edde; font-weight:300;
+    white-space:nowrap;
+    /* 入场动画 */
+    animation:
+      enterBlur  1.6s cubic-bezier(0.22,0.61,0.36,1) forwards,
+      enterTrack 1.6s cubic-bezier(0.22,0.61,0.36,1) forwards,
+      breathe    3.2s ease-in-out 1.6s infinite;
+    /* 初始：模糊 + 字距宽 */
+    filter:blur(6px);
+    letter-spacing:16px;
+    opacity:0;
+    transform:translateY(6px);
+  }
+
+  @keyframes enterBlur {
+    0%   { filter:blur(6px); opacity:0; }
+    35%  { filter:blur(3px); opacity:0.55; }
+    70%  { filter:blur(0.5px); opacity:0.9; }
+    100% { filter:blur(0px); opacity:1; }
+  }
+
+  @keyframes enterTrack {
+    0%   { letter-spacing:16px; transform:translateY(6px); }
+    60%  { letter-spacing:1px; transform:translateY(-1px); }
+    80%  { letter-spacing:3px; transform:translateY(0.5px); }
+    100% { letter-spacing:2px; transform:translateY(0); }
+  }
+
+  /* 稳定呼吸 */
+  @keyframes breathe {
+    0%,100% { letter-spacing:2px; transform:translateY(0); opacity:1; }
+    50%     { letter-spacing:2.6px; transform:translateY(-1.5px); opacity:0.92; }
+  }
+
+  /* ═══════════════ 退场：下沉 + 模糊 ═══════════════ */
+  .text-exit {
+    animation:
+      exitSink 0.9s cubic-bezier(0.55,0,1,0.45) forwards,
+      exitBlur 0.9s cubic-bezier(0.55,0,1,0.45) forwards;
+    animation-delay:0s, 0s;
+  }
+
+  @keyframes exitSink {
+    0%   { transform:translateY(0); opacity:1; }
+    40%  { opacity:0.8; }
+    100% { transform:translateY(28px); opacity:0; }
+  }
+
+  @keyframes exitBlur {
+    0%   { filter:blur(0px); letter-spacing:2px; }
+    100% { filter:blur(4px); letter-spacing:5px; }
+  }
+
+  /* ═══════════════ 触发按钮 ═══════════════ */
+  .controls {
+    position:fixed; bottom:60px; display:flex; gap:20px;
+  }
+  .btn {
+    padding:14px 36px; border-radius:30px; border:none;
+    font-size:18px; font-family:'Microsoft YaHei',sans-serif;
+    cursor:pointer; letter-spacing:2px;
+    transition:all 0.3s;
+  }
+  .btn-enter {
+    background:rgba(242,237,222,0.15); color:#f2edde;
+    border:1px solid rgba(242,237,222,0.3);
+  }
+  .btn-enter:hover { background:rgba(242,237,222,0.25); }
+  .btn-exit {
+    background:rgba(200,160,100,0.15); color:#c8a060;
+    border:1px solid rgba(200,160,100,0.3);
+  }
+  .btn-exit:hover { background:rgba(200,160,100,0.25); }
+
+  /* 状态提示 */
+  .status {
+    position:fixed; top:40px; font-size:14px; color:rgba(255,255,255,0.4);
+    letter-spacing:2px;
+  }
+</style>
+</head>
+<body>
+<div class="status" id="status">就绪</div>
+<div class="stage">
+  <div class="text-enter" id="text">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+</div>
+<div class="controls">
+  <button class="btn btn-enter" onclick="replayEnter()">入场</button>
+  <button class="btn btn-exit" onclick="playExit()">退场</button>
+</div>
+
+<script>
+const el = document.getElementById('text');
+const st = document.getElementById('status');
+
+function replayEnter() {
+  el.classList.remove('text-exit');
+  // 强制重置
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = '';
+  el.classList.add('text-enter');
+  st.textContent = '入场中…';
+  setTimeout(() => st.textContent = '呼吸中', 1800);
+}
+
+function playExit() {
+  el.classList.remove('text-enter');
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = '';
+  el.classList.add('text-exit');
+  st.textContent = '退场中…';
+  setTimeout(() => st.textContent = '已退场', 1000);
+}
+</script>
+</body>
+</html>

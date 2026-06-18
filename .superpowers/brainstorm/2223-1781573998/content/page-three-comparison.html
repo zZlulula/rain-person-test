@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Three — Before/After 对比</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0f0a; color:#d5e5d2; font-family:'Noto Serif SC',serif; display:flex; height:100vh; overflow:hidden; }
+  .half { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; border-right:1px solid #1a2a1a; }
+  .half:last-child { border-right:none; }
+  .label { position:absolute; top:24px; font-size:13px; letter-spacing:3px; color:#5a7a5a; text-transform:uppercase; }
+  .label span { font-size:18px; display:block; color:#8aaa8a; margin-top:4px; }
+
+  .prompt { text-align:center; width:80%; font-size:26px; font-weight:300; letter-spacing:2px; line-height:1.6;
+    opacity:0; transform:translateY(14px); transition:all 0.9s ease-out; }
+  .prompt.show { opacity:1; transform:translateY(0); animation:breathe 3.2s ease-in-out infinite; }
+
+  /* BEFORE 呼吸 */
+  .prompt.before-breathe { animation:breathe-before 3.2s ease-in-out infinite; }
+  @keyframes breathe-before {
+    0%,100% { transform:translateY(0) scale(1); }
+    50% { transform:translateY(0) scale(1.022); }
+  }
+
+  /* AFTER 呼吸 + 入场放大 */
+  .prompt.after-breathe { animation:breathe-after 3.2s ease-in-out infinite; }
+  @keyframes breathe-after {
+    0%,100% { transform:translateY(0) scale(1); text-shadow:0 0 0 rgba(200,220,200,0); }
+    50% { transform:translateY(0) scale(1.035); text-shadow:0 0 24px rgba(200,220,200,0.12); }
+  }
+
+  .options-row { display:flex; gap:32px; margin-top:60px; }
+  .btn-wrap { opacity:0; transform:scale(0.92); transition:all 0.5s ease-out; }
+  .btn-wrap.in { opacity:1; transform:scale(1); }
+  .btn-wrap.out { opacity:0; transform:scale(0.92); transition:all 0.35s ease-in; }
+
+  .btn { padding:14px 32px; min-width:110px; text-align:center; font-size:24px; font-weight:300; letter-spacing:2px;
+    color:#d8dcd6; border:1px solid rgba(216,220,214,0.08); border-radius:6px; background:rgba(0,0,0,0.15);
+    transition:all 0.7s ease-out; position:relative; cursor:default; }
+
+  /* AFTER: 更大的按钮 */
+  .after .btn { font-size:30px; min-width:130px; padding:18px 40px; }
+
+  .btn.highlighted {
+    color:#f0dea0; font-weight:400; letter-spacing:5px; font-size:27px;
+    border-color:rgba(240,222,160,0.2);
+    text-shadow:0 0 18px rgba(240,200,110,0.55), 0 0 38px rgba(220,170,70,0.25), 0 0 56px rgba(200,150,50,0.1);
+    box-shadow:0 0 60px rgba(220,170,70,0.08), 0 0 120px rgba(200,150,50,0.04);
+    animation:glowPulse 3.2s ease-in-out infinite;
+  }
+  .after .btn.highlighted { font-size:33px; }
+
+  @keyframes glowPulse {
+    0%,100% { box-shadow:0 0 60px rgba(220,170,70,0.06); }
+    50% { box-shadow:0 0 90px rgba(220,170,70,0.14); }
+  }
+
+  .phase-indicator { position:absolute; bottom:40px; font-size:12px; letter-spacing:2px; color:#5a7a5a; text-align:center; }
+  .phase-indicator .phase { color:#c8a860; font-weight:bold; }
+
+  /* Timeline bar */
+  .timeline { position:absolute; bottom:80px; left:40px; right:40px; height:2px; background:#1a2a1a; border-radius:1px; }
+  .timeline-fill { height:100%; background:#c8a860; border-radius:1px; transition:width 0.05s linear; }
+  .timeline-labels { display:flex; justify-content:space-between; font-size:9px; color:#3a5a3a; margin-top:4px; }
+</style>
+</head>
+<body>
+
+<!-- BEFORE -->
+<div class="half" id="before">
+  <div class="label">BEFORE<span>当前状态</span></div>
+  <div class="prompt before-breathe" id="prompt-before">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+  <div class="options-row" id="opts-before">
+    <div class="btn-wrap" id="w0b"><div class="btn">皱眉</div></div>
+    <div class="btn-wrap" id="w1b"><div class="btn">抿嘴</div></div>
+    <div class="btn-wrap" id="w2b"><div class="btn">皱眉+抿嘴</div></div>
+  </div>
+  <div class="phase-indicator" id="phase-before">等待检测…</div>
+  <div class="timeline"><div class="timeline-fill" id="tl-before" style="width:0%"></div></div>
+</div>
+
+<!-- AFTER -->
+<div class="half after" id="after">
+  <div class="label">AFTER<span>改进方案</span></div>
+  <div class="prompt after-breathe" id="prompt-after">你遇到了一位朋友，想象你在和他解释你的烦恼</div>
+  <div class="options-row" id="opts-after">
+    <div class="btn-wrap" id="w0a"><div class="btn">皱眉</div></div>
+    <div class="btn-wrap" id="w1a"><div class="btn">抿嘴</div></div>
+    <div class="btn-wrap" id="w2a"><div class="btn">皱眉+抿嘴</div></div>
+  </div>
+  <div class="phase-indicator" id="phase-after">等待检测…</div>
+</div>
+
+<script>
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runDemo() {
+  const optsB = ['w0b','w1b','w2b'].map(id => document.getElementById(id));
+  const optsA = ['w0a','w1a','w2a'].map(id => document.getElementById(id));
+  const btnB = optsB.map(w => w.querySelector('.btn'));
+  const btnA = optsA.map(w => w.querySelector('.btn'));
+  const phaseB = document.getElementById('phase-before');
+  const phaseA = document.getElementById('phase-after');
+  const promptB = document.getElementById('prompt-before');
+  const promptA = document.getElementById('prompt-after');
+  const tlB = document.getElementById('tl-before');
+
+  // Phase 1: Show prompts
+  promptB.classList.add('show');
+  promptA.classList.add('show');
+  await sleep(900);
+
+  // Phase 2: Questions fade out, options stagger in
+  promptB.style.opacity = '0';
+  promptA.style.opacity = '0';
+  await sleep(400);
+
+  // BEFORE: stagger in (80ms)
+  phaseB.innerHTML = 'Phase: <span class="phase">选项入场</span>（80ms stagger）';
+  for (let i=0; i<3; i++) {
+    optsB[i].classList.add('in');
+    await sleep(80);
+  }
+  await sleep(300);
+
+  // AFTER: stagger in (100ms) — slightly more dramatic
+  phaseA.innerHTML = 'Phase: <span class="phase">选项入场</span>（100ms stagger，字号更大）';
+  for (let i=0; i<3; i++) {
+    optsA[i].classList.add('in');
+    await sleep(100);
+  }
+  await sleep(400);
+
+  // Phase 3: Detection → highlight
+  phaseB.innerHTML = 'Phase: <span class="phase">检测到"皱眉"</span> — 立即退场（无停留）';
+  phaseA.innerHTML = 'Phase: <span class="phase">检测到"皱眉"</span> — 高亮停留 1.8s…';
+
+  btnB[0].classList.add('highlighted');
+  btnA[0].classList.add('highlighted');
+
+  // BEFORE: immediately stagger out (no hold)
+  phaseB.innerHTML = 'Phase: <span class="phase" style="color:#e06060">高亮+退场同时发生！</span>';
+  for (let i=2; i>=0; i--) {
+    optsB[i].classList.add('out');
+    await sleep(60);
+  }
+
+  // AFTER: hold for 1.8s
+  await sleep(500);
+  phaseA.innerHTML = 'Phase: <span class="phase">高亮停留中…</span>（用户看清选择）';
+  await sleep(800);
+  phaseA.innerHTML = 'Phase: <span class="phase">高亮停留中…</span>（还剩 0.5s）';
+  await sleep(500);
+
+  // AFTER: now stagger out
+  phaseA.innerHTML = 'Phase: <span class="phase">退场</span>（100ms stagger，优雅退出）';
+  for (let i=2; i>=0; i--) {
+    optsA[i].classList.add('out');
+    await sleep(100);
+  }
+
+  // Result
+  phaseB.innerHTML = 'BEFORE: 用户几乎看不清选了什么就跳走了';
+  phaseA.innerHTML = 'AFTER: <span class="phase">✓</span> 清晰看到选中态 + 从容过渡';
+  tlB.style.width = '100%';
+}
+
+runDemo();
+</script>
+</body>
+</html>

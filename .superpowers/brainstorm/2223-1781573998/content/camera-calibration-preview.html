@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>摄像头标定 — 实现方案 & 效果预览</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0f0a; color:#c8dcc6; font-family:'Noto Sans SC','Microsoft YaHei',sans-serif; }
+  .container { max-width:900px; margin:0 auto; padding:32px 24px; }
+
+  h1 { font-weight:200; letter-spacing:6px; color:#a0c0a0; font-size:22px; margin-bottom:8px; }
+  .subtitle { font-size:13px; color:#5a7a5a; letter-spacing:2px; margin-bottom:36px; }
+
+  .section { margin-bottom:36px; }
+  .section h2 { font-size:14px; font-weight:400; letter-spacing:3px; color:#c8a860; margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid #1a2a1a; }
+  .section h3 { font-size:13px; font-weight:400; color:#8aaa8a; margin:16px 0 8px; }
+
+  /* 架构图 */
+  .arch { display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; margin:16px 0; }
+  .arch-box { background:#111a11; border:1px solid #1a2a1a; border-radius:10px; padding:16px 20px; text-align:center; min-width:100px; }
+  .arch-box .title { font-size:12px; color:#c8a860; letter-spacing:2px; margin-bottom:6px; }
+  .arch-box .desc { font-size:11px; color:#6a8a6a; line-height:1.5; }
+  .arch-arrow { color:#3a5a3a; font-size:18px; }
+
+  /* 模拟界面 */
+  .demo-stage { position:relative; width:100%; max-width:640px; height:400px; margin:20px auto; background:#0d120d; border-radius:16px; overflow:hidden; border:1px solid #1a2a1a; }
+  .demo-bg { position:absolute; inset:0; background:radial-gradient(ellipse at 30% 30%,#111a11 0%,#0a0f0a 100%); }
+
+  /* 红点 */
+  .demo-dot { position:absolute; width:28px; height:28px; border-radius:50%;
+    background:radial-gradient(circle,#ff5040,#c02018);
+    box-shadow:0 0 28px rgba(255,60,40,0.8),0 0 60px rgba(255,40,20,0.45),0 0 100px rgba(220,20,10,0.2);
+    transform:translate(-50%,-50%);
+    transition:left 0.5s cubic-bezier(0.32,0.72,0,1),top 0.5s cubic-bezier(0.32,0.72,0,1);
+    animation:dotPulse 2.4s ease-in-out infinite;
+    z-index:3;
+  }
+  @keyframes dotPulse {
+    0%,100% { box-shadow:0 0 28px rgba(255,60,40,0.8),0 0 60px rgba(255,40,20,0.45),0 0 100px rgba(220,20,10,0.2); }
+    50% { box-shadow:0 0 40px rgba(255,60,40,1.0),0 0 80px rgba(255,40,20,0.60),0 0 130px rgba(220,20,10,0.30); }
+  }
+  .demo-ring { position:absolute; width:70px; height:70px; border-radius:50%; border:1px solid rgba(255,70,50,0.25);
+    transform:translate(-50%,-50%);
+    animation:ringPulse 2.4s ease-in-out infinite;
+    z-index:2;
+  }
+  @keyframes ringPulse {
+    0%,100% { width:70px; height:70px; opacity:0.20; }
+    50% { width:88px; height:88px; opacity:0.35; }
+  }
+
+  /* PIP 摄像头 */
+  .pip { position:absolute; bottom:16px; right:16px; width:120px; height:90px;
+    background:#1a1a1a; border-radius:10px; border:1.5px solid #2a3a2a;
+    overflow:hidden; z-index:10;
+  }
+  .pip-label { position:absolute; top:4px; left:6px; font-size:8px; color:#5a5a5a; letter-spacing:1px; z-index:11; }
+  .pip-face { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .pip-face-inner { width:50px; height:60px; border:1.5px solid rgba(200,160,100,0.25); border-radius:50% 50% 40% 40%; position:relative; }
+  .pip-eye { position:absolute; width:8px; height:8px; background:rgba(200,160,100,0.5); border-radius:50%; top:18px; }
+  .pip-eye.left { left:10px; }
+  .pip-eye.right { right:10px; }
+  .pip-pupil { position:absolute; width:4px; height:4px; background:rgba(255,200,140,0.8); border-radius:50%; top:2px; left:2px; transition:all 0.3s ease; }
+
+  /* 凝视预测点 */
+  .gaze-prediction { position:absolute; width:16px; height:16px; border-radius:50%;
+    border:2px solid rgba(200,168,96,0.5); background:rgba(200,168,96,0.08);
+    transform:translate(-50%,-50%);
+    transition:left 0.2s ease-out,top 0.2s ease-out;
+    z-index:4; pointer-events:none;
+  }
+  .gaze-prediction::after { content:''; position:absolute; top:50%; left:50%; width:4px; height:4px; background:rgba(200,168,96,0.7); border-radius:50%; transform:translate(-50%,-50%); }
+
+  /* 进度 */
+  .progress-bar { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:5; }
+  .progress-dot { width:8px; height:8px; border-radius:50%; background:#2a3a2a; transition:all 0.5s ease; }
+  .progress-dot.done { background:#8aaa6a; box-shadow:0 0 8px rgba(138,170,106,0.4); }
+  .progress-dot.active { background:#c8a860; box-shadow:0 0 12px rgba(200,168,96,0.5); animation:progPulse 1s ease-in-out infinite; }
+  @keyframes progPulse { 0%,100%{box-shadow:0 0 12px rgba(200,168,96,0.5);} 50%{box-shadow:0 0 20px rgba(200,168,96,0.8);} }
+
+  /* 信息面板 */
+  .info-row { display:flex; gap:12px; margin:10px 0; }
+  .info-card { flex:1; background:#111a11; border:1px solid #1a2a1a; border-radius:8px; padding:12px; }
+  .info-card .key { font-size:9px; color:#5a7a5a; letter-spacing:1px; }
+  .info-card .val { font-size:13px; color:#c8dcc6; font-weight:300; margin-top:4px; }
+
+  /* 代码块 */
+  .code-block { background:#0d120d; border:1px solid #1a2a1a; border-radius:8px; padding:14px; font-family:monospace; font-size:11px; color:#8aaa8a; line-height:1.6; overflow-x:auto; white-space:pre; }
+  .code-block .kw { color:#c8a860; }
+  .code-block .str { color:#8ab88a; }
+  .code-block .cm { color:#4a6a4a; }
+
+  .flow-steps { display:flex; gap:8px; flex-wrap:wrap; }
+  .flow-step { background:#111a11; border:1px solid #1a2a1a; border-radius:8px; padding:10px 14px; text-align:center; font-size:11px; color:#8aaa8a; min-width:80px; }
+  .flow-step .num { font-size:20px; color:#c8a860; font-weight:200; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>摄像头标定 — 方案 & 预览</h1>
+<div class="subtitle">眼动追踪标定：用摄像头检测用户视线，映射到屏幕坐标</div>
+
+<!-- ══════════════════════════════════════════ -->
+<div class="section">
+  <h2>📐 架构方案</h2>
+
+  <h3>数据流</h3>
+  <div class="arch">
+    <div class="arch-box"><div class="title">📷 摄像头</div><div class="desc">前置摄像头<br>采集面部视频</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-box"><div class="title">🧠 人脸检测</div><div class="desc">MediaPipe /<br>ML Kit Face</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-box"><div class="title">👁 视线估计</div><div class="desc">瞳孔-角膜反射<br>→ 视线向量</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-box"><div class="title">📐 标定映射</div><div class="desc">5点采样 →<br>透视变换矩阵</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-box"><div class="title">🎯 实时追踪</div><div class="desc">后续页面用<br>映射矩阵定位</div></div>
+  </div>
+
+  <h3>推荐技术栈</h3>
+  <div class="info-row">
+    <div class="info-card">
+      <div class="key">方案 A — 纯前端</div>
+      <div class="val" style="font-size:12px;line-height:1.5;">
+        • <b>google_mlkit_face_detection</b><br>
+        • 检测 468 个面部关键点<br>
+        • 提取眼部区域 → 简单几何视线<br>
+        • 精度一般，适合粗略方向
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="key">方案 B — 后端推理</div>
+      <div class="val" style="font-size:12px;line-height:1.5;">
+        • 摄像头帧 → WebSocket → 后端<br>
+        • 跑 MediaPipe Iris / GazeML<br>
+        • 返回精确 (x,y) 屏幕坐标<br>
+        • 精度高，延迟 ~50-100ms
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="key">方案 C — 混合</div>
+      <div class="val" style="font-size:12px;line-height:1.5;">
+        • 标定阶段用后端精确算法<br>
+        • 运行时用前端轻量追踪<br>
+        • 平衡精度和延迟<br>
+        • 现有 BackendService 架构
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<div class="section">
+  <h2>🎬 效果模拟</h2>
+  <div class="demo-stage" id="demo">
+    <div class="demo-bg"></div>
+    <div class="demo-ring" id="demoRing" style="left:15%;top:15%;"></div>
+    <div class="demo-dot" id="demoDot" style="left:15%;top:15%;"></div>
+    <div class="gaze-prediction" id="gazePred" style="left:15%;top:15%;"></div>
+
+    <!-- PIP 摄像头 -->
+    <div class="pip">
+      <div class="pip-label">前置摄像头</div>
+      <div class="pip-face">
+        <div class="pip-face-inner">
+          <div class="pip-eye left"><div class="pip-pupil" id="pipEyeL"></div></div>
+          <div class="pip-eye right"><div class="pip-pupil" id="pipEyeR"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 进度 -->
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-dot done"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<div class="section">
+  <h2>⚙️ 标定流程</h2>
+  <div class="flow-steps">
+    <div class="flow-step"><div class="num">1</div>摄像头初始化</div>
+    <div class="flow-step"><div class="num">2</div>红点出现在<br>左上角</div>
+    <div class="flow-step"><div class="num">3</div>用户注视<br>→ 采集样本</div>
+    <div class="flow-step"><div class="num">4</div>红点移动到<br>下一个位置</div>
+    <div class="flow-step"><div class="num">5</div>×5 点完成后<br>计算映射矩阵</div>
+    <div class="flow-step"><div class="num">6</div>标定完成<br>进入测试</div>
+  </div>
+
+  <h3>Flutter 侧关键代码</h3>
+  <div class="code-block"><span class="cm">// 1. 初始化摄像头</span>
+<span class="kw">final</span> camera = <span class="kw">await</span> availableCameras();
+<span class="kw">final</span> controller = CameraController(camera[0], ResolutionPreset.medium);
+<span class="kw">await</span> controller.initialize();
+
+<span class="cm">// 2. 逐帧送后端 / 本地 ML</span>
+controller.startImageStream((CameraImage img) {
+  <span class="kw">final</span> gazePoint = <span class="kw">await</span> BackendService.instance
+      .detectGazeFromFrame(img, screenSize);
+  <span class="str">// gazePoint: Offset? — 用户在屏幕上的注视坐标</span>
+});
+
+<span class="cm">// 3. 标定采样</span>
+<span class="kw">for</span> (<span class="kw">final</span> point <span class="kw">in</span> calibrationPoints) {
+  showRedDotAt(point);               <span class="cm">// 显示红点</span>
+  <span class="kw">await</span> Future.delayed(<span class="str">2.seconds</span>);   <span class="cm">// 等用户注视</span>
+  <span class="kw">final</span> raw = collectGazeSamples(20); <span class="cm">// 采 20 帧</span>
+  samples.add((screenPoint: point, gazePoint: average(raw)));
+}
+
+<span class="cm">// 4. 计算映射</span>
+<span class="kw">final</span> matrix = computeHomography(samples);
+BackendService.instance.setGazeCalibration(matrix);</div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<div class="section">
+  <h2>🔄 对现有代码的影响</h2>
+  <div class="info-row">
+    <div class="info-card">
+      <div class="key">page_two.dart</div>
+      <div class="val" style="font-size:11px;line-height:1.5;">
+        • 红点动画 → 已有<br>
+        • 新增：摄像头 PIP 小窗<br>
+        • 新增：凝视预测圆点跟踪<br>
+        • 采集每点 20 帧样本
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="key">BackendService</div>
+      <div class="val" style="font-size:11px;line-height:1.5;">
+        • 新增 `detectGazeFromFrame()`<br>
+        • 新增 `setGazeCalibration()`<br>
+        • 后续 `detectGazeDirection()` 使用映射
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="key">依赖</div>
+      <div class="val" style="font-size:11px;line-height:1.5;">
+        • `camera` 插件<br>
+        • `google_mlkit_face_detection`<br>
+        • 或 `permission_handler`<br>
+        • 摄像头权限声明
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const dot = document.getElementById('demoDot');
+const ring = document.getElementById('demoRing');
+const pred = document.getElementById('gazePred');
+const eyeL = document.getElementById('pipEyeL');
+const eyeR = document.getElementById('pipEyeR');
+const stage = document.getElementById('demo');
+const bar = document.getElementById('progressBar');
+
+const calibPoints = [
+  {x:12, y:14}, {x:88, y:10}, {x:15, y:85}, {x:86, y:82}, {x:50, y:50},
+];
+let currentIdx = 0;
+
+function setDotPos(p) {
+  dot.style.left = p.x+'%'; dot.style.top = p.y+'%';
+  ring.style.left = p.x+'%'; ring.style.top = p.y+'%';
+}
+
+function updateEyes(tx, ty) {
+  // 瞳孔跟随红点方向（带延迟）
+  const dx = (tx - 50) * 0.08;
+  const dy = (ty - 50) * 0.10;
+  eyeL.style.transform = `translate(${dx}px,${dy}px)`;
+  eyeR.style.transform = `translate(${dx}px,${dy}px)`;
+}
+
+function updateProgress(idx) {
+  const dots = bar.querySelectorAll('.progress-dot');
+  dots.forEach((d,i) => {
+    d.className = 'progress-dot';
+    if (i < idx) d.classList.add('done');
+    if (i === idx) d.classList.add('active');
+  });
+}
+
+function updatePrediction(dotPos) {
+  // 模拟：预测点在红点附近抖动（模拟视线误差）
+  const jitterX = (Math.random()-0.5) * 8;
+  const jitterY = (Math.random()-0.5) * 8;
+  pred.style.left = (dotPos.x + jitterX)+'%';
+  pred.style.top = (dotPos.y + jitterY)+'%';
+}
+
+async function runCalibration() {
+  for (let i = 0; i < calibPoints.length; i++) {
+    currentIdx = i;
+    const p = calibPoints[i];
+    setDotPos(p);
+    updateProgress(i);
+
+    // 20 帧采样（模拟）
+    for (let f = 0; f < 20; f++) {
+      updateEyes(p.x, p.y);
+      updatePrediction(p);
+      await new Promise(r => setTimeout(r, 100));
+    }
+  }
+  // 标定完成
+  updateProgress(5);
+  dot.style.animation = 'none';
+  dot.style.boxShadow = '0 0 40px rgba(100,200,80,0.8),0 0 80px rgba(100,200,80,0.4)';
+  dot.style.background = 'radial-gradient(circle,#60d040,#308020)';
+}
+
+runCalibration();
+</script>
+</body>
+</html>

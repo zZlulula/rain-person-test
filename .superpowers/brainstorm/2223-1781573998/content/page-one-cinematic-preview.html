@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>首页预览 — CinematicText + 暖金按钮</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #e8ebe4;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; font-family: 'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif;
+    overflow: hidden;
+  }
+  .phone {
+    width: 390px; height: 844px;
+    background: #e8ebe4;
+    position: relative; overflow: hidden;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  }
+
+  /* ── rain particles ── */
+  .rain-layer {
+    position: absolute; inset: 0;
+    pointer-events: none; z-index: 0;
+  }
+  .drop {
+    position: absolute;
+    width: 1px; height: 55px;
+    background: linear-gradient(to bottom, transparent, rgba(42,58,46,.13), transparent);
+    animation: fall linear infinite;
+  }
+  @keyframes fall {
+    0%   { transform: translateY(-120px); opacity: 0; }
+    5%   { opacity: .55; }
+    85%  { opacity: .55; }
+    100% { transform: translateY(900px); opacity: 0; }
+  }
+
+  /* ── content ── */
+  .content { position: relative; z-index: 1; height: 100%; }
+
+  /* ── title (CinematicText: enter + breathe) ── */
+  .title-wrap {
+    position: absolute; left:0; right:0; top: 33%;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .cinematic-title {
+    font-size: 44px; font-weight: 200; letter-spacing: 8px;
+    color: rgba(42,58,46,.86);
+    animation: cine-enter 1.6s cubic-bezier(.22,.61,.36,1) forwards,
+               cine-breathe 4s 1.6s ease-in-out infinite;
+  }
+  .cinematic-sub {
+    margin-top: 14px;
+    font-size: 14px; font-weight: 300; letter-spacing: 2px;
+    color: rgba(42,58,46,.50);
+    animation: sub-enter 1.6s .15s cubic-bezier(.22,.61,.36,1) both,
+               sub-breathe 4s 1.75s ease-in-out infinite;
+  }
+  @keyframes cine-enter {
+    0%   { letter-spacing: 16px; opacity: 0; transform: translateY(6px) scale(.97); }
+    60%  { letter-spacing: 1px;  opacity: 1; }
+    80%  { letter-spacing: 9px; }
+    100% { letter-spacing: 8px;  opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes cine-breathe {
+    0%,100% { opacity: .84; transform: translateY(0) scale(1); }
+    50%     { opacity: .90; transform: translateY(-1.5px) scale(1.012); }
+  }
+  @keyframes sub-enter {
+    0%   { opacity: 0; transform: translateY(4px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes sub-breathe {
+    0%,100% { opacity: .48; transform: translateY(0) scale(1); }
+    50%     { opacity: .58; transform: translateY(-1px) scale(1.006); }
+  }
+
+  /* ── start button (warm gold glow) ── */
+  .btn-wrap {
+    position: absolute; left:0; right:0; top: 58%;
+    display: flex; justify-content: center;
+  }
+  .btn-gold {
+    background: none; border: none; cursor: pointer;
+    padding: 12px 52px;
+    font-family: inherit;
+    font-size: 20px; font-weight: 300; letter-spacing: 4px;
+    color: #8a9c8a;
+    border: 1px solid rgba(58,74,63,.20);
+    border-radius: 14px;
+    transition: all .5s cubic-bezier(.25,.8,.25,1);
+    animation: btn-breathe 4s 1.8s ease-in-out infinite;
+  }
+  .btn-gold:hover, .btn-gold.highlight {
+    color: #fef4ca;
+    font-weight: 500;
+    letter-spacing: 8px;
+    border-color: rgba(252,208,128,.35);
+    text-shadow:
+      0 0 10px rgba(252,208,128,.72),
+      0 0 24px rgba(250,192,112,.50),
+      0 0 44px rgba(238,172,95,.26),
+      0 0 66px rgba(222,158,80,.14);
+  }
+  @keyframes btn-breathe {
+    0%,100% { opacity: .75; }
+    50%     { opacity: .88; }
+  }
+
+  .note {
+    position: absolute; bottom: 24px; left:0; right:0;
+    text-align: center; font-size: 12px; color: rgba(42,58,46,.25);
+  }
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone">
+  <!-- rain -->
+  <div class="rain-layer" id="rain"></div>
+
+  <!-- content -->
+  <div class="content">
+    <div class="title-wrap">
+      <div class="cinematic-title">雨中人</div>
+      <div class="cinematic-sub">一场关于内心世界的雨境之旅</div>
+    </div>
+    <div class="btn-wrap">
+      <button class="btn-gold" id="btn" onclick="this.classList.toggle('highlight')">
+        开&emsp;始
+      </button>
+    </div>
+  </div>
+  <div class="note">hover / click 按钮看暖金高亮效果 · CinematicText 入场+呼吸</div>
+</div>
+
+<script>
+// generate rain
+const rain = document.getElementById('rain');
+const drops = 80;
+for (let i=0; i<drops; i++) {
+  const d = document.createElement('div');
+  d.className = 'drop';
+  d.style.left = Math.random()*100+'%';
+  d.style.animationDuration = (1.2+Math.random()*2.4)+'s';
+  d.style.animationDelay = Math.random()*3+'s';
+  d.style.height = (40+Math.random()*80)+'px';
+  rain.appendChild(d);
+}
+</script>
+</body>
+</html>

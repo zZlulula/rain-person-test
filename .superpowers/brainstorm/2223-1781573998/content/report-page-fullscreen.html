@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>报告页预览 — 温暖光晕版</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(232,210,160,.10) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 60%, rgba(210,175,130,.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 80%, rgba(240,220,170,.06) 0%, transparent 45%),
+      radial-gradient(ellipse at 65% 10%, rgba(122,155,138,.05) 0%, transparent 50%),
+      #eaf0e8;
+    min-height: 100vh; font-family: 'Microsoft YaHei','PingFang SC',sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 56px 140px;
+    position: relative; overflow: hidden;
+  }
+
+  .warm-spot {
+    position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    animation: spot-drift 12s ease-in-out infinite;
+    filter: blur(60px);
+  }
+  .warm-spot:nth-child(1) {
+    width: 560px; height: 560px; top: -16%; left: -2%;
+    background: rgba(252,208,128,.15);
+    animation-delay: 0s;
+  }
+  .warm-spot:nth-child(2) {
+    width: 460px; height: 460px; bottom: 4%; right: -2%;
+    background: rgba(250,192,112,.13);
+    animation-delay: -4s;
+  }
+  .warm-spot:nth-child(3) {
+    width: 360px; height: 360px; top: 38%; left: 46%;
+    background: rgba(238,172,105,.11);
+    animation-delay: -8s;
+  }
+  @keyframes spot-drift {
+    0%,100% { transform: translate(0,0) scale(1); }
+    25%     { transform: translate(30px,-20px) scale(1.15); }
+    50%     { transform: translate(-15px,25px) scale(.92); }
+    75%     { transform: translate(-25px,-10px) scale(1.08); }
+  }
+
+  .container { max-width: 1440px; width: 100%; position: relative; z-index: 1; }
+
+  .header { text-align: center; margin-bottom: 36px; position: relative; }
+  .title-wrap { display: inline-block; position: relative; }
+  .title-glow {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 600px; height: 110px; border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(252,208,128,.16) 0%, transparent 70%);
+    animation: glow-breathe 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes glow-breathe {
+    0%,100% { opacity: .5; transform: translate(-50%,-50%) scale(.95); }
+    50%     { opacity: 1; transform: translate(-50%,-50%) scale(1.08); }
+  }
+  .title {
+    font-size: 38px; font-weight: 200;
+    letter-spacing: 5px; color: rgba(42,58,46,.82);
+    animation: title-breathe 5s ease-in-out infinite;
+    display: inline-block; position: relative; z-index: 1;
+  }
+  @keyframes title-breathe {
+    0%,100% { opacity: .78; letter-spacing: 5px; }
+    50%     { opacity: .96; letter-spacing: 9px; }
+  }
+
+  .summary {
+    text-align: center; font-size: 21px; color: rgba(42,58,46,.48); line-height: 1.9;
+    margin-bottom: 48px;
+    animation: summary-in .6s .3s ease-out both;
+  }
+  @keyframes summary-in {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .cards {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 26px; margin-bottom: 60px;
+  }
+  .card {
+    width: 100%; max-width: 1200px;
+    background: rgba(221,226,216,.48);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(58,74,63,.08);
+    border-radius: 18px; padding: 36px 64px;
+    animation: card-in .5s ease-out both, card-float 6s ease-in-out infinite;
+    position: relative; overflow: hidden;
+  }
+  .card:nth-child(1) { animation-delay: .5s, 1.0s; }
+  .card:nth-child(2) { animation-delay: .65s, 1.15s; }
+  .card:nth-child(3) { animation-delay: .8s, 1.3s; }
+  .card:nth-child(4) { animation-delay: .95s, 1.45s; }
+
+  @keyframes card-in {
+    0%   { opacity: 0; transform: translateY(24px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes card-float {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-3px); }
+  }
+
+  .card-stage {
+    font-size: 18px; color: rgba(42,58,46,.30);
+    letter-spacing: 2px; margin-bottom: 8px;
+  }
+  .card-type {
+    font-size: 24px; font-weight: 400; color: rgba(42,58,46,.78);
+    margin-bottom: 12px;
+  }
+  .card-desc {
+    font-size: 20px; color: rgba(42,58,46,.44); line-height: 1.75;
+  }
+
+  .card::before {
+    content: ''; position: absolute; top: -30%; right: -18%;
+    width: 130px; height: 130px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(252,208,128,.20) 0%, rgba(250,192,112,.10) 40%, transparent 70%);
+    animation: warm-shimmer 7s ease-in-out infinite;
+    filter: blur(10px);
+  }
+  .card:nth-child(2)::before { animation-delay: 1.8s; }
+  .card:nth-child(3)::before { animation-delay: 3.5s; }
+  .card:nth-child(4)::before { animation-delay: 5.2s; }
+  @keyframes warm-shimmer {
+    0%,100% { transform: translate(0,0) scale(1); opacity: .25; }
+    50%     { transform: translate(-45px,25px) scale(1.6); opacity: .65; }
+  }
+
+  .card::after {
+    content: ''; position: absolute; bottom: -30%; left: -10%;
+    width: 90px; height: 90px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,220,160,.12) 0%, transparent 70%);
+    animation: warm-shimmer2 9s ease-in-out infinite;
+    filter: blur(14px);
+  }
+  .card:nth-child(2)::after { animation-delay: 2.2s; }
+  .card:nth-child(3)::after { animation-delay: 4.5s; }
+  .card:nth-child(4)::after { animation-delay: 6.8s; }
+  @keyframes warm-shimmer2 {
+    0%,100% { transform: translate(0,0) scale(1); opacity: .15; }
+    50%     { transform: translate(30px,-20px) scale(1.5); opacity: .5; }
+  }
+
+  .btn-wrap { display: flex; justify-content: center; position: relative; }
+  .btn {
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 21px; font-weight: 300;
+    letter-spacing: 7px; color: #8a9c8a;
+    padding: 12px 42px; position: relative;
+    transition: all .45s cubic-bezier(.25,.8,.25,1);
+  }
+  .btn::after {
+    content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+    width: 30px; height: 1.5px; border-radius: 1px;
+    background: rgba(58,74,63,.18);
+    transition: all .45s cubic-bezier(.25,.8,.25,1);
+    animation: line-pulse 3.2s ease-in-out infinite;
+  }
+  @keyframes line-pulse {
+    0%,100% { width: 36px; }
+    50%     { width: 64px; }
+  }
+  .btn:hover, .btn.highlight {
+    color: #fef4ca; font-weight: 400; letter-spacing: 11px;
+    text-shadow:
+      0 0 14px rgba(252,208,128,.75),
+      0 0 32px rgba(250,192,112,.55),
+      0 0 60px rgba(238,172,95,.28),
+      0 0 90px rgba(252,208,128,.14);
+  }
+  .btn:hover::after, .btn.highlight::after {
+    width: 70%; animation: none;
+    background: linear-gradient(to right, transparent, rgba(252,208,128,.80) 10%, rgba(252,208,128,.80) 90%, transparent);
+    box-shadow: 0 0 16px rgba(252,208,128,.60), 0 0 36px rgba(250,192,112,.35);
+  }
+</style>
+</head>
+<body>
+<div class="warm-spot"></div>
+<div class="warm-spot"></div>
+<div class="warm-spot"></div>
+
+<div class="container">
+  <div class="header">
+    <div class="title-wrap">
+      <div class="title-glow"></div>
+      <div class="title">你的本次雨境画像</div>
+    </div>
+  </div>
+  <div class="summary">你在风雨中仍然保持清晰与克制。面对生活的雨，你选择带着觉察前行——每一步都是对自己更深的了解。</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-stage">第 1 阶段</div>
+      <div class="card-type">抿嘴 — 情绪压抑偏高</div>
+      <div class="card-desc">你习惯将情绪收在心底，不愿过多表露。这是一种温柔的自制，也提醒你偶尔需要给自己的感受一个出口。</div>
+    </div>
+    <div class="card">
+      <div class="card-stage">第 2 阶段</div>
+      <div class="card-type">游戏 + 家人 — 倾向转移压力与依靠</div>
+      <div class="card-desc">在重压面前，你一边通过娱乐为自己松绑，一边渴望从亲近的人那里获得力量。你在独自应对和寻求陪伴之间寻找着平衡点。</div>
+    </div>
+    <div class="card">
+      <div class="card-stage">第 3 阶段</div>
+      <div class="card-type">伞 — 倾向于先解决问题 · 理性倾向者</div>
+      <div class="card-desc">大雨中你选择了一把伞——你愿意带着工具直面困境，而非停下等待天晴。这是属于实干者的勇气。</div>
+    </div>
+    <div class="card">
+      <div class="card-stage">第 4 阶段</div>
+      <div class="card-type">森林 — 倾向于畅想未来</div>
+      <div class="card-desc">你的视线穿过雨幕望向远方。对你而言，未来的图景比眼下的泥泞更重要——你是一个有方向感的人。</div>
+    </div>
+  </div>
+  <div class="btn-wrap">
+    <button class="btn" onclick="this.classList.toggle('highlight')">重新体验</button>
+  </div>
+</div>
+</body>
+</html>

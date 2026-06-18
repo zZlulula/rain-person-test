@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>眼睛 — 极简豆豆眼优化</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#e8ebe4; font-family:'Microsoft YaHei',sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .row { display:flex; gap:60px; align-items:center; }
+  .col { display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .label { font-size:15px; color:#4a5a42; letter-spacing:1px; }
+  .eye-wrap { display:flex; gap:16px; }
+
+  .eye {
+    width:52px; height:52px; position:relative;
+    background:radial-gradient(ellipse at 50% 46%, #fefefb 0%, #f5f7ef 60%, #eaede2 100%);
+    border-radius:50%;
+    box-shadow:0 2px 8px rgba(100,120,80,0.04);
+    overflow:hidden;
+  }
+  .blush {
+    position:absolute; bottom:0px; left:50%; transform:translateX(-50%);
+    width:22px; height:7px;
+    background:rgba(240,170,155,0.28);
+    border-radius:50%; filter:blur(3.5px);
+    animation:blushP 2.8s ease-in-out infinite; z-index:1;
+  }
+  @keyframes blushP { 0%,100%{opacity:0.40} 52%{opacity:0.88} }
+
+  .lids { position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:50%; }
+  .lids::before, .lids::after {
+    content:''; position:absolute; left:0; right:0; background:#e8ebe4;
+  }
+  .lids::before {
+    top:0; height:0; border-radius:0 0 48% 48%;
+    animation:blinkTop 4.5s cubic-bezier(0.65,0,0.35,1) infinite;
+  }
+  .lids::after {
+    bottom:0; height:0; border-radius:48% 48% 0 0;
+    animation:blinkBot 4.5s cubic-bezier(0.65,0,0.35,1) infinite;
+  }
+  @keyframes blinkTop { 0%,48%,56%,100%{height:0} 52%{height:54%} }
+  @keyframes blinkBot { 0%,48%,56%,100%{height:0} 52%{height:46%} }
+
+  @keyframes drift {
+    0%,100%{transform:translate(0,0.3px)}
+    15%{transform:translate(-2px,-1px)}
+    30%{transform:translate(1.5px,1.5px)}
+    45%{transform:translate(-1px,-2.5px)}
+    60%{transform:translate(3px,-0.3px)}
+    75%{transform:translate(-2px,1.2px)}
+    88%{transform:translate(0.5px,0)}
+  }
+
+  /* ═══ C1：经典豆豆 — 扁椭圆+单高光 ═══ */
+  .c1 {
+    position:absolute; width:18px; height:22px; border-radius:50%;
+    background:radial-gradient(circle at 44% 38%, #3a2820, #080403);
+    top:15px; left:17px;
+    box-shadow:0 0 3px rgba(0,0,0,0.10);
+    animation:drift 4.8s ease-in-out infinite;
+  }
+  .h1c1 { position:absolute; width:7px; height:7px; background:white; border-radius:50%;
+    top:2px; left:3px; box-shadow:0 0 2px white; }
+
+  /* ═══ C2：圆润豆豆 — 更大更圆+微光边 ═══ */
+  .c2 {
+    position:absolute; width:20px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 43% 38%, #483830, #0a0604);
+    top:16px; left:16px;
+    box-shadow:
+      0 0 4px rgba(60,40,30,0.15),
+      0 0 0 1px rgba(60,40,30,0.06);
+    animation:drift 4.5s ease-in-out infinite;
+  }
+  .h1c2 { position:absolute; width:7px; height:7px; background:white; border-radius:50%;
+    top:1px; left:2px; box-shadow:0 0 2px white; }
+
+  /* ═══ C3：焦糖豆豆 — 暖棕+双高光 ═══ */
+  .c3 {
+    position:absolute; width:20px; height:22px; border-radius:50%;
+    background:radial-gradient(circle at 42% 36%, #604838, #140a04);
+    top:15px; left:16px;
+    box-shadow:0 0 5px rgba(80,50,30,0.12);
+    animation:drift 4.5s ease-in-out infinite;
+  }
+  .h1c3 { position:absolute; width:7px; height:7px; background:white; border-radius:50%;
+    top:1px; left:3px; box-shadow:0 0 2px white; }
+  .h2c3 { position:absolute; width:3px; height:3px; background:rgba(255,255,255,0.55); border-radius:50%;
+    top:9px; left:10px; }
+
+  /* ═══ C4：奶豆豆 — 浅棕+柔光晕+小高光 ═══ */
+  .c4 {
+    position:absolute; width:20px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 42% 38%, #786050, #1a0e06);
+    top:16px; left:16px;
+    box-shadow:
+      0 0 6px rgba(100,70,40,0.18),
+      0 0 0 1.5px rgba(100,70,40,0.05);
+    animation:drift 4.5s ease-in-out infinite;
+  }
+  .h1c4 { position:absolute; width:5px; height:5px; background:white; border-radius:50%;
+    top:1px; left:2px; box-shadow:0 0 2px white,0 0 4px rgba(255,255,255,0.35); }
+  .h2c4 { position:absolute; width:2.5px; height:2.5px; background:rgba(255,255,255,0.50); border-radius:50%;
+    top:8px; left:9px; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="col">
+    <div class="eye-wrap">
+      <div class="eye"><div class="blush"></div><div class="c1"><div class="h1c1"></div></div><div class="lids"></div></div>
+      <div class="eye"><div class="blush"></div><div class="c1"><div class="h1c1"></div></div><div class="lids"></div></div>
+    </div>
+    <span class="label">C1 · 经典豆豆</span>
+  </div>
+  <div class="col">
+    <div class="eye-wrap">
+      <div class="eye"><div class="blush"></div><div class="c2"><div class="h1c2"></div></div><div class="lids"></div></div>
+      <div class="eye"><div class="blush"></div><div class="c2"><div class="h1c2"></div></div><div class="lids"></div></div>
+    </div>
+    <span class="label">C2 · 圆润豆豆</span>
+  </div>
+  <div class="col">
+    <div class="eye-wrap">
+      <div class="eye"><div class="blush"></div><div class="c3"><div class="h1c3"></div><div class="h2c3"></div></div><div class="lids"></div></div>
+      <div class="eye"><div class="blush"></div><div class="c3"><div class="h1c3"></div><div class="h2c3"></div></div><div class="lids"></div></div>
+    </div>
+    <span class="label">C3 · 焦糖豆豆</span>
+  </div>
+  <div class="col">
+    <div class="eye-wrap">
+      <div class="eye"><div class="blush"></div><div class="c4"><div class="h1c4"></div><div class="h2c4"></div></div><div class="lids"></div></div>
+      <div class="eye"><div class="blush"></div><div class="c4"><div class="h1c4"></div><div class="h2c4"></div></div><div class="lids"></div></div>
+    </div>
+    <span class="label">C4 · 奶豆豆</span>
+  </div>
+</div>
+</body>
+</html>

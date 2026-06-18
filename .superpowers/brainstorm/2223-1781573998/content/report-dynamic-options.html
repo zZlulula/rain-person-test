@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>报告页动态方案对比</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0f0a; font-family:'Microsoft YaHei','微软雅黑','PingFang SC',sans-serif; display:flex; height:100vh; }
+
+.col { flex:1; display:flex; flex-direction:column; align-items:center; overflow-y:auto; border-right:1px solid #1a2a1a; position:relative; }
+.col:last-child { border-right:none; }
+.bg { position:fixed; top:0;left:0; right:0; bottom:0; background:linear-gradient(180deg,#f8faf6,#f3f6f1 40%,#eef1ec); pointer-events:none; }
+.bg::after { content:''; position:absolute; top:-20%; left:-20%; right:-20%; height:50%; background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.35),transparent 70%); }
+.label { position:sticky; top:0; z-index:20; padding:8px 20px; background:rgba(10,15,10,0.95); text-align:center; font-size:10px; letter-spacing:2px; color:#5a7a5a; width:100%; border-bottom:1px solid #1a2a1a; }
+.label span { display:block; font-size:13px; color:#8aaa8a; }
+.content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; padding:30px 5% 100px; width:100%; }
+
+.title { font-weight:200; color:#2a3a2e; opacity:0.85; font-size:26px; letter-spacing:5px; margin-bottom:4px; }
+.sub { color:rgba(42,58,46,0.65); text-align:center; font-size:13px; line-height:1.7; margin-bottom:24px; }
+.card { width:90%; margin-bottom:10px; padding:18px; border-radius:14px; border:1px solid rgba(58,74,63,0.06); background:rgba(255,255,255,0.42); }
+.card-h { display:flex; align-items:center; margin-bottom:6px; gap:8px; }
+.card-icon { display:inline-flex; width:24px; height:24px; border-radius:50%; align-items:center; justify-content:center; font-size:12px; }
+.card-stage { font-size:10px; color:#4a5a4a; letter-spacing:2px; }
+.card-result { font-size:18px; font-weight:400; color:#1e2d22; margin:4px 0; }
+.card-line { height:1px; background:rgba(58,74,63,0.04); margin:6px 0; }
+.card-insight { font-size:12px; color:rgba(42,58,46,0.88); line-height:1.65; }
+
+.btn { font-size:20px; font-weight:300; letter-spacing:8px; color:#c8b080; margin-top:30px; }
+
+/* ── A: 当前小球 ── */
+.a .particle { position:fixed; border-radius:50%; background:rgba(212,184,112,0.08); pointer-events:none; z-index:0; }
+.a .p1 { width:14px; height:14px; top:25%; left:12%; animation:pFloatA 4.2s ease-in-out infinite; }
+.a .p2 { width:10px; height:10px; top:50%; left:84%; animation:pFloatA 4.2s ease-in-out 1.4s infinite; }
+.a .p3 { width:16px; height:16px; top:70%; left:8%; animation:pFloatA 4.2s ease-in-out 2.8s infinite; }
+@keyframes pFloatA {
+  0%,100% { transform:translateY(0) scale(1); opacity:0.08; }
+  50% { transform:translateY(-20px) scale(1.5); opacity:0.22; }
+}
+
+/* ── B: 顶部光瀑 ── */
+.b .light-fall {
+  position:fixed; top:0; left:0; right:0; height:50%; pointer-events:none; z-index:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.12),transparent 60%);
+  animation:lFall 6s ease-in-out infinite;
+}
+@keyframes lFall {
+  0%,100% { background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.10),transparent 60%); }
+  50% { background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.20),transparent 70%); }
+}
+
+/* ── C: 极淡浮尘（多个极小光点缓慢飘动）─ */
+.c .dust { position:fixed; border-radius:50%; pointer-events:none; z-index:0; }
+.c .d1 { width:2px; height:2px; top:20%; left:15%; background:rgba(180,160,110,0.2); animation:dustA 8s ease-in-out infinite; }
+.c .d2 { width:1.5px; height:1.5px; top:35%; left:78%; background:rgba(180,160,110,0.15); animation:dustB 7s ease-in-out 1s infinite; }
+.c .d3 { width:2px; height:2px; top:55%; left:22%; background:rgba(190,170,120,0.18); animation:dustC 9s ease-in-out 2s infinite; }
+.c .d4 { width:1px; height:1px; top:65%; left:68%; background:rgba(180,160,110,0.12); animation:dustA 8.5s ease-in-out .5s infinite; }
+.c .d5 { width:1.5px; height:1.5px; top:30%; left:90%; background:rgba(190,170,120,0.14); animation:dustB 7.5s ease-in-out 3s infinite; }
+@keyframes dustA {
+  0%,100% { transform:translate(0,0); opacity:0; }
+  25% { opacity:0.15; }
+  50% { transform:translate(15px,-30px); opacity:0.3; }
+  75% { opacity:0.15; }
+}
+@keyframes dustB {
+  0%,100% { transform:translate(0,0); opacity:0; }
+  25% { opacity:0.12; }
+  50% { transform:translate(-12px,-25px); opacity:0.25; }
+  75% { opacity:0.12; }
+}
+@keyframes dustC {
+  0%,100% { transform:translate(0,0); opacity:0; }
+  25% { opacity:0.14; }
+  50% { transform:translate(18px,-35px); opacity:0.28; }
+  75% { opacity:0.14; }
+}
+
+/* ── D: 无额外元素，单靠卡片呼吸 ── */
+.d .card:nth-child(1) { animation:cardB 5.5s ease-in-out infinite; }
+.d .card:nth-child(2) { animation:cardB 5.5s ease-in-out 1.2s infinite; }
+.d .card:nth-child(3) { animation:cardB 5.5s ease-in-out 2.4s infinite; }
+.d .card:nth-child(4) { animation:cardB 5.5s ease-in-out 3.6s infinite; }
+@keyframes cardB {
+  50% { transform:scale(1.005) translateY(-2px); }
+}
+
+/* ── E: 渐变光斑缓慢游走 ── */
+.e .orb {
+  position:fixed; border-radius:50%; pointer-events:none; z-index:0;
+  filter:blur(40px);
+}
+.e .o1 { width:180px; height:180px; top:30%; left:-60px; background:rgba(200,190,160,0.06); animation:orbA 10s ease-in-out infinite; }
+.e .o2 { width:140px; height:140px; top:55%; right:-40px; background:rgba(180,195,175,0.05); animation:orbB 12s ease-in-out 3s infinite; }
+@keyframes orbA {
+  0%,100% { transform:translate(0,0); }
+  33% { transform:translate(30px,20px); }
+  66% { transform:translate(15px,-15px); }
+}
+@keyframes orbB {
+  0%,100% { transform:translate(0,0); }
+  33% { transform:translate(-25px,-10px); }
+  66% { transform:translate(-10px,20px); }
+}
+
+.desc { text-align:center; font-size:10px; color:#8a9a8a; margin:20px 0; letter-spacing:1px; }
+</style>
+</head>
+<body>
+
+<div class="col a">
+  <div class="bg"></div>
+  <div class="label">A<span>当前 · 3颗小球</span></div>
+  <div class="particle p1"></div><div class="particle p2"></div><div class="particle p3"></div>
+  <div class="content">
+    <div class="title">你的本次雨境画像</div>
+    <div class="sub">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+    <div class="card"><div class="card-h"><span class="card-icon" style="background:rgba(138,170,138,0.12);color:#7a9a78;">①</span><span class="card-stage">第1阶段 · 表情</span></div><div class="card-result">皱眉</div><div class="card-line"></div><div class="card-insight">面对烦恼时，你倾向于将情绪收敛在眉间。</div></div>
+    <div class="card"><div class="card-h"><span class="card-icon" style="background:rgba(155,175,148,0.12);color:#85a07e;">②</span><span class="card-stage">第2阶段 · 关键词</span></div><div class="card-result">家人、发呆</div><div class="card-line"></div><div class="card-insight">在压力时刻，你想到的是家人和放空。</div></div>
+    <div class="btn">重新体验</div>
+  </div>
+  <div class="desc">存在感太强，分散注意力</div>
+</div>
+
+<div class="col b">
+  <div class="bg"></div>
+  <div class="label">B<span>顶部光瀑</span></div>
+  <div class="light-fall"></div>
+  <div class="content">
+    <div class="title">你的本次雨境画像</div>
+    <div class="sub">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+    <div class="card"><div class="card-h"><span class="card-icon" style="background:rgba(138,170,138,0.12);color:#7a9a78;">①</span><span class="card-stage">第1阶段 · 表情</span></div><div class="card-result">皱眉</div><div class="card-line"></div><div class="card-insight">面对烦恼时，你倾向于将情绪收敛在眉间。</div></div>
+    <div class="card"><div class="card-h"><span class="card-icon" style="background:rgba(155,175,148,0.12);color:#85a07e;">②</span><span class="card-stage">第2阶段 · 关键词</span></div><div class="card-result">家人、发呆</div><div class="card-line"></div><div class="card-insight">在压力时刻，你想到的是家人和放空。</div></div>
+    <div class="btn">重新体验</div>
+  </div>
+  <div class="desc">柔白光瀑缓缓呼吸，呼应毛玻璃顶光</div>
+</div>
+
+<div class="col c">
+  <div class="bg"></div>
+  <div class="label">C<span>极淡浮尘</span></div>
+  <div class="dust d1"></div><div class="dust d2"></div><div class="dust d3"></div><div class="dust d4"></div><div class="dust d5"></div>
+  <div class="content">
+    <div class="title">你的本次雨境画像</div>
+    <div class="sub">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+    <div class="card"><div class="card-h"><span class="card-icon" style="background:rgba(138,170,138,0.12);color:#7a9a78;">①</span><span class="card-stage">第1阶段 · 表情</span></div><div class="card-result">皱眉</div><div class="card-line"></div><div class="card-insight">面对烦恼时，你倾向于将情绪收敛在眉间。</div></div>
+    <div class="card"><div class="card-h"><span class="card-icon" style="background:rgba(155,175,148,0.12);color:#85a07e;">②</span><span class="card-stage">第2阶段 · 关键词</span></div><div class="card-result">家人、发呆</div><div class="card-line"></div><div class="card-insight">在压力时刻，你想到的是家人和放空。</div></div>
+    <div class="btn">重新体验</div>
+  </div>
+  <div class="desc">1-2px 极淡光尘缓慢飘浮，若有若无</div>
+</div>
+
+<div class="col d">
+  <div class="bg"></div>
+  <div class="label">D<span>卡片自呼吸</span></div>
+  <div class="content">
+    <div class="title">你的本次雨境画像</div>
+    <div class="sub">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+    <div class="card"><div class="card-h"><span class="card-icon" style="background:rgba(138,170,138,0.12);color:#7a9a78;">①</span><span class="card-stage">第1阶段 · 表情</span></div><div class="card-result">皱眉</div><div class="card-line"></div><div class="card-insight">面对烦恼时，你倾向于将情绪收敛在眉间。</div></div>
+    <div class="card"><div class="card-h"><span class="card-icon" style="background:rgba(155,175,148,0.12);color:#85a07e;">②</span><span class="card-stage">第2阶段 · 关键词</span></div><div class="card-result">家人、发呆</div><div class="card-line"></div><div class="card-insight">在压力时刻，你想到的是家人和放空。</div></div>
+    <div class="btn">重新体验</div>
+  </div>
+  <div class="desc">去掉所有装饰，仅保留卡片微呼吸</div>
+</div>
+
+<div class="col e">
+  <div class="bg"></div>
+  <div class="label">E<span>游走光斑</span></div>
+  <div class="orb o1"></div><div class="orb o2"></div>
+  <div class="content">
+    <div class="title">你的本次雨境画像</div>
+    <div class="sub">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div>
+    <div class="card"><div class="card-h"><span class="card-icon" style="background:rgba(138,170,138,0.12);color:#7a9a78;">①</span><span class="card-stage">第1阶段 · 表情</span></div><div class="card-result">皱眉</div><div class="card-line"></div><div class="card-insight">面对烦恼时，你倾向于将情绪收敛在眉间。</div></div>
+    <div class="card"><div class="card-h"><span class="card-icon" style="background:rgba(155,175,148,0.12);color:#85a07e;">②</span><span class="card-stage">第2阶段 · 关键词</span></div><div class="card-result">家人、发呆</div><div class="card-line"></div><div class="card-insight">在压力时刻，你想到的是家人和放空。</div></div>
+    <div class="btn">重新体验</div>
+  </div>
+  <div class="desc">两大模糊光斑极慢游走，如云影</div>
+</div>
+
+</body>
+</html>

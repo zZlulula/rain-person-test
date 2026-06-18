@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>报告页 V4 — 修复呼吸动画</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0f0a; display:flex; height:100vh; overflow:hidden; font-family:'Noto Serif SC','Noto Sans SC',serif; }
+.half { flex:1; display:flex; flex-direction:column; overflow-y:auto; position:relative; border-right:1px solid #1a2a1a; }
+.half:last-child { border-right:none; }
+.half::-webkit-scrollbar { width:0; }
+.label { position:sticky; top:0; z-index:20; padding:10px 20px; background:rgba(10,15,10,0.95); text-align:center; font-size:11px; letter-spacing:3px; color:#5a7a5a; border-bottom:1px solid #1a2a1a; }
+.label span { display:block; font-size:15px; color:#8aaa8a; }
+
+.bg { position:absolute; inset:0; pointer-events:none; }
+.half:first-child .bg { background:#e8ebe4; }
+.half:last-child .bg {
+  background:linear-gradient(180deg,#f8faf6,#f3f6f1 40%,#eef1ec);
+}
+.half:last-child .bg::after {
+  content:''; position:absolute; top:-80px; left:-20%; right:-20%; height:340px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.30),transparent 70%);
+}
+.ls { position:absolute; border-radius:50%; pointer-events:none; }
+.ls1 { bottom:40px; left:-30px; width:240px; height:240px; background:radial-gradient(circle,rgba(180,195,170,0.10),transparent); }
+.ls2 { bottom:100px; right:-25px; width:220px; height:220px; background:radial-gradient(circle,rgba(185,200,178,0.08),transparent); }
+.ls3 { top:30%; left:-60px; width:180px; height:180px; background:radial-gradient(circle,rgba(200,195,160,0.05),transparent); }
+
+.content { position:relative; z-index:1; padding:34px 22px 120px; display:flex; flex-direction:column; align-items:center; }
+
+/* ── 标题 area ── */
+.title-area { text-align:center; margin-bottom:30px; }
+.title {
+  font-size:28px; font-weight:200; letter-spacing:6px; color:#2a3a2e;
+  opacity:0; transform:translateY(16px);
+  transition:opacity 0.8s ease, transform 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+.title.in { opacity:1; transform:translateY(0); }
+.subtitle {
+  font-size:13px; color:rgba(42,58,46,0.38); line-height:1.7; max-width:280px;
+  margin:8px auto 0; opacity:0; transform:translateY(10px);
+  transition:opacity 0.8s ease 0.12s, transform 0.8s cubic-bezier(0.16,1,0.3,1) 0.12s;
+}
+.subtitle.in { opacity:1; transform:translateY(0); }
+
+/* AFTER: 标题呼吸 — 用 animation */
+.half:last-child .title.in {
+  animation:titleBr 4s ease-in-out infinite 0.5s;
+}
+@keyframes titleBr {
+  0%,100% { letter-spacing:6px; text-shadow:0 0 15px rgba(100,130,90,0.03),0 0 40px rgba(80,110,70,0.01); }
+  50% { letter-spacing:10px; text-shadow:0 0 40px rgba(100,130,90,0.12),0 0 75px rgba(80,110,70,0.05); }
+}
+.half:last-child .subtitle.in {
+  animation:subFl 4.5s ease-in-out infinite 0.6s;
+}
+@keyframes subFl {
+  0%,100% { opacity:0.38; transform:translateY(0); }
+  50% { opacity:0.56; transform:translateY(-3px); }
+}
+
+/* ── 卡片外层：处理入场 ── */
+.card-wrapper {
+  width:100%; max-width:320px; opacity:0; transform:translateY(40px) scale(0.94);
+  transition:opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+.card-wrapper.in { opacity:1; transform:translateY(0) scale(1); }
+/* 每张卡片延迟不同 */
+.card-wrapper:nth-child(1) { transition-delay:0.08s; }
+.card-wrapper:nth-child(2) { transition-delay:0.28s; }
+.card-wrapper:nth-child(3) { transition-delay:0.48s; }
+.card-wrapper:nth-child(4) { transition-delay:0.68s; }
+
+/* ── 卡片内层：呼吸动画（不受入场 transition 影响）── */
+.card-inner {
+  padding:24px; margin-bottom:8px; border-radius:14px;
+  border:1px solid rgba(58,74,63,0.06); background:rgba(255,255,255,0.42);
+  position:relative; overflow:hidden;
+}
+.half:last-child .card-wrapper.in .card-inner {
+  animation:cBreathe 5.5s ease-in-out infinite;
+}
+.card-wrapper:nth-child(1).in .card-inner { animation-delay:0.6s; }
+.card-wrapper:nth-child(2).in .card-inner { animation-delay:1.8s; }
+.card-wrapper:nth-child(3).in .card-inner { animation-delay:3.0s; }
+.card-wrapper:nth-child(4).in .card-inner { animation-delay:4.0s; }
+
+@keyframes cBreathe {
+  0%,100% { transform:scale(1) translateY(0); }
+  50% { transform:scale(1.008) translateY(-2px); }
+}
+
+.card-header { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+.card-icon {
+  width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:13px; transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.card-icon.pop { transform:scale(1.22); }
+.card-icon.s1 { background:rgba(138,170,138,0.12); color:#7a9a78; }
+.card-icon.s2 { background:rgba(155,175,148,0.12); color:#85a07e; }
+.card-icon.s3 { background:rgba(185,170,130,0.12); color:#a09060; }
+.card-icon.s4 { background:rgba(148,170,168,0.12); color:#789a92; }
+.card-stage { font-size:10px; color:#8a9a8a; letter-spacing:2px; }
+.card-result { font-size:20px; font-weight:400; color:#2a3a2e; margin-top:4px; }
+.card-insight { font-size:12px; color:#6a7a6a; margin-top:10px; line-height:1.65; padding-top:10px; border-top:1px solid rgba(58,74,63,0.05); }
+
+/* 卡片微光呼吸 */
+.card-glow {
+  position:absolute; inset:-60%;
+  background:radial-gradient(ellipse at 30% 20%,rgba(210,190,140,0.06),transparent 60%);
+  pointer-events:none;
+}
+.half:last-child .card-wrapper.in .card-glow {
+  animation:cGlow 5s ease-in-out infinite;
+}
+.card-wrapper:nth-child(1).in .card-glow { animation-delay:1.2s; }
+.card-wrapper:nth-child(2).in .card-glow { animation-delay:2.6s; }
+.card-wrapper:nth-child(3).in .card-glow { animation-delay:3.8s; }
+.card-wrapper:nth-child(4).in .card-glow { animation-delay:0.5s; }
+@keyframes cGlow {
+  0%,100% { opacity:0.40; }
+  33% { opacity:0.85; }
+  66% { opacity:0.50; }
+}
+
+/* 分隔线 */
+.divider {
+  width:40px; height:1px; margin:2px auto 12px;
+  background:linear-gradient(90deg,transparent,rgba(180,160,110,0.15),transparent);
+  opacity:0; transition:opacity 0.5s ease;
+}
+.divider.show { opacity:1; }
+
+/* 浮游光点 */
+.spark { position:absolute; border-radius:50%; pointer-events:none; }
+.spark.l { width:3px; height:3px; background:#d4b870; box-shadow:0 0 6px rgba(210,180,110,0.4); animation:sA 3.8s ease-in-out infinite; }
+.spark.m { width:2px; height:2px; background:#e0cc90; box-shadow:0 0 4px rgba(220,200,140,0.35); animation:sB 3.2s ease-in-out infinite; }
+.spark.s { width:1.5px; height:1.5px; background:#ead8a0; box-shadow:0 0 3px rgba(230,210,150,0.3); animation:sA 2.8s ease-in-out infinite; }
+@keyframes sA {
+  0%,100% { opacity:0; transform:translateY(0) scale(0.5); }
+  15% { opacity:0.5; }
+  50% { opacity:0.7; transform:translateY(-30px) scale(1.2); }
+  85% { opacity:0.25; }
+}
+@keyframes sB {
+  0%,100% { opacity:0; transform:translateY(0) scale(0.4); }
+  12% { opacity:0.55; }
+  50% { opacity:0.75; transform:translateY(-36px) scale(1.35); }
+  88% { opacity:0.2; }
+}
+
+/* 按钮 */
+.btn-wrap { margin-top:44px; text-align:center; }
+.btn {
+  border:none; background:transparent; color:#8a7a5a; font-family:'Noto Serif SC',serif;
+  letter-spacing:10px; font-size:20px; font-weight:300; padding:16px 56px;
+  cursor:pointer; position:relative; display:inline-block;
+  animation:btnBr 3.2s ease-in-out infinite;
+}
+@keyframes btnBr {
+  0%,100% { text-shadow:0 0 0 rgba(180,150,80,0); transform:scale(1); }
+  50% { text-shadow:0 0 24px rgba(180,150,80,0.18),0 0 48px rgba(160,130,70,0.06); transform:scale(1.014); }
+}
+.btn-line { position:absolute; bottom:6px; left:18%; width:60%; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(180,150,80,0.30),transparent);
+  animation:lnBr 3.2s ease-in-out infinite; }
+@keyframes lnBr {
+  0%,100% { opacity:0.12; width:40%; left:30%; }
+  50% { opacity:0.50; width:68%; left:16%; }
+}
+
+.bottom-fade {
+  position:sticky; bottom:0; z-index:5; pointer-events:none;
+  height:80px; background:linear-gradient(180deg,transparent,#f3f6f1 70%);
+}
+
+/* 雨丝 */
+.rain { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.drop { position:absolute; width:0.5px; animation:rain linear infinite; }
+.half:first-child .drop { background:rgba(90,120,90,0.04); }
+.half:last-child .drop { background:rgba(90,120,90,0.08); }
+@keyframes rain { 0%{transform:translateY(-100vh);} 100%{transform:translateY(100vh);} }
+
+/* 旧版卡片 */
+.card-simple {
+  width:100%; max-width:320px; padding:20px; margin-bottom:16px; border-radius:12px;
+  border:1px solid rgba(58,74,63,0.1); background:rgba(221,226,216,0.5);
+  opacity:0; transform:translateY(30px);
+  transition:opacity 0.5s ease, transform 0.5s ease;
+}
+.card-simple.show { opacity:1; transform:translateY(0); }
+.card-simple .placeholder { font-size:13px; color:#8a9a8a; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ BEFORE ═══════════ -->
+<div class="half">
+  <div class="label">BEFORE<span>当前</span></div>
+  <div class="bg"></div><div class="ls ls1"></div><div class="ls ls2"></div>
+  <div class="rain" id="rb"></div>
+  <div class="content">
+    <div class="title-area"><div class="title" id="tb">你的本次雨境画像</div><div class="subtitle" id="sb">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div></div>
+    <div class="card-simple" id="cb0"><div class="card-header"><div class="card-icon s1">①</div><div class="card-stage">第1阶段 · 表情</div></div><div class="card-result">皱眉</div><div class="placeholder">每个选择都是你内心的一次回应。</div></div>
+    <div class="card-simple" id="cb1"><div class="card-header"><div class="card-icon s2">②</div><div class="card-stage">第2阶段 · 关键词</div></div><div class="card-result">家人、发呆</div><div class="placeholder">每个选择都是你内心的一次回应。</div></div>
+    <div class="card-simple" id="cb2"><div class="card-header"><div class="card-icon s3">③</div><div class="card-stage">第3阶段 · 庇护所</div></div><div class="card-result">伞</div><div class="placeholder">每个选择都是你内心的一次回应。</div></div>
+    <div class="card-simple" id="cb3"><div class="card-header"><div class="card-icon s4">④</div><div class="card-stage">第4阶段 · 方向</div></div><div class="card-result">中间</div><div class="placeholder">每个选择都是你内心的一次回应。</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ AFTER ═══════════ -->
+<div class="half">
+  <div class="label">AFTER<span>呼吸感修复</span></div>
+  <div class="bg"></div><div class="ls ls1"></div><div class="ls ls2"></div><div class="ls ls3"></div>
+  <div class="rain" id="ra"></div>
+
+  <div class="spark l" style="top:8%;left:10%;animation-delay:0s;"></div>
+  <div class="spark m" style="top:16%;left:85%;animation-delay:1.4s;"></div>
+  <div class="spark s" style="top:35%;left:6%;animation-delay:2.6s;"></div>
+  <div class="spark l" style="top:48%;left:90%;animation-delay:0.8s;"></div>
+  <div class="spark m" style="top:60%;left:12%;animation-delay:2.0s;"></div>
+  <div class="spark s" style="top:72%;left:87%;animation-delay:3.2s;"></div>
+  <div class="spark l" style="top:80%;left:7%;animation-delay:2.2s;"></div>
+  <div class="spark m" style="top:88%;left:82%;animation-delay:0.5s;"></div>
+
+  <div class="content">
+    <div class="title-area"><div class="title" id="ta">你的本次雨境画像</div><div class="subtitle" id="sa">在雨中的这段时间里，你的潜意识通过选择展现了内心的一面。</div></div>
+
+    <div class="card-wrapper" id="cw0">
+      <div class="card-inner">
+        <div class="card-glow"></div>
+        <div class="card-header"><div class="card-icon s1" id="ic0">①</div><div class="card-stage">第1阶段 · 表情</div></div>
+        <div class="card-result">皱眉</div>
+        <div class="card-insight">面对烦恼时，你倾向于将情绪收敛在眉间。皱眉往往意味着你在认真思考和消化，而非逃避。</div>
+      </div>
+    </div>
+    <div class="divider" id="dv0"></div>
+
+    <div class="card-wrapper" id="cw1">
+      <div class="card-inner">
+        <div class="card-glow"></div>
+        <div class="card-header"><div class="card-icon s2" id="ic1">②</div><div class="card-stage">第2阶段 · 关键词</div></div>
+        <div class="card-result">家人、发呆</div>
+        <div class="card-insight">在压力时刻，你想到的是家人和放空。这是你内心深处的避风港——亲情的连接和自我独处的空间。</div>
+      </div>
+    </div>
+    <div class="divider" id="dv1"></div>
+
+    <div class="card-wrapper" id="cw2">
+      <div class="card-inner">
+        <div class="card-glow"></div>
+        <div class="card-header"><div class="card-icon s3" id="ic2">③</div><div class="card-stage">第3阶段 · 庇护所</div></div>
+        <div class="card-result">伞</div>
+        <div class="card-insight">伞是主动的庇护——你选择亲手撑起自己的保护。比起躲进亭子，你更愿意握紧自己能够掌控的东西。</div>
+      </div>
+    </div>
+    <div class="divider" id="dv2"></div>
+
+    <div class="card-wrapper" id="cw3">
+      <div class="card-inner">
+        <div class="card-glow"></div>
+        <div class="card-header"><div class="card-icon s4" id="ic3">④</div><div class="card-stage">第4阶段 · 方向</div></div>
+        <div class="card-result">中间</div>
+        <div class="card-insight">雨后天晴，你选择留在原地。你没有急于奔向某个方向——此刻的停留，是内心安定最好的证明。</div>
+      </div>
+    </div>
+
+    <div class="btn-wrap"><div class="btn">重新体验<div class="btn-line"></div></div></div>
+  </div>
+  <div class="bottom-fade"></div>
+</div>
+
+<script>
+// 雨丝
+function rain(id,n,o){const c=document.getElementById(id);for(let i=0;i<n;i++){const d=document.createElement('div');d.className='drop';d.style.left=Math.random()*100+'%';d.style.height=(8+Math.random()*20)+'px';d.style.animationDuration=(0.8+Math.random()*2)+'s';d.style.animationDelay=Math.random()*4+'s';d.style.opacity=o;c.appendChild(d);}}
+rain('rb',16,0.5); rain('ra',20,0.7);
+
+// BEFORE: 同时显示
+setTimeout(()=>{
+  document.getElementById('tb').classList.add('in');
+  document.getElementById('sb').classList.add('in');
+  ['cb0','cb1','cb2','cb3'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('show'),i*100));
+},200);
+
+// AFTER: stagger 入场
+setTimeout(()=>{
+  document.getElementById('ta').classList.add('in');
+  document.getElementById('sa').classList.add('in');
+},100);
+
+['cw0','cw1','cw2','cw3'].forEach((id,i)=>{
+  setTimeout(()=>{
+    const w=document.getElementById(id);
+    if(!w) return;
+    w.classList.add('in');
+    // 图标脉动
+    setTimeout(()=>{
+      const ic=document.getElementById('ic'+i);
+      if(ic) ic.classList.add('pop');
+      setTimeout(()=>{ if(ic) ic.classList.remove('pop'); },400);
+    },100);
+    // 分隔线
+    if(i<3) setTimeout(()=>{ const dv=document.getElementById('dv'+i); if(dv) dv.classList.add('show'); },200);
+  },220*i+300);
+});
+</script>
+</body>
+</html>

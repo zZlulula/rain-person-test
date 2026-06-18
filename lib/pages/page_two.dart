@@ -11,11 +11,13 @@ class PageTwoView extends StatefulWidget {
   State<PageTwoView> createState() => _PageTwoViewState();
 }
 
-class _PageTwoViewState extends State<PageTwoView> {
+class _PageTwoViewState extends State<PageTwoView>
+    with SingleTickerProviderStateMixin {
   double _promptOpacity = 0;
   double _calibrationOpacity = 0;
   double _redDotOpacity = 0;
   double _buttonOpacity = 0;
+  late final AnimationController _dotPulseCtrl;
 
   final List<Offset> _calibrationPoints = const [
     Offset(0.1, 0.1), Offset(0.9, 0.1), Offset(0.1, 0.9),
@@ -67,33 +69,57 @@ class _PageTwoViewState extends State<PageTwoView> {
                 child: SizedBox(
                   width: 130,
                   height: 130,
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0.92, end: 1.0),
-                    duration: const Duration(milliseconds: 2400),
-                    builder: (context, s, _) => Transform.scale(
-                      scale: s,
-                      child: CustomPaint(
-                        painter: _CalibrationReticlePainter(),
+                  child: AnimatedBuilder(
+                    animation: _dotPulseCtrl,
+                    builder: (context, _) {
+                      final t = _dotPulseCtrl.value; // 0…1
+                      final pulse = t < 0.5
+                          ? t * 2     // 0→1 渐强
+                          : 2 - t * 2; // 1→0 渐弱
+                      return CustomPaint(
+                        painter: _CalibrationReticlePainter(pulse: pulse),
                         size: const Size(130, 130),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
               ),
             ),
           if (_buttonOpacity > 0)
             Positioned(
-              left: 0, right: 0, bottom: 60,
+              left: 0, right: 0, bottom: 80,
               child: Center(
                 child: AnimatedOpacity(
-                  opacity: _buttonOpacity, duration: const Duration(milliseconds: 300),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accent, borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text('标定完成',
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w300, color: Colors.white)),
+                  opacity: _buttonOpacity, duration: const Duration(milliseconds: 600),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        '标定完成',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 6,
+                          color: Color(0xFF8a9c8a),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: 40,
+                        height: 1.5,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF8a9c8a).withValues(alpha: 0),
+                              const Color(0xFF8a9c8a).withValues(alpha: 0.42),
+                              const Color(0xFF8a9c8a).withValues(alpha: 0.42),
+                              const Color(0xFF8a9c8a).withValues(alpha: 0),
+                            ],
+                            stops: const [0.0, 0.15, 0.85, 1.0],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -101,6 +127,22 @@ class _PageTwoViewState extends State<PageTwoView> {
         ],
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _dotPulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
+    _startSequence();
+  }
+
+  @override
+  void dispose() {
+    _dotPulseCtrl.dispose();
+    super.dispose();
   }
 
   void _startSequence() {
@@ -138,7 +180,7 @@ class _PageTwoViewState extends State<PageTwoView> {
       Future.delayed(const Duration(milliseconds: 500), () {
         if (!mounted) return;
         setState(() => _buttonOpacity = 1);
-        Future.delayed(const Duration(seconds: 1), () {
+        Future.delayed(const Duration(seconds: 3), () {
           if (mounted) _transitionToNextPage();
         });
       });
@@ -150,64 +192,51 @@ class _PageTwoViewState extends State<PageTwoView> {
     Future.delayed(const Duration(seconds: 1), () => widget.onComplete());
   }
 
-  @override
-  void initState() { super.initState(); _startSequence(); }
 }
 
-/// 标定准星 — 暖色水滴光点 + 呼吸环 + 十字线
+/// 标定光点 — 深红实心 + 双层光晕脉动
 class _CalibrationReticlePainter extends CustomPainter {
+  final double pulse; // 0..1，由外部动画驱动
+
+  _CalibrationReticlePainter({required this.pulse});
+
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2, cy = size.height / 2;
-    final r = min(cx, cy) - 4;
+    final s = 0.88 + pulse * 0.22; // 0.88 ↔ 1.10
 
-    // ── 外圈：暖色呼吸环 ──
-    final ringPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
-      ..color = AppTheme.calibGlow.withValues(alpha: 0.2);
-    canvas.drawCircle(Offset(cx, cy), r, ringPaint);
-
-    // ── 中层光晕 ──
-    final glowPaint = Paint()
+    // ── 外层光晕 90px ──
+    final outerGlow = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppTheme.calibGlow.withValues(alpha: 0.25),
-          AppTheme.calibGlow.withValues(alpha: 0.06),
+          AppTheme.calibGlow.withValues(alpha: 0.18),
+          AppTheme.calibGlow.withValues(alpha: 0.04),
           Colors.transparent,
         ],
         stops: const [0.0, 0.4, 1.0],
-      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: 30));
-    canvas.drawCircle(Offset(cx, cy), 30, glowPaint);
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: 45 * s));
+    canvas.drawCircle(Offset(cx, cy), 45 * s, outerGlow);
 
-    // ── 十字线 ──
-    final crossPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5
-      ..color = AppTheme.calibGlow.withValues(alpha: 0.16);
-    final crossLen = r * 0.45;
-    canvas.drawLine(Offset(cx - crossLen, cy), Offset(cx + crossLen, cy), crossPaint);
-    canvas.drawLine(Offset(cx, cy - crossLen), Offset(cx, cy + crossLen), crossPaint);
-
-    // ── 中心水滴光点 ──
-    final coreGlow = Paint()
+    // ── 内层光晕 56px ──
+    final innerGlow = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppTheme.calibGlow.withValues(alpha: 0.65),
-          AppTheme.calibGlow.withValues(alpha: 0.18),
+          AppTheme.calibGlow.withValues(alpha: 0.50),
+          AppTheme.calibGlow.withValues(alpha: 0.12),
           Colors.transparent,
         ],
-        stops: const [0.0, 0.3, 1.0],
-      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: 16));
-    canvas.drawCircle(Offset(cx, cy), 16, coreGlow);
+        stops: const [0.0, 0.35, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: 28 * s));
+    canvas.drawCircle(Offset(cx, cy), 28 * s, innerGlow);
 
-    // 实心小点
+    // ── 实心核 11px ──
     final core = Paint()
       ..color = AppTheme.calibGlow
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(cx, cy), 5, core);
+    canvas.drawCircle(Offset(cx, cy), 11 * s, core);
   }
 
   @override
-  bool shouldRepaint(covariant _CalibrationReticlePainter oldDelegate) => false;
+  bool shouldRepaint(covariant _CalibrationReticlePainter oldDelegate) =>
+      pulse != oldDelegate.pulse;
 }

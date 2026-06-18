@@ -12,10 +12,14 @@ class VideoControllerCache {
   Future<VideoPlayerController> prepare(String assetPath) async {
     final existing = _controllers[assetPath];
     if (existing != null) {
-      if (!existing.value.isInitialized) {
-        await existing.initialize();
+      try {
+        if (!existing.value.isInitialized) {
+          await existing.initialize();
+        }
+        return existing;
+      } catch (_) {
+        _controllers.remove(assetPath);
       }
-      return existing;
     }
     final controller = await createAssetVideoController(assetPath);
     await controller.initialize();
@@ -32,23 +36,27 @@ class VideoControllerCache {
   /// 取出控制器并复位到开头，供页面切换播放。
   Future<VideoPlayerController> acquireForPlay(String assetPath) async {
     final controller = await prepare(assetPath);
-    await controller.setLooping(false);
-    if (controller.value.isPlaying) {
-      await controller.pause();
-    }
-    if (controller.value.position > const Duration(milliseconds: 50)) {
-      await controller.seekTo(Duration.zero);
-      // Windows video_player_win 在 seek 后需要一帧稳定时间
-      await Future<void>.delayed(const Duration(milliseconds: 32));
-    }
+    try {
+      await controller.setLooping(false);
+      if (controller.value.isPlaying) {
+        await controller.pause();
+      }
+      if (controller.value.position > const Duration(milliseconds: 50)) {
+        await controller.seekTo(Duration.zero);
+        // Windows video_player_win 在 seek 后需要一帧稳定时间
+        await Future<void>.delayed(const Duration(milliseconds: 32));
+      }
+    } catch (_) {}
     return controller;
   }
 
   void pauseAll() {
     for (final controller in _controllers.values) {
-      if (controller.value.isInitialized && controller.value.isPlaying) {
-        controller.pause();
-      }
+      try {
+        if (controller.value.isInitialized && controller.value.isPlaying) {
+          controller.pause();
+        }
+      } catch (_) {}
     }
   }
 

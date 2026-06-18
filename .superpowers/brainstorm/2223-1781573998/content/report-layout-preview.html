@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>报告页布局对比 — 旧 vs 新</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0f0a; font-family:'Microsoft YaHei','微软雅黑','PingFang SC',sans-serif; display:flex; height:100vh; overflow:hidden; }
+.half { flex:1; display:flex; flex-direction:column; overflow-y:auto; position:relative; border-right:1px solid #1a2a1a; }
+.half:last-child { border-right:none; }
+.label { position:sticky; top:0; z-index:20; padding:8px 20px; background:rgba(10,15,10,0.95); text-align:center; font-size:10px; letter-spacing:2px; color:#5a7a5a; border-bottom:1px solid #1a2a1a; }
+.label span { display:block; font-size:13px; color:#8aaa8a; }
+.bg { position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,#f8faf6,#f3f6f1 40%,#eef1ec); }
+.bg::after { content:''; position:absolute; top:-80px; left:-20%; right:-20%; height:340px; background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.35),transparent 70%); }
+.content { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; padding-bottom:120px; }
+
+/* ── 旧版：固定 px ── */
+.old .rpt-title { font-size:28px; margin-top:64px; }
+.old .rpt-sub { font-size:14px; margin-top:12px; padding:0 30px; max-width:300px; }
+.old .card { width:calc(100% - 40px); margin-top:14px; padding:24px; }
+.old .card .result { font-size:20px; }
+.old .card .insight { font-size:13px; }
+.old .btn { font-size:20px; position:sticky; bottom:40px; margin-top:36px; }
+
+/* ── 新版：vw/vh 比例 ── */
+.rpt-title { font-weight:200; letter-spacing:0.3em; color:#2a3a2e; opacity:0.85; }
+.rpt-sub { color:rgba(42,58,46,0.65); text-align:center; letter-spacing:0.1em; line-height:1.7; }
+.card { border-radius:14px; border:1px solid rgba(58,74,63,0.06); background:rgba(255,255,255,0.42); margin-bottom:10px; }
+.card-header { display:flex; align-items:center; margin-bottom:8px; }
+.card-icon { display:inline-flex; width:28px; height:28px; border-radius:50%; align-items:center; justify-content:center; font-size:14px; margin-right:10px; background:rgba(138,170,138,0.12); color:#7a9a78; }
+.card-stage { font-size:11px; color:#4a5a4a; letter-spacing:2px; }
+.card-result { font-weight:400; font-family:'Microsoft YaHei',sans-serif; color:#1e2d22; margin-bottom:10px; }
+.card-divider { height:1px; background:rgba(58,74,63,0.04); margin-bottom:10px; }
+.card-insight { color:rgba(42,58,46,0.88); line-height:1.65; }
+.btn-text { font-weight:300; letter-spacing:0.5em; color:#b8a070; font-family:'Microsoft YaHei',sans-serif; }
+
+.new .rpt-title { font-size:clamp(24px, 7vw, 36px); margin-top:7vh; }
+.new .rpt-sub { font-size:clamp(13px, 3.2vw, 17px); margin-top:1.5vh; padding:0 8vw; }
+.new .card { width:90%; max-width:480px; margin-top:1.8vh; padding:clamp(16px, 3.5vw, 28px); }
+.new .card .result { font-size:clamp(18px, 5vw, 26px); }
+.new .card .insight { font-size:clamp(13px, 3.2vw, 16px); }
+.new .btn { margin-top:5vh; }
+.new .btn-text { font-size:clamp(18px, 5vw, 26px); }
+
+/* ── 比标注 ── */
+.old-badge { display:inline-block; font-size:8px; padding:1px 4px; border-radius:2px; margin-left:3px; background:rgba(200,120,80,0.15); color:#c87850; }
+.new-badge { display:inline-block; font-size:8px; padding:1px 4px; border-radius:2px; margin-left:3px; background:rgba(100,160,100,0.15); color:#6aa060; }
+
+/* 两个不同尺寸的设备模拟 */
+.device-label { font-size:9px; color:#8a9a8a; letter-spacing:1px; margin-top:20px; opacity:0.5; }
+</style>
+</head>
+<body>
+
+<!-- ═══════ 旧版 · 固定像素 ═══════ -->
+<div class="half old">
+  <div class="label">BEFORE<span>固定 px 布局</span></div>
+  <div class="bg"></div>
+  <div class="content">
+    <div class="rpt-title">你的本次雨境画像</div>
+    <div class="rpt-sub">在雨中的这段时间里，你的潜意识<br>通过选择展现了内心的一面。</div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-icon">①</span><span class="card-stage">第1阶段 · 表情</span></div>
+      <div class="result">皱眉</div>
+      <div class="card-divider"></div>
+      <div class="insight">面对烦恼时，你倾向于将情绪收敛在眉间。皱眉往往意味着你在认真思考和消化，而非逃避。</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-icon" style="background:rgba(155,175,148,0.12);color:#85a07e;">②</span><span class="card-stage">第2阶段 · 关键词</span></div>
+      <div class="result">家人、发呆</div>
+      <div class="card-divider"></div>
+      <div class="insight">在压力时刻，你想到的是家人和放空。这是你内心深处的避风港。</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-icon" style="background:rgba(185,170,130,0.12);color:#a09060;">③</span><span class="card-stage">第3阶段 · 庇护所</span></div>
+      <div class="result">选择了伞</div>
+      <div class="card-divider"></div>
+      <div class="insight">伞是主动的庇护——你选择亲手撑起自己的保护。你更愿意把力量握在自己手中。</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-icon" style="background:rgba(148,170,168,0.12);color:#789a92;">④</span><span class="card-stage">第4阶段 · 方向</span></div>
+      <div class="result">望向了中间</div>
+      <div class="card-divider"></div>
+      <div class="insight">雨后天晴，你选择留在原地。此刻的停留，是内心安定最好的证明。</div>
+    </div>
+
+    <div class="btn"><div class="btn-text">重新体验</div></div>
+    <div class="device-label">固定 px → 大屏偏小 / 小屏溢出</div>
+  </div>
+</div>
+
+<!-- ═══════ 新版 · vw/vh 比例适配 ═══════ -->
+<div class="half new">
+  <div class="label">AFTER<span>比例自适应布局</span></div>
+  <div class="bg"></div>
+  <div class="content">
+    <div class="rpt-title">你的本次雨境画像</div>
+    <div class="rpt-sub">在雨中的这段时间里，你的潜意识<br>通过选择展现了内心的一面。</div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-icon">①</span><span class="card-stage">第1阶段 · 表情</span></div>
+      <div class="result">皱眉</div>
+      <div class="card-divider"></div>
+      <div class="insight">面对烦恼时，你倾向于将情绪收敛在眉间。皱眉往往意味着你在认真思考和消化，而非逃避。</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-icon" style="background:rgba(155,175,148,0.12);color:#85a07e;">②</span><span class="card-stage">第2阶段 · 关键词</span></div>
+      <div class="result">家人、发呆</div>
+      <div class="card-divider"></div>
+      <div class="insight">在压力时刻，你想到的是家人和放空。这是你内心深处的避风港。</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-icon" style="background:rgba(185,170,130,0.12);color:#a09060;">③</span><span class="card-stage">第3阶段 · 庇护所</span></div>
+      <div class="result">选择了伞</div>
+      <div class="card-divider"></div>
+      <div class="insight">伞是主动的庇护——你选择亲手撑起自己的保护。你更愿意把力量握在自己手中。</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-icon" style="background:rgba(148,170,168,0.12);color:#789a92;">④</span><span class="card-stage">第4阶段 · 方向</span></div>
+      <div class="result">望向了中间</div>
+      <div class="card-divider"></div>
+      <div class="insight">雨后天晴，你选择留在原地。此刻的停留，是内心安定最好的证明。</div>
+    </div>
+
+    <div class="btn"><div class="btn-text">重新体验</div></div>
+    <div class="device-label">vw/vh 比例 → 适配任意尺寸</div>
+  </div>
+</div>
+
+</body>
+</html>

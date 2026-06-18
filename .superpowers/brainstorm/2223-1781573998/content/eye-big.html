@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>眼睛 — 72px 放大版</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#e8ebe4; font-family:'Microsoft YaHei',sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .scene { display:flex; flex-direction:column; align-items:center; gap:36px; }
+  .hint { font-size:28px; color:#2a3a2e; letter-spacing:3px; font-weight:300; animation:hf 3s ease-in-out infinite; }
+  @keyframes hf { 0%,100%{opacity:0.5} 50%{opacity:0.88} }
+  .eye-wrap { display:flex; gap:22px; }
+
+  .eye {
+    width:72px; height:72px; position:relative;
+    background:radial-gradient(ellipse at 50% 46%, #fefefb 0%, #f5f7ef 60%, #eaede2 100%);
+    border-radius:50%; overflow:hidden;
+    box-shadow:0 3px 10px rgba(100,120,80,0.04);
+  }
+  .blush {
+    position:absolute; bottom:2px; left:50%; transform:translateX(-50%);
+    width:30px; height:9px; background:rgba(240,170,155,0.28);
+    border-radius:50%; filter:blur(4px);
+    animation:blushP 2.8s ease-in-out infinite; z-index:1;
+  }
+  @keyframes blushP { 0%,100%{opacity:0.40} 52%{opacity:0.88} }
+
+  /* 豆豆眼珠 — 26×29px */
+  .bean {
+    position:absolute;
+    width:26px; height:29px;
+    border-radius:50%;
+    background:radial-gradient(circle at 43% 37%, #483830, #0a0604);
+    top:21px; left:23px;
+    box-shadow:0 0 5px rgba(60,40,30,0.12);
+    animation:drift 5.0s ease-in-out infinite;
+  }
+  /* 高光 9px */
+  .bean::after {
+    content:'';
+    position:absolute;
+    width:9px; height:9px;
+    background:white;
+    border-radius:50%;
+    top:2px; left:3px;
+    box-shadow:0 0 3px white;
+  }
+
+  @keyframes drift {
+    0%,100%{transform:translate(0,0.4px)}
+    15%{transform:translate(-3px,-1.5px)}
+    30%{transform:translate(2px,2px)}
+    45%{transform:translate(-1.5px,-3px)}
+    60%{transform:translate(4px,-0.5px)}
+    75%{transform:translate(-3px,1.5px)}
+    88%{transform:translate(0.8px,0)}
+  }
+
+  /* 眨眼 — 5.5s */
+  .lids { position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:50%; }
+  .lids::before, .lids::after {
+    content:''; position:absolute; left:0; right:0; background:#e8ebe4;
+  }
+  .lids::before {
+    top:0; height:0; border-radius:0 0 48% 48%;
+    animation:blinkTop 5.5s cubic-bezier(0.65,0,0.35,1) infinite;
+  }
+  .lids::after {
+    bottom:0; height:0; border-radius:48% 48% 0 0;
+    animation:blinkBot 5.5s cubic-bezier(0.65,0,0.35,1) infinite;
+  }
+  @keyframes blinkTop { 0%,48%,56%,100%{height:0} 52%{height:54%} }
+  @keyframes blinkBot { 0%,48%,56%,100%{height:0} 52%{height:46%} }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="hint">看着红点，现在开始标定</div>
+  <div class="eye-wrap">
+    <div class="eye"><div class="blush"></div><div class="bean"></div><div class="lids"></div></div>
+    <div class="eye"><div class="blush"></div><div class="bean"></div><div class="lids"></div></div>
+  </div>
+</div>
+</body>
+</html>

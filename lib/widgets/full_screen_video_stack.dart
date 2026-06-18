@@ -45,6 +45,7 @@ class _IsolatedVideoLayerState extends State<_IsolatedVideoLayer> {
   void _detach() {
     _attached?.removeListener(_onVideoTick);
     _attached = null;
+    _layoutSize = Size.zero;
     _videoOpacity = 0;
   }
 
@@ -97,31 +98,37 @@ class _IsolatedVideoLayerState extends State<_IsolatedVideoLayer> {
     return RepaintBoundary(
       child: ColoredBox(
         color: Colors.black,
-        child: ClipRect(
-          child: SizedBox.expand(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (videoReady)
-                  AnimatedOpacity(
-                    opacity: _videoOpacity.clamp(0.0, 1.0),
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOut,
-                    child: FittedBox(
-                      fit: BoxFit.fill,
-                      alignment: Alignment.center,
-                      child: SizedBox(
-                        width: width,
-                        height: height,
-                        child: VideoPlayer(
-                          controller,
-                          key: ValueKey(controller),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+        child: Center(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final vw = constraints.maxWidth * 0.96;
+              final vh = constraints.maxHeight * 0.84;
+              return ClipRect(
+                child: SizedBox(
+                  width: vw,
+                  height: vh,
+                  child: videoReady
+                      ? AnimatedOpacity(
+                          opacity: _videoOpacity.clamp(0.0, 1.0),
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOut,
+                          child: FittedBox(
+                            fit: BoxFit.contain,
+                            alignment: Alignment.center,
+                            child: SizedBox(
+                              width: width,
+                              height: height,
+                              child: VideoPlayer(
+                                controller,
+                                key: ValueKey(controller),
+                              ),
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              );
+            },
           ),
         ),
       ),

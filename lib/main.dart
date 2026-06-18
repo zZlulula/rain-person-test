@@ -20,6 +20,12 @@ import 'pages/report_page.dart';
 ///           分支选择(伞/亭子) → 结尾动画 → 报告 → 重新体验
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('=== FLUTTER ERROR ===');
+    debugPrint(details.exceptionAsString());
+    debugPrint(details.stack?.toString() ?? '');
+  };
   await Future.wait([
     MediaPreloadService.instance.preload(),
     AppTheme.preloadFonts(),

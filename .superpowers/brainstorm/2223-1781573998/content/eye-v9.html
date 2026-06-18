@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>眼睛 v9 — 极简</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#e8ebe4; font-family:'Microsoft YaHei',sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .scene { display:flex; flex-direction:column; align-items:center; gap:40px; }
+  .hint { font-size:28px; color:#2a3a2e; letter-spacing:3px; font-weight:300; animation:hf 3s ease-in-out infinite; }
+  @keyframes hf { 0%,100%{opacity:0.50} 50%{opacity:0.88} }
+
+  .eye-wrap { position:relative; width:180px; height:70px; display:flex; align-items:center; justify-content:center; gap:32px; }
+
+  /* 两只眼睛 — 就是简单的椭圆 */
+  .eye {
+    width:40px; height:24px;
+    background:radial-gradient(ellipse at 50% 45%, #fafbf7, #eef1e8);
+    border-radius:50%;
+    position:relative;
+    box-shadow:0 0 8px 1px rgba(100,120,80,0.06);
+    overflow:hidden;
+  }
+
+  /* 虹膜 — 一个圆 */
+  .iris {
+    position:absolute;
+    width:18px; height:18px;
+    background:radial-gradient(circle at 42% 36%, #7d9a68, #4e6a3c 50%, #2a3a20);
+    border-radius:50%;
+    top:3px; left:11px;
+    animation:drift 4.5s ease-in-out infinite;
+  }
+  @keyframes drift {
+    0%,100%{transform:translate(0,0)}
+    15%{transform:translate(-4px,-1px)}
+    30%{transform:translate(3px,2px)}
+    45%{transform:translate(-2px,-3px)}
+    60%{transform:translate(4px,0)}
+    75%{transform:translate(-3px,1.5px)}
+    90%{transform:translate(1px,0)}
+  }
+
+  /* 瞳孔 */
+  .pupil {
+    position:absolute;
+    width:9px; height:9px;
+    background:radial-gradient(circle at 45% 40%, #151a10, #030502);
+    border-radius:50%;
+    top:4.5px; left:4.5px;
+  }
+
+  /* 高光 — 一个小白点 */
+  .highlight {
+    position:absolute;
+    width:4px; height:4px;
+    background:white;
+    border-radius:50%;
+    top:2px; left:2px;
+    box-shadow:0 0 2px rgba(255,255,255,0.5);
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="hint">看着红点，现在开始标定</div>
+  <div class="eye-wrap">
+    <div class="eye">
+      <div class="iris">
+        <div class="pupil"></div>
+        <div class="highlight"></div>
+      </div>
+    </div>
+    <div class="eye">
+      <div class="iris">
+        <div class="pupil"></div>
+        <div class="highlight"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

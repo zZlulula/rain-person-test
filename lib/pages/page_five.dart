@@ -8,20 +8,9 @@ import '../services/video_controller_cache.dart';
 import '../utils/video_loader.dart';
 import '../widgets/experience_mask.dart';
 import '../widgets/full_screen_video_stack.dart';
-import '../widgets/gaze_choice_button.dart';
 import '../app_theme.dart';
 
-/// 页面五：分支选择页（伞 / 亭子）
-///
-/// 流程：
-///   1. 播放"仓和伞.mp4"引导动画
-///   2. 动画结束 → 蒙版1 + 文案"放松好了吗…"（3s）
-///   3. 两个按钮浮现（伞 / 亭子）
-///   4. 后端 detectShelterChoice() 返回选择 → 对应按钮高亮 1.2s
-///   5. 播放对应选择动画（选择伞.mp4 / 选择仓.mp4）
-///   6. 蒙版淡出 → 进入页面六
-///
-/// 选择由后端视线检测结果驱动。
+/// 页面五：分支选择页（伞 / 亭子）— Mock 自动选择
 class PageFiveView extends StatefulWidget {
   final VoidCallback onComplete;
   const PageFiveView({super.key, required this.onComplete});
@@ -34,13 +23,8 @@ class _PageFiveViewState extends State<PageFiveView> {
 
   double _maskOpacity = 0;
   double _promptOpacity = 0;
-  bool _showChoices = false;
-  double _choicesOpacity = 0;
   bool _holdBlackFrame = true;
   ShelterChoice? _confirmedChoice;
-
-  final ValueNotifier<ShelterChoice?> _highlightedChoice =
-      ValueNotifier<ShelterChoice?>(null);
 
   Timer? _detectionTimer;
   Timer? _timeoutTimer;
@@ -48,7 +32,6 @@ class _PageFiveViewState extends State<PageFiveView> {
   VideoPlayerController? _videoController;
   String? _currentVideoPath;
   bool _introVideoFinished = false;
-  bool _selectionVideoFinished = false;
 
   @override
   Widget build(BuildContext context) {
@@ -58,67 +41,31 @@ class _PageFiveViewState extends State<PageFiveView> {
       body: FullScreenVideoStack(
         videoController: _holdBlackFrame ? null : _videoController,
         maskOpacity: _maskOpacity,
-        blockInteraction: !_showChoices,
+        blockInteraction: false,
         overlays: [
-          Positioned(
-            left: 0, right: 0, top: screenSize.height * 0.3,
-            child: Center(
-              child: AnimatedOpacity(
-                opacity: _promptOpacity,
-                duration: ExperienceMask.fadeDuration,
-                child: SizedBox(
-                  width: screenSize.width * 0.85,
-                  child: Text(
-                    '放松好了吗？场景还在下雨，你的前方出现了一把伞和一个小亭子，你想选哪个？（看着你想选的选项）',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 24, color: Color(0xFFd5e5d2), height: 1.6, fontWeight: FontWeight.w300, letterSpacing: 2),
+          if (_promptOpacity > 0)
+            Positioned(
+              left: 0, right: 0, top: screenSize.height * 0.3,
+              child: Center(
+                child: AnimatedOpacity(
+                  opacity: _promptOpacity, duration: ExperienceMask.fadeDuration,
+                  child: SizedBox(
+                    width: screenSize.width * 0.85,
+                    child: Text(
+                      '放松好了吗？场景还在下雨，你的前方出现了一把伞和一个小亭子，你想选哪个？',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 24, color: Color(0xFFd5e5d2), height: 1.6, fontWeight: FontWeight.w300, letterSpacing: 2),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          if (_showChoices && _choicesOpacity > 0) _buildChoiceButtons(screenSize),
         ],
       ),
     );
   }
 
-  /// 伞 / 亭子 两个选项按钮
-  Widget _buildChoiceButtons(Size screenSize) {
-    return Positioned(
-      bottom: 80, left: 0, right: 0,
-      child: AnimatedOpacity(
-        opacity: _choicesOpacity,
-        duration: ExperienceMask.fadeDuration,
-        child: ValueListenableBuilder<ShelterChoice?>(
-          valueListenable: _highlightedChoice,
-          builder: (context, highlighted, _) {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                GazeChoiceButton(
-                  label: '伞',
-                  highlighted: highlighted == ShelterChoice.umbrella,
-                  fontSize: 28,
-                  minWidth: screenSize.width * 0.32,
-                  onDark: true,
-                ),
-                GazeChoiceButton(
-                  label: '亭子',
-                  highlighted: highlighted == ShelterChoice.pavilion,
-                  fontSize: 28,
-                  minWidth: screenSize.width * 0.32,
-                  onDark: true,
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  // ── 引导动画 ───────────────────────────────────────────
+  // ── 引导动画 ──
 
   Future<void> _initVideo() async {
     try {
@@ -131,8 +78,10 @@ class _PageFiveViewState extends State<PageFiveView> {
 
       for (var i = 0; i < 30; i++) {
         if (!mounted) return;
-        final value = _videoController!.value;
-        if (value.isPlaying && value.position > const Duration(milliseconds: 16)) break;
+        try {
+          final value = _videoController!.value;
+          if (value.isPlaying && value.position > const Duration(milliseconds: 16)) break;
+        } catch (_) {}
         await Future<void>.delayed(const Duration(milliseconds: 16));
       }
     } catch (e) {
@@ -145,9 +94,13 @@ class _PageFiveViewState extends State<PageFiveView> {
   }
 
   void _onIntroVideoUpdate() {
-    if (_videoController == null || !_videoController!.value.isInitialized) return;
     if (_introVideoFinished) return;
-    if (_videoController!.value.isCompleted) _onIntroVideoComplete();
+    final ctrl = _videoController;
+    if (ctrl == null) return;
+    try {
+      if (!ctrl.value.isInitialized) return;
+      if (ctrl.value.isCompleted) _onIntroVideoComplete();
+    } catch (_) {}
   }
 
   Future<void> _onIntroVideoComplete() async {
@@ -155,29 +108,29 @@ class _PageFiveViewState extends State<PageFiveView> {
     _introVideoFinished = true;
     _videoController?.removeListener(_onIntroVideoUpdate);
 
-    final controller = _videoController;
-    if (controller != null && controller.value.isInitialized) {
-      final dur = controller.value.duration;
-      if (dur > const Duration(milliseconds: 100)) {
-        await controller.seekTo(dur - const Duration(milliseconds: 50));
+    try {
+      final controller = _videoController;
+      if (controller != null && controller.value.isInitialized) {
+        final dur = controller.value.duration;
+        if (dur > const Duration(milliseconds: 100)) {
+          await controller.seekTo(dur - const Duration(milliseconds: 50));
+        }
+        await controller.pause();
       }
-      await controller.pause();
-    }
+    } catch (_) {}
 
     setState(() {
       _maskOpacity = ExperienceMask.guideOpacity;
       _promptOpacity = 1;
     });
 
-    // 3s 文案后显示选择按钮
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
-      setState(() { _showChoices = true; _choicesOpacity = 1; });
       _startBackendDetection();
     });
   }
 
-  // ── 后端选择检测 ───────────────────────────────────────
+  // ── 后端选择检测 ──
 
   void _startBackendDetection() {
     _timeoutTimer = Timer(const Duration(seconds: 15), () {
@@ -194,31 +147,22 @@ class _PageFiveViewState extends State<PageFiveView> {
 
   Future<void> _pollShelterChoice() async {
     if (!mounted || _confirmedChoice != null) return;
+    _detectionTimer?.cancel(); // 只取第一次结果，避免 mock 随机反复
     try {
-      // TODO(后端接入): GET /api/rain-person/shelter-choice → {"choice": "umbrella"}
       final choice = await BackendService.instance.detectShelterChoice();
       if (mounted && _confirmedChoice == null) {
-        _highlightedChoice.value = choice;
-        // 高亮 1.2s 后确认
-        Future.delayed(const Duration(milliseconds: 1200), () {
-          if (mounted && _confirmedChoice == null) _confirmChoice(choice);
-        });
+        _confirmChoice(choice);
       }
     } catch (_) {}
   }
 
-  /// 确认选择 → 播放对应动画（选择伞 / 选择仓）
   void _confirmChoice(ShelterChoice choice) {
     if (!mounted || _confirmedChoice != null) return;
     _detectionTimer?.cancel();
     _timeoutTimer?.cancel();
     _confirmedChoice = choice;
-    _highlightedChoice.value = choice;
-
     BackendService.instance.userData.stageThreeChoice = choice;
-
-    setState(() { _showChoices = false; _choicesOpacity = 0; _promptOpacity = 0; });
-
+    setState(() => _promptOpacity = 0);
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) _playSelectionVideo(choice);
     });
@@ -226,6 +170,9 @@ class _PageFiveViewState extends State<PageFiveView> {
 
   Future<void> _playSelectionVideo(ShelterChoice choice) async {
     final branch = ExperienceFlow.stageThreeBranch(choice);
+
+    // 先黑屏再切控制器，避免旧帧残留造成"反复横跳"
+    setState(() => _holdBlackFrame = true);
 
     _videoController?.removeListener(_onIntroVideoUpdate);
     _videoController?.pause();
@@ -245,7 +192,7 @@ class _PageFiveViewState extends State<PageFiveView> {
       await controller.initialize();
       if (!mounted) return;
       await controller.setLooping(false);
-      controller.addListener(_onSelectionVideoUpdate);
+      _videoController!.addListener(_onSelectionVideoUpdate);
       setState(() => _holdBlackFrame = false);
       await controller.play();
     } catch (e) {
@@ -256,14 +203,15 @@ class _PageFiveViewState extends State<PageFiveView> {
   }
 
   void _onSelectionVideoUpdate() {
-    if (_selectionVideoFinished ||
-        _videoController == null ||
-        !_videoController!.value.isInitialized) return;
-    if (_videoController!.value.isCompleted) {
-      _selectionVideoFinished = true;
-      _videoController?.removeListener(_onSelectionVideoUpdate);
-      _transitionToNextPage();
-    }
+    final ctrl = _videoController;
+    if (ctrl == null) return;
+    try {
+      if (!ctrl.value.isInitialized) return;
+      if (ctrl.value.isCompleted) {
+        ctrl.removeListener(_onSelectionVideoUpdate);
+        _transitionToNextPage();
+      }
+    } catch (_) {}
   }
 
   void _transitionToNextPage() {
@@ -288,7 +236,6 @@ class _PageFiveViewState extends State<PageFiveView> {
     } else {
       _videoController?.pause();
     }
-    _highlightedChoice.dispose();
     super.dispose();
   }
 }

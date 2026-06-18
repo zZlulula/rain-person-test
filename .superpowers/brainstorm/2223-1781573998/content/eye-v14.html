@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>眼睛 v14 — 人眼+电子融合</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#e8ebe4; font-family:'Microsoft YaHei',sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .scene { display:flex; flex-direction:column; align-items:center; gap:40px; }
+  .hint { font-size:28px; color:#2a3a2e; letter-spacing:3px; font-weight:300; animation:hf 3s ease-in-out infinite; }
+  @keyframes hf { 0%,100%{opacity:0.5} 50%{opacity:0.88} }
+
+  .eye-wrap { position:relative; width:200px; height:90px; display:flex; align-items:center; justify-content:center; gap:26px; }
+
+  /* 柔光底 */
+  .glow-bg {
+    position:absolute; inset:-12px -8px; border-radius:50%;
+    background:radial-gradient(ellipse at 35% 48%, rgba(160,150,120,0.06) 0%, transparent 44%),
+                radial-gradient(ellipse at 65% 48%, rgba(160,150,120,0.06) 0%, transparent 44%);
+    animation:bgP 2.8s ease-in-out infinite;
+  }
+  @keyframes bgP { 0%,100%{opacity:0.30} 52%{opacity:0.78} }
+
+  /* 单眼 — 杏仁形 */
+  .eye {
+    width:44px; height:28px;
+    background:radial-gradient(ellipse at 50% 44%, #fcfdf9 0%, #f0f3ea 50%, #e2e6da 100%);
+    border-radius:48% 48% 44% 44% / 52% 52% 44% 44%;
+    position:relative;
+    box-shadow:
+      0 0 0 0.4px rgba(80,80,60,0.05),
+      0 0 8px 1px rgba(120,110,80,0.04),
+      inset 0 0.2px 0.5px rgba(0,0,0,0.015);
+    overflow:hidden;
+  }
+
+  /* 虹膜 — 暖棕，简单两层 */
+  .iris {
+    position:absolute;
+    width:20px; height:20px;
+    background:radial-gradient(circle at 40% 36%,
+      #b89868 0%, #8a6e48 35%, #5a4430 100%);
+    border-radius:50%;
+    top:4px; left:12px;
+    box-shadow:0 0 0.5px rgba(0,0,0,0.10);
+    animation:drift 4.5s ease-in-out infinite;
+  }
+  @keyframes drift {
+    0%,100%{transform:translate(0,0.3px)}
+    14%{transform:translate(-2.5px,-1px)}
+    28%{transform:translate(2px,1.5px)}
+    44%{transform:translate(-1.2px,-2px)}
+    58%{transform:translate(3px,0)}
+    72%{transform:translate(-2px,1.2px)}
+    86%{transform:translate(0.8px,0)}
+  }
+
+  /* 瞳孔 */
+  .pupil {
+    position:absolute;
+    width:10px; height:10px;
+    background:radial-gradient(circle at 44% 38%, #1a1510, #050403);
+    border-radius:50%;
+    top:5px; left:5px;
+  }
+
+  /* 高光 1 — 左上大圆 */
+  .h1 {
+    position:absolute;
+    width:5.5px; height:5.5px;
+    background:white;
+    border-radius:50%;
+    top:0px; left:1px;
+    box-shadow:0 0 2px white;
+  }
+
+  /* 高光 2 — 右下小圆 */
+  .h2 {
+    position:absolute;
+    width:2.5px; height:2.5px;
+    background:rgba(255,255,255,0.7);
+    border-radius:50%;
+    top:9px; left:9px;
+  }
+
+  /* 眨眼 — 上下同时轻合 */
+  .lids {
+    position:absolute; inset:0; z-index:4; pointer-events:none;
+    overflow:hidden; border-radius:50%;
+  }
+  .lids::before, .lids::after {
+    content:''; position:absolute; left:0; right:0;
+    background:#e8ebe4;
+  }
+  .lids::before {
+    top:0; height:0;
+    border-radius:0 0 50% 50%;
+    animation:blinkTop 4.2s cubic-bezier(0.65,0,0.35,1) infinite;
+  }
+  .lids::after {
+    bottom:0; height:0;
+    border-radius:50% 50% 0 0;
+    animation:blinkBot 4.2s cubic-bezier(0.65,0,0.35,1) infinite;
+  }
+  @keyframes blinkTop {
+    0%,44%,54%,100%{height:0}
+    49%{height:52%}
+  }
+  @keyframes blinkBot {
+    0%,44%,54%,100%{height:0}
+    49%{height:48%}
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="hint">看着红点，现在开始标定</div>
+  <div class="eye-wrap">
+    <div class="glow-bg"></div>
+    <div class="eye">
+      <div class="iris">
+        <div class="pupil"></div>
+        <div class="h1"></div>
+        <div class="h2"></div>
+      </div>
+      <div class="lids"></div>
+    </div>
+    <div class="eye">
+      <div class="iris">
+        <div class="pupil"></div>
+        <div class="h1"></div>
+        <div class="h2"></div>
+      </div>
+      <div class="lids"></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

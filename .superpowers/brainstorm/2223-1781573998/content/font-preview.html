@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全局字体预览 — 微软雅黑 + 放大 + 增强对比</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0f0a; font-family:'Microsoft YaHei','微软雅黑','PingFang SC',sans-serif; display:flex; height:100vh; overflow:hidden; }
+.half { flex:1; display:flex; flex-direction:column; overflow-y:auto; position:relative; border-right:1px solid #1a2a1a; }
+.half:last-child { border-right:none; }
+.half::-webkit-scrollbar { width:0; }
+.label { position:sticky; top:0; z-index:20; padding:10px 20px; background:rgba(10,15,10,0.95); text-align:center; font-size:11px; letter-spacing:3px; color:#5a7a5a; border-bottom:1px solid #1a2a1a; }
+.label span { display:block; font-size:15px; color:#8aaa8a; }
+.bg { position:absolute; inset:0; pointer-events:none; }
+.half:first-child .bg { background:#e8ebe4; }
+.half:last-child .bg { background:linear-gradient(180deg,#f8faf6,#f3f6f1 40%,#eef1ec); }
+.half:last-child .bg::after { content:''; position:absolute; top:-80px; left:-20%; right:-20%; height:340px; background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.35),transparent 70%); }
+.ls { position:absolute; border-radius:50%; pointer-events:none; }
+.ls1 { bottom:40px; left:-30px; width:240px; height:240px; background:radial-gradient(circle,rgba(180,195,170,0.10),transparent); }
+.ls2 { bottom:100px; right:-25px; width:220px; height:220px; background:radial-gradient(circle,rgba(185,200,178,0.08),transparent); }
+.content { position:relative; z-index:1; padding:30px 22px 100px; display:flex; flex-direction:column; align-items:center; }
+.section-tag { font-size:9px; letter-spacing:3px; color:#8a9a8a; margin:16px 0 6px; opacity:0.6; }
+.home-title { font-family:'Microsoft YaHei',sans-serif; font-size:48px; font-weight:200; letter-spacing:8px; color:#2a3a2e; opacity:0.85; text-shadow:0 0 30px rgba(100,130,90,0.06),0 0 60px rgba(80,110,70,0.03); animation:hT 3.6s ease-in-out infinite; }
+@keyframes hT { 50% { transform:scale(1.02); letter-spacing:12px; opacity:0.95; } }
+.home-sub { font-size:18px; color:rgba(42,58,46,0.50); letter-spacing:3px; margin-top:8px; }
+.home-btn { margin-top:40px; font-size:28px; color:#b8a070; letter-spacing:10px; position:relative; padding:14px 48px; animation:bB 3.2s ease-in-out infinite; }
+@keyframes bB { 0%,100% { text-shadow:0 0 0 rgba(180,150,80,0); } 50% { text-shadow:0 0 20px rgba(180,150,80,0.14); } }
+.home-btn::after { content:''; position:absolute; bottom:6px; left:24%; width:52%; height:1px; background:linear-gradient(90deg,transparent,rgba(180,150,80,0.32),transparent); }
+.opt-row { display:flex; gap:20px; }
+.opt-btn { padding:12px 28px; min-width:100px; text-align:center; border-radius:6px; font-family:'Microsoft YaHei',sans-serif; font-size:30px; font-weight:300; letter-spacing:2px; color:#d8dcd6; border:1px solid rgba(216,220,214,0.08); background:rgba(0,0,0,0.12); }
+.opt-btn.hl { font-size:32px; font-weight:400; letter-spacing:5px; color:#f0dea0; text-shadow:0 0 18px rgba(240,200,110,0.55),0 0 38px rgba(220,170,70,0.25),0 0 56px rgba(200,150,50,0.1); box-shadow:0 0 60px rgba(220,170,70,0.08),0 0 100px rgba(200,150,50,0.04); animation:glP 3.2s ease-in-out infinite; }
+@keyframes glP { 50% { box-shadow:0 0 80px rgba(220,170,70,0.16),0 0 140px rgba(200,150,50,0.07); } }
+.question { font-family:'Microsoft YaHei',sans-serif; font-size:30px; font-weight:300; letter-spacing:2px; color:#d5e5d2; text-align:center; max-width:320px; line-height:1.6; }
+.rpt-title { font-family:'Microsoft YaHei',sans-serif; font-size:32px; font-weight:200; letter-spacing:6px; color:#2a3a2e; animation:rT 4s ease-in-out infinite; text-shadow:0 0 20px rgba(100,130,90,0.05),0 0 50px rgba(80,110,70,0.02); margin-bottom:4px; }
+@keyframes rT { 50% { letter-spacing:10px; text-shadow:0 0 40px rgba(100,130,90,0.10); } }
+.rpt-sub { font-size:16px; color:rgba(42,58,46,0.50); letter-spacing:2px; text-align:center; max-width:280px; margin-bottom:20px; line-height:1.6; }
+.card-w { width:100%; max-width:340px; margin-bottom:14px; padding:22px; border-radius:14px; border:1px solid rgba(58,74,63,0.06); background:rgba(255,255,255,0.42); animation:cB 5.5s ease-in-out infinite; }
+.card-w:nth-child(2) { animation-delay:1.2s; }
+.card-w:nth-child(3) { animation-delay:2.4s; }
+@keyframes cB { 50% { transform:scale(1.006) translateY(-1px); } }
+.c-icon { display:inline-flex; width:28px; height:28px; border-radius:50%; align-items:center; justify-content:center; font-size:13px; margin-right:8px; }
+.c-icon.s1 { background:rgba(138,170,138,0.12); color:#7a9a78; }
+.c-icon.s2 { background:rgba(155,175,148,0.12); color:#85a07e; }
+.c-icon.s3 { background:rgba(185,170,130,0.12); color:#a09060; }
+.c-icon.s4 { background:rgba(148,170,168,0.12); color:#789a92; }
+.c-stage { font-size:10px; color:#6a7a6a; letter-spacing:2px; }
+.c-result { font-size:24px; font-weight:400; color:#2a3a2e; margin:4px 0; }
+.c-insight { font-size:15px; color:rgba(42,58,46,0.82); line-height:1.65; padding-top:8px; border-top:1px solid rgba(58,74,63,0.06); }
+.rpt-btn { margin-top:36px; font-size:24px; color:#b8a070; letter-spacing:10px; animation:bB 3.2s ease-in-out infinite; position:relative; padding:12px 48px; }
+.rpt-btn::after { content:''; position:absolute; bottom:6px; left:22%; width:56%; height:1px; background:linear-gradient(90deg,transparent,rgba(180,150,80,0.28),transparent); }
+.type-before { border:1px solid rgba(58,74,63,0.10); background:rgba(221,226,216,0.45); }
+.type-before .c-insight { color:rgba(42,58,46,0.40); }
+.timing-note { font-size:10px; color:#8a7a5a; margin-top:4px; letter-spacing:2px; }
+</style>
+</head>
+<body>
+<div class="half">
+  <div class="label">BEFORE<span>Noto Serif / 原字号 / 原对比</span></div>
+  <div class="bg"></div><div class="ls ls1"></div><div class="ls ls2"></div>
+  <div class="content">
+    <div class="section-tag">— 首页 —</div>
+    <div class="home-title" style="font-size:44px;font-family:'Noto Serif SC',serif;animation:none;">雨 中 人</div>
+    <div class="home-sub" style="font-size:15px;font-family:'Noto Serif SC',serif;color:rgba(42,58,46,0.40);">一场关于内心世界的雨境之旅</div>
+    <div class="home-btn" style="font-size:24px;color:#8a7a5a;font-family:'Noto Serif SC',serif;animation:none;">开 始</div>
+    <div class="section-tag" style="margin-top:24px;">— 问题 & 选项 —</div>
+    <div class="question" style="font-size:26px;font-family:'Noto Serif SC',serif;">你遇到了一位朋友，<br>想象你在和他解释你的烦恼</div>
+    <div class="opt-row" style="margin-top:14px;">
+      <div class="opt-btn hl" style="font-family:'Noto Serif SC',serif;font-size:28px;">皱眉</div>
+      <div class="opt-btn" style="font-family:'Noto Serif SC',serif;">抿嘴</div>
+      <div class="opt-btn" style="font-family:'Noto Serif SC',serif;">皱眉+抿嘴</div>
+    </div>
+    <div class="timing-note">高亮停留 1.5s → 退场</div>
+    <div class="section-tag" style="margin-top:24px;">— 报告页 —</div>
+    <div class="rpt-title" style="font-size:28px;font-family:'Noto Serif SC',serif;animation:none;">你的本次雨境画像</div>
+    <div class="rpt-sub" style="font-size:14px;font-family:'Noto Serif SC',serif;color:rgba(42,58,46,0.38);">在雨中的这段时间里，你的潜意识<br>通过选择展现了内心的一面。</div>
+    <div class="card-w type-before" style="animation:none;"><div><span class="c-icon s1">①</span><span class="c-stage">第1阶段 · 表情</span></div><div class="c-result" style="font-size:20px;">皱眉</div><div class="c-insight" style="font-size:13px;">每个选择都是你内心的一次回应。</div></div>
+    <div class="rpt-btn" style="font-size:20px;color:#8a7a5a;font-family:'Noto Serif SC',serif;animation:none;">重新体验</div>
+  </div>
+</div>
+<div class="half">
+  <div class="label">AFTER<span>微软雅黑 / 字号+4 / 对比增强</span></div>
+  <div class="bg"></div><div class="ls ls1"></div><div class="ls ls2"></div>
+  <div class="content">
+    <div class="section-tag">— 首页 —</div>
+    <div class="home-title">雨 中 人</div>
+    <div class="home-sub">一场关于内心世界的雨境之旅</div>
+    <div class="home-btn">开 始</div>
+    <div class="section-tag" style="margin-top:24px;">— 问题 & 选项 —</div>
+    <div class="question">你遇到了一位朋友，<br>想象你在和他解释你的烦恼</div>
+    <div class="opt-row" style="margin-top:14px;">
+      <div class="opt-btn hl">皱眉</div>
+      <div class="opt-btn">抿嘴</div>
+      <div class="opt-btn">皱眉+抿嘴</div>
+    </div>
+    <div class="timing-note">高亮停留 <b>2.5s</b> → 退场</div>
+    <div class="section-tag" style="margin-top:24px;">— 报告页 —</div>
+    <div class="rpt-title">你的本次雨境画像</div>
+    <div class="rpt-sub">在雨中的这段时间里，你的潜意识<br>通过选择展现了内心的一面。</div>
+    <div class="card-w"><div><span class="c-icon s1">①</span><span class="c-stage">第1阶段 · 表情</span></div><div class="c-result">皱眉</div><div class="c-insight">面对烦恼时，你倾向于将情绪收敛在眉间。皱眉往往意味着你在认真思考和消化，而非逃避。</div></div>
+    <div class="card-w"><div><span class="c-icon s2">②</span><span class="c-stage">第2阶段 · 关键词</span></div><div class="c-result">家人、发呆</div><div class="c-insight">在压力时刻，你想到的是家人和放空。这是你内心深处的避风港。</div></div>
+    <div class="rpt-btn">重新体验</div>
+  </div>
+</div>
+</body>
+</html>

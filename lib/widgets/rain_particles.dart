@@ -64,12 +64,12 @@ class _RainPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rng = Random(42);
     final paint = Paint()
-      ..strokeWidth = 0.5
+      ..strokeWidth = 0.7
       ..style = PaintingStyle.stroke;
 
     for (int i = 0; i < count; i++) {
       final x = rng.nextDouble() * size.width;
-      final length = 40.0 + rng.nextDouble() * 80.0;
+      final length = 55.0 + rng.nextDouble() * 100.0;
       final speed = 0.3 + rng.nextDouble() * 0.5;
       final y = ((progress + rng.nextDouble()) * size.height * speed) %
               (size.height + length) -

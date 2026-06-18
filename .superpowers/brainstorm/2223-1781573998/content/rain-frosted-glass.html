@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雨滴 — 毛玻璃背景对比</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0f0a; color:#d5e5d2; font-family:'Noto Serif SC',serif; display:flex; height:100vh; }
+  .half { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; border-right:1px solid #1a2a1a; overflow:hidden; }
+  .half:last-child { border-right:none; }
+  .label { position:absolute; top:20px; font-size:12px; letter-spacing:3px; color:#5a7a5a; z-index:10; }
+  .label span { display:block; font-size:16px; color:#8aaa8a; margin-top:2px; }
+
+  /* BEFORE bg */
+  .bg-before { position:absolute; inset:0; background:#e8ebe4; }
+
+  /* AFTER bg — 毛玻璃: 浅色基底层 + 柔光渐变 + 微纹理 */
+  .bg-after {
+    position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse at 20% 70%, rgba(220,235,215,0.25) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 60%, rgba(230,240,225,0.20) 0%, transparent 45%),
+      linear-gradient(180deg, #f2f5f0 0%, #eef1ec 40%, #e8ebe4 100%);
+  }
+  /* 毛玻璃纹理 overlay */
+  .bg-after::after {
+    content:''; position:absolute; inset:0;
+    backdrop-filter: blur(0.5px);
+    background: rgba(255,255,255,0.06);
+    pointer-events:none;
+  }
+
+  /* 内容层 */
+  .content { position:relative; z-index:2; text-align:center; }
+  .title { font-size:36px; font-weight:200; letter-spacing:8px; color:rgba(42,58,46,0.80); margin-bottom:8px; }
+  .sub { font-size:13px; font-weight:300; letter-spacing:3px; color:rgba(42,58,46,0.45); }
+
+  /* 雨滴 canvas */
+  canvas.rain-layer { position:absolute; inset:0; z-index:1; pointer-events:none; }
+
+  /* 标注 */
+  .annotation { position:absolute; bottom:24px; font-size:11px; letter-spacing:2px; z-index:5; }
+  .annotation.bad { color:#8a6a5a; }
+  .annotation.good { color:#a0c0a0; }
+</style>
+</head>
+<body>
+
+<div class="half" id="before-pane">
+  <div class="label">BEFORE<span>纯色底 #e8ebe4 · 雨 opacity 0.03-0.06</span></div>
+  <div class="bg-before"></div>
+  <canvas class="rain-layer" id="rain-before"></canvas>
+  <div class="content">
+    <div class="title">雨 中 人</div>
+    <div class="sub">一场关于内心世界的雨境之旅</div>
+  </div>
+  <div class="annotation bad">雨滴几乎不可见</div>
+</div>
+
+<div class="half" id="after-pane">
+  <div class="label">AFTER — 毛玻璃<span>柔光渐变 + 雨 opacity 0.08-0.16</span></div>
+  <div class="bg-after"></div>
+  <canvas class="rain-layer" id="rain-after"></canvas>
+  <div class="content">
+    <div class="title">雨 中 人</div>
+    <div class="sub">一场关于内心世界的雨境之旅</div>
+  </div>
+  <div class="annotation good">雨滴清晰可感</div>
+</div>
+
+<script>
+function drawRain(canvasId, maxOpacity, lineColor) {
+  const c = document.getElementById(canvasId);
+  const ctx = c.getContext('2d');
+  let drops = [];
+  const count = 25;
+
+  function resize() {
+    c.width = c.parentElement.clientWidth;
+    c.height = c.parentElement.clientHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const rng = mulberry32(42);
+  for (let i=0; i<count; i++) {
+    drops.push({
+      x: rng() * c.width,
+      y: rng() * c.height,
+      len: 40 + rng() * 80,
+      speed: 0.3 + rng() * 0.5,
+      opacity: 0.03 + rng() * (maxOpacity - 0.03),
+      angle: 8 + rng() * 7,
+    });
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, c.width, c.height);
+    for (const d of drops) {
+      d.y += d.speed * 1.8;
+      if (d.y > c.height + d.len) { d.y = -d.len; d.x = rng() * c.width; }
+      const rad = d.angle * Math.PI / 180;
+      const x2 = d.x + Math.sin(rad) * d.len;
+      const y2 = d.y + Math.cos(rad) * d.len;
+      ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = lineColor.replace('{a}', d.opacity);
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function mulberry32(a) {
+  return function() { a|=0; a=a+0x6D2B79F|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; };
+}
+
+drawRain('rain-before', 0.06, 'rgba(42,58,46,{a})');
+drawRain('rain-after', 0.16, 'rgba(42,58,46,{a})');
+</script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>选项按钮优化方案</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; font-family:'Microsoft YaHei',sans-serif; color:#ccc; }
+  .wrap { max-width:1100px; margin:0 auto; padding:32px; }
+
+  h2 { font-size:20px; font-weight:300; margin:36px 0 18px; letter-spacing:2px; }
+  h2 em { font-style:normal; color:#888; font-size:15px; margin-left:12px; }
+
+  .row { display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; }
+
+  .card {
+    background:#1a1a1a; border-radius:16px; padding:28px 24px;
+    border:1px solid #2a2a2a; min-width:280px;
+  }
+  .card h3 { font-size:15px; font-weight:400; margin-bottom:20px; color:#aaa; letter-spacing:1px; }
+  .card h3 span { color:#888; font-size:12px; font-weight:300; }
+
+  /* ═══════════════ 按钮通用 ═══════════════ */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:14px 32px; border-radius:28px; font-size:20px;
+    font-family:'Microsoft YaHei',sans-serif; letter-spacing:3px;
+    cursor:default; transition:all 0.7s cubic-bezier(0.22,0.61,0.36,1);
+    position:relative; font-weight:300;
+    min-width:120px; text-align:center;
+    border:1px solid transparent;
+  }
+  .btn-row { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+
+  /* ═══════════════ A: 当前 — 烛光 ═══════════════ */
+  .a-norm { background:transparent; color:#e4e8e2; border-color:rgba(255,255,255,0.08); }
+  .a-hl   {
+    background:transparent; color:#f0dea0; font-size:21.6px; letter-spacing:5px; font-weight:400;
+    text-shadow:0 0 18px rgba(240,200,110,0.55), 0 0 38px rgba(220,170,70,0.25), 0 0 56px rgba(200,150,50,0.10);
+    border-color:rgba(240,200,110,0.15);
+    box-shadow:0 0 40px rgba(240,200,100,0.08), 0 0 80px rgba(220,160,60,0.04);
+    animation:auraBreathe 3.2s ease-in-out infinite;
+  }
+  @keyframes auraBreathe {
+    0%,100%{ box-shadow:0 0 30px rgba(240,200,100,0.06), 0 0 60px rgba(220,160,60,0.03); }
+    50%     { box-shadow:0 0 50px rgba(240,200,100,0.12), 0 0 90px rgba(220,160,60,0.06); }
+  }
+
+  /* ═══════════════ B: 薄雾轻纱 — page_three 表情 ═══════════════ */
+  .b-norm { background:transparent; color:rgba(220,215,205,0.65); border-color:rgba(255,255,255,0.05); }
+  .b-hl   {
+    background:transparent; color:#e8dcc8; letter-spacing:5px; font-weight:400;
+    text-shadow:0 0 14px rgba(210,190,160,0.45), 0 0 32px rgba(190,170,140,0.20);
+    border-color:rgba(210,190,155,0.3);
+    box-shadow:
+      0 0 24px rgba(200,175,140,0.10),
+      0 0 60px rgba(185,160,130,0.05),
+      inset 0 0 18px rgba(210,185,150,0.04);
+    animation:mistBreathe 4.0s ease-in-out infinite;
+  }
+  @keyframes mistBreathe {
+    0%,100%{ box-shadow:0 0 18px rgba(200,175,140,0.08), 0 0 48px rgba(185,160,130,0.03), inset 0 0 12px rgba(210,185,150,0.03); }
+    50%     { box-shadow:0 0 32px rgba(210,185,150,0.14), 0 0 70px rgba(195,170,140,0.06), inset 0 0 22px rgba(220,195,160,0.06); }
+  }
+
+  /* ═══════════════ C: 雨滴涟漪 — page_five 伞/亭子 ═══════════════ */
+  .c-norm { background:transparent; color:rgba(180,210,220,0.60); border-color:rgba(140,190,210,0.08); }
+  .c-hl   {
+    background:transparent; color:#c8e8f0; letter-spacing:5px; font-weight:400;
+    text-shadow:0 0 10px rgba(150,210,230,0.50), 0 0 24px rgba(120,190,215,0.25), 0 0 40px rgba(100,170,200,0.10);
+    border-color:rgba(140,200,220,0.35);
+    box-shadow:
+      0 0 20px rgba(130,195,220,0.12),
+      0 0 50px rgba(110,180,210,0.06),
+      0 0 0 2px rgba(150,210,230,0.08);
+    animation:rippleBreathe 3.6s ease-in-out infinite;
+  }
+  @keyframes rippleBreathe {
+    0%,100%{ box-shadow:0 0 16px rgba(130,195,220,0.10), 0 0 42px rgba(110,180,210,0.04), 0 0 0 2px rgba(150,210,230,0.06); }
+    50%     { box-shadow:0 0 28px rgba(140,205,230,0.18), 0 0 60px rgba(120,190,215,0.08), 0 0 0 3px rgba(160,215,235,0.12); }
+  }
+
+  /* ═══════════════ D: 云隙光 — page_six 方向 ═══════════════ */
+  .d-norm { background:transparent; color:rgba(255,245,230,0.55); border-color:rgba(255,240,220,0.06); }
+  .d-hl   {
+    background:transparent; color:#fff8ed; letter-spacing:5px; font-weight:400;
+    text-shadow:0 0 16px rgba(255,235,200,0.55), 0 0 36px rgba(255,220,180,0.28), 0 0 56px rgba(255,210,160,0.10);
+    border-color:rgba(255,230,195,0.35);
+    /* 云隙光：顶部暖光更强，向下渐弱 — 用不对称阴影模拟 */
+    box-shadow:
+      0 -4px 18px rgba(255,220,170,0.18),
+      0 0 24px rgba(255,210,160,0.12),
+      0 0 50px rgba(255,200,140,0.06);
+    animation:sunbeamBreathe 3.8s ease-in-out infinite;
+  }
+  @keyframes sunbeamBreathe {
+    0%,100%{ box-shadow:0 -3px 14px rgba(255,220,170,0.14), 0 0 20px rgba(255,210,160,0.10), 0 0 42px rgba(255,200,140,0.04); }
+    50%     { box-shadow:0 -5px 24px rgba(255,225,180,0.24), 0 0 32px rgba(255,215,165,0.16), 0 0 60px rgba(255,205,145,0.08); }
+  }
+
+  /* 对比标签 */
+  .tag {
+    display:inline-block; padding:2px 10px; border-radius:10px;
+    font-size:11px; letter-spacing:1px; margin-bottom:12px;
+  }
+  .tag-now  { background:rgba(240,200,110,0.15); color:#e8c060; }
+  .tag-new  { background:rgba(120,200,160,0.15); color:#78c8a0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>页面三 <em>— 你遇到了一位朋友，想象你在和他解释你的烦恼</em></h2>
+<p style="color:#666;font-size:13px;margin-bottom:16px;">表情选项：皱眉 / 抿嘴 / 皱眉+抿嘴 — 需要温柔、抚慰、私语感</p>
+<div class="row">
+  <div class="card">
+    <span class="tag tag-now">当前：烛光</span>
+    <h3>暖金烛光 <span>— 通用暖光</span></h3>
+    <div class="btn-row">
+      <span class="btn a-norm">皱眉</span>
+      <span class="btn a-hl">抿嘴</span>
+      <span class="btn a-norm">皱眉+抿嘴</span>
+    </div>
+  </div>
+  <div class="card">
+    <span class="tag tag-new">方案 B</span>
+    <h3>薄雾轻纱 <span>— 晨雾柔光，内收克制</span></h3>
+    <div class="btn-row">
+      <span class="btn b-norm">皱眉</span>
+      <span class="btn b-hl">抿嘴</span>
+      <span class="btn b-norm">皱眉+抿嘴</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>页面五 <em>— 下雨场景，你的前方出现了一把伞和一个小亭子</em></h2>
+<p style="color:#666;font-size:13px;margin-bottom:16px;">庇护选择：伞 / 亭子 — 需要清冷、静谧、雨中庇护感</p>
+<div class="row">
+  <div class="card">
+    <span class="tag tag-now">当前：烛光</span>
+    <h3>暖金烛光 <span>— 通用暖光（与雨景不搭）</span></h3>
+    <div class="btn-row">
+      <span class="btn a-hl">伞</span>
+      <span class="btn a-norm">亭子</span>
+    </div>
+  </div>
+  <div class="card">
+    <span class="tag tag-new">方案 C</span>
+    <h3>雨滴涟漪 <span>— 青蓝冷调，水光呼吸</span></h3>
+    <div class="btn-row">
+      <span class="btn c-hl">伞</span>
+      <span class="btn c-norm">亭子</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>页面六 <em>— 天要放晴了，在放晴前最后欣赏一下这个景色吧</em></h2>
+<p style="color:#666;font-size:13px;margin-bottom:16px;">方向选择：左/中/右 — 需要希望、云开雾散、温暖光感</p>
+<div class="row">
+  <div class="card">
+    <span class="tag tag-now">当前：烛光</span>
+    <h3>暖金烛光 <span>— 通用暖光</span></h3>
+    <div class="btn-row">
+      <span class="btn a-norm">左</span>
+      <span class="btn a-hl">中</span>
+      <span class="btn a-norm">右</span>
+    </div>
+  </div>
+  <div class="card">
+    <span class="tag tag-new">方案 D</span>
+    <h3>云隙光 <span>— 顶部暖光倾泻，象征天晴</span></h3>
+    <div class="btn-row">
+      <span class="btn d-norm">左</span>
+      <span class="btn d-hl">中</span>
+      <span class="btn d-norm">右</span>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

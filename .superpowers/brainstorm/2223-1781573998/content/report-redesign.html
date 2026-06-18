@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>报告页 — 增强版</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0f0a; font-family:'Microsoft YaHei','微软雅黑','PingFang SC',sans-serif; display:flex; justify-content:center; height:100vh; }
+
+.wrapper {
+  width:100%; max-width:100%; display:flex; flex-direction:column; align-items:center;
+  overflow-y:auto; position:relative; padding:0 5%;
+  scroll-behavior:smooth;
+}
+.wrapper::-webkit-scrollbar { width:0; }
+
+/* ══ 背景层 ══ */
+.bg {
+  position:fixed; inset:0; pointer-events:none;
+  background:linear-gradient(175deg,#f9fbf7 0%,#f4f7f2 35%,#eff2ec 70%,#ecefe9 100%);
+  z-index:0;
+}
+.bg::after {
+  content:''; position:absolute; top:-10%; left:-20%; right:-20%; height:45%;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.40),transparent 70%);
+}
+
+/* ── 背景随机闪现光斑（两颗）── */
+.bg-orb {
+  position:fixed; border-radius:50%; pointer-events:none; z-index:0;
+  opacity:0;
+}
+.bg-orb.o1 {
+  width:320px; height:320px;
+  background:radial-gradient(circle,rgba(235,215,155,0.35) 0%,rgba(220,200,140,0.12) 50%,transparent 70%);
+  animation:orbFlashA 16s ease-in-out infinite;
+}
+.bg-orb.o2 {
+  width:180px; height:180px;
+  background:radial-gradient(circle,rgba(205,218,185,0.30) 0%,rgba(190,205,170,0.10) 50%,transparent 70%);
+  animation:orbFlashB 22s ease-in-out 5s infinite;
+}
+@keyframes orbFlashA {
+  /* 位置1 — 左上 */
+  0%      { top:10%; left:8%;  opacity:0; transform:scale(0.7); }
+  2%      { top:10%; left:8%;  opacity:0.85; transform:scale(1); }
+  6%      { top:10%; left:8%;  opacity:1; transform:scale(1.12); }
+  10%     { top:10%; left:8%;  opacity:0; transform:scale(0.8); }
+  /* 瞬跳 */
+  10.01%  { top:55%; left:60%; opacity:0; transform:scale(0.7); }
+  /* 位置2 — 右下 */
+  12%     { top:55%; left:60%; opacity:0.8; transform:scale(1); }
+  16%     { top:55%; left:60%; opacity:0.95; transform:scale(1.1); }
+  20%     { top:55%; left:60%; opacity:0; transform:scale(0.8); }
+  /* 瞬跳 */
+  20.01%  { top:35%; left:70%; opacity:0; transform:scale(0.7); }
+  /* 位置3 — 右中 */
+  22%     { top:35%; left:70%; opacity:0.85; transform:scale(1); }
+  26%     { top:35%; left:70%; opacity:0.95; transform:scale(1.1); }
+  30%     { top:35%; left:70%; opacity:0; transform:scale(0.8); }
+  /* 瞬跳 */
+  30.01%  { top:65%; left:15%; opacity:0; transform:scale(0.7); }
+  /* 位置4 — 左下 */
+  32%     { top:65%; left:15%; opacity:0.8; transform:scale(1); }
+  36%     { top:65%; left:15%; opacity:0.9; transform:scale(1.1); }
+  40%     { top:65%; left:15%; opacity:0; transform:scale(0.8); }
+  /* 瞬跳 */
+  40.01%  { top:15%; left:50%; opacity:0; transform:scale(0.7); }
+  /* 位置5 — 顶部中央 */
+  42%     { top:15%; left:50%; opacity:0.85; transform:scale(1); }
+  46%     { top:15%; left:50%; opacity:0.95; transform:scale(1.1); }
+  50%     { top:15%; left:50%; opacity:0; transform:scale(0.8); }
+  /* — 后半程重复 5 个新位置 — */
+  50.01%  { top:75%; left:45%; opacity:0; transform:scale(0.7); }
+  52%     { top:75%; left:45%; opacity:0.8; transform:scale(1); }
+  56%     { top:75%; left:45%; opacity:0.9; transform:scale(1.1); }
+  60%     { top:75%; left:45%; opacity:0; transform:scale(0.8); }
+  60.01%  { top:45%; left:5%;  opacity:0; transform:scale(0.7); }
+  62%     { top:45%; left:5%;  opacity:0.85; transform:scale(1); }
+  66%     { top:45%; left:5%;  opacity:0.95; transform:scale(1.1); }
+  70%     { top:45%; left:5%;  opacity:0; transform:scale(0.8); }
+  70.01%  { top:25%; left:30%; opacity:0; transform:scale(0.7); }
+  72%     { top:25%; left:30%; opacity:0.8; transform:scale(1); }
+  76%     { top:25%; left:30%; opacity:0.9; transform:scale(1.1); }
+  80%     { top:25%; left:30%; opacity:0; transform:scale(0.8); }
+  80.01%  { top:5%;  left:75%; opacity:0; transform:scale(0.7); }
+  82%     { top:5%;  left:75%; opacity:0.85; transform:scale(1); }
+  86%     { top:5%;  left:75%; opacity:0.95; transform:scale(1.1); }
+  90%     { top:5%;  left:75%; opacity:0; transform:scale(0.8); }
+  90.01%  { top:55%; left:35%; opacity:0; transform:scale(0.7); }
+  92%     { top:55%; left:35%; opacity:0.8; transform:scale(1); }
+  96%     { top:55%; left:35%; opacity:0.95; transform:scale(1.1); }
+  100%    { top:55%; left:35%; opacity:0; transform:scale(0.8); }
+}
+@keyframes orbFlashB {
+  /* 位置1 */
+  0%      { top:70%; left:75%; opacity:0; transform:scale(0.6); }
+  3%      { top:70%; left:75%; opacity:0.8; transform:scale(1); }
+  8%      { top:70%; left:75%; opacity:0.9; transform:scale(1.08); }
+  13%     { top:70%; left:75%; opacity:0; transform:scale(0.7); }
+  13.01%  { top:8%;  left:20%; opacity:0; transform:scale(0.6); }
+  /* 位置2 */
+  16%     { top:8%;  left:20%; opacity:0.85; transform:scale(1); }
+  21%     { top:8%;  left:20%; opacity:0.95; transform:scale(1.1); }
+  26%     { top:8%;  left:20%; opacity:0; transform:scale(0.7); }
+  26.01%  { top:40%; left:55%; opacity:0; transform:scale(0.6); }
+  /* 位置3 */
+  29%     { top:40%; left:55%; opacity:0.8; transform:scale(1); }
+  34%     { top:40%; left:55%; opacity:0.9; transform:scale(1.08); }
+  39%     { top:40%; left:55%; opacity:0; transform:scale(0.7); }
+  39.01%  { top:80%; left:10%; opacity:0; transform:scale(0.6); }
+  /* 位置4 */
+  42%     { top:80%; left:10%; opacity:0.85; transform:scale(1); }
+  47%     { top:80%; left:10%; opacity:0.9; transform:scale(1.1); }
+  52%     { top:80%; left:10%; opacity:0; transform:scale(0.7); }
+  52.01%  { top:20%; left:65%; opacity:0; transform:scale(0.6); }
+  /* 位置5 */
+  55%     { top:20%; left:65%; opacity:0.8; transform:scale(1); }
+  60%     { top:20%; left:65%; opacity:0.95; transform:scale(1.08); }
+  65%     { top:20%; left:65%; opacity:0; transform:scale(0.7); }
+  65.01%  { top:55%; left:30%; opacity:0; transform:scale(0.6); }
+  /* 位置6 */
+  68%     { top:55%; left:30%; opacity:0.85; transform:scale(1); }
+  73%     { top:55%; left:30%; opacity:0.9; transform:scale(1.1); }
+  78%     { top:55%; left:30%; opacity:0; transform:scale(0.7); }
+  78.01%  { top:12%; left:48%; opacity:0; transform:scale(0.6); }
+  /* 位置7 */
+  81%     { top:12%; left:48%; opacity:0.8; transform:scale(1); }
+  86%     { top:12%; left:48%; opacity:0.9; transform:scale(1.08); }
+  91%     { top:12%; left:48%; opacity:0; transform:scale(0.7); }
+  91.01%  { top:70%; left:75%; opacity:0; transform:scale(0.6); }
+  94%     { top:70%; left:75%; opacity:0.85; transform:scale(1); }
+  98%     { top:70%; left:75%; opacity:0.9; transform:scale(1.08); }
+  100%    { top:70%; left:75%; opacity:0; transform:scale(0.7); }
+}
+
+/* ── 极淡浮尘 ── */
+.dust {
+  position:fixed; border-radius:50%; pointer-events:none; z-index:0;
+}
+.dust.d1 { width:1.5px; height:1.5px; top:18%; left:12%; background:rgba(180,160,115,0.18); animation:dustA 9s ease-in-out infinite; }
+.dust.d2 { width:1px; height:1px; top:28%; left:82%; background:rgba(185,165,120,0.14); animation:dustB 7.5s ease-in-out 1.5s infinite; }
+.dust.d3 { width:2px; height:2px; top:52%; left:18%; background:rgba(175,155,110,0.16); animation:dustC 8.5s ease-in-out 3s infinite; }
+.dust.d4 { width:1px; height:1px; top:42%; left:72%; background:rgba(180,160,115,0.12); animation:dustA 8s ease-in-out 0.8s infinite; }
+.dust.d5 { width:1.5px; height:1.5px; top:68%; left:78%; background:rgba(185,165,120,0.15); animation:dustB 9.5s ease-in-out 5s infinite; }
+.dust.d6 { width:1px; height:1px; top:80%; left:8%; background:rgba(175,155,110,0.13); animation:dustC 7s ease-in-out 2s infinite; }
+.dust.d7 { width:2px; height:2px; top:22%; left:48%; background:rgba(180,160,115,0.10); animation:dustA 10s ease-in-out 6s infinite; }
+.dust.d8 { width:1px; height:1px; top:60%; left:32%; background:rgba(185,165,120,0.11); animation:dustB 8.8s ease-in-out 4s infinite; }
+@keyframes dustA {
+  0%,100% { transform:translate(0,0) scale(1); opacity:0; }
+  20% { opacity:0.22; }
+  40% { transform:translate(18px,-35px) scale(1.4); opacity:0.35; }
+  60% { opacity:0.18; }
+  80% { transform:translate(6px,-12px) scale(0.9); opacity:0.08; }
+}
+@keyframes dustB {
+  0%,100% { transform:translate(0,0) scale(1); opacity:0; }
+  25% { opacity:0.18; }
+  50% { transform:translate(-14px,-28px) scale(1.3); opacity:0.28; }
+  75% { opacity:0.12; }
+}
+@keyframes dustC {
+  0%,100% { transform:translate(0,0) scale(1); opacity:0; }
+  30% { opacity:0.20; }
+  50% { transform:translate(10px,-40px) scale(1.5); opacity:0.32; }
+  70% { opacity:0.14; }
+}
+
+.content { position:relative; z-index:1; width:100%; padding:5vh 0 14vh; display:flex; flex-direction:column; align-items:center; }
+
+/* ══ 标题 ══ */
+.title {
+  font-size:clamp(32px,8.5vw,46px); font-weight:200; color:#4a5040;
+  letter-spacing:10px; opacity:0.85; text-align:center; margin-bottom:2vh;
+  text-shadow:0 0 40px rgba(160,150,120,0.08),0 0 80px rgba(140,130,100,0.04);
+  animation:tB 5s ease-in-out infinite;
+}
+@keyframes tB {
+  0%,100% { letter-spacing:10px; opacity:0.82; }
+  50% { letter-spacing:18px; opacity:0.96; text-shadow:0 0 60px rgba(180,160,120,0.14),0 0 100px rgba(150,130,100,0.06); }
+}
+.sub {
+  font-size:17px; color:rgba(74,80,64,0.40); letter-spacing:3px;
+  text-align:center; line-height:2.2; margin-bottom:5vh;
+}
+
+/* ══ 阶段间连接点 ══ */
+.stage-dot {
+  width:3px; height:3px; border-radius:50%; margin:0.8vh 0;
+  background:rgba(170,155,125,0.12);
+  animation:dotPulse 5s ease-in-out infinite;
+}
+.stage-dot:nth-child(2) { animation-delay:1.2s; }
+.stage-dot:nth-child(4) { animation-delay:2.4s; }
+@keyframes dotPulse {
+  0%,100% { opacity:0.08; transform:scale(1); }
+  50% { opacity:0.22; transform:scale(1.6); box-shadow:0 0 6px rgba(170,155,125,0.10); }
+}
+
+/* ══ 卡片 ══ */
+.card {
+  width:100%; margin-bottom:1.2vh; border-radius:16px;
+  padding:clamp(12px,3vw,20px);
+  position:relative; overflow:hidden;
+  animation:cIn 0.8s ease-out both, cBreathe 5s ease-in-out infinite;
+  border:0.5px solid rgba(160,150,120,0.06);
+  box-shadow:0 1px 12px rgba(0,0,0,0.010);
+}
+.card:nth-child(3) { animation-delay:0.2s, 0.2s; }
+.card:nth-child(5) { animation-delay:0.4s, 1.5s; }
+.card:nth-child(7) { animation-delay:0.6s, 2.8s; }
+.card:nth-child(9) { animation-delay:0.8s, 4.0s; }
+@keyframes cIn { 0% { opacity:0; transform:translateY(24px); } 100% { opacity:1; transform:translateY(0); } }
+@keyframes cBreathe {
+  0%,100% { transform:translateY(0); box-shadow:0 1px 12px rgba(0,0,0,0.010); }
+  50% { transform:translateY(-2px); box-shadow:0 3px 20px rgba(0,0,0,0.022); }
+}
+
+/* 卡片底色 + 微渐变 — 按阶段区分色温 */
+.card:nth-child(3) { background:linear-gradient(160deg,rgba(250,252,248,0.58),rgba(244,250,242,0.50)); }
+.card:nth-child(5) { background:linear-gradient(160deg,rgba(248,252,246,0.58),rgba(246,250,242,0.50)); }
+.card:nth-child(7) { background:linear-gradient(160deg,rgba(252,250,246,0.58),rgba(250,248,240,0.50)); }
+.card:nth-child(9) { background:linear-gradient(160deg,rgba(248,252,250,0.58),rgba(244,250,248,0.50)); }
+
+/* 光扫 */
+.card::before {
+  content:''; position:absolute; top:-50%; left:-100%; width:40%; height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,250,240,0.06),transparent);
+  animation:cScan 9s ease-in-out infinite; pointer-events:none; z-index:0;
+}
+.card:nth-child(3)::before { animation-delay:-3s; }
+.card:nth-child(7)::before { animation-delay:-6s; }
+@keyframes cScan { 0%,100% { left:-100%; } 50% { left:160%; } }
+
+/* 顶部色条 */
+.card::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:4px;
+  background:var(--bar,transparent);
+  animation:cBar 5s ease-in-out infinite; z-index:0; pointer-events:none;
+  border-radius:4px 4px 0 0;
+}
+@keyframes cBar { 0%,100% { opacity:0.22; } 50% { opacity:0.60; } }
+
+/* 卡片内边框光晕 */
+.card-glow {
+  position:absolute; inset:1px; border-radius:15px; pointer-events:none; z-index:0;
+  border:1px solid transparent;
+  animation:cGlow 5s ease-in-out infinite;
+}
+@keyframes cGlow {
+  0%,100% { border-color:rgba(170,155,125,0.0); }
+  50% { border-color:rgba(170,155,125,0.04); }
+}
+
+.c-inner { position:relative; z-index:1; }
+
+/* ══ 阶段头行 ══ */
+.c-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.c-icon {
+  width:38px; height:38px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+  animation:cIcon 5s ease-in-out infinite;
+}
+@keyframes cIcon {
+  0%,100% { transform:scale(1); box-shadow:0 0 0 rgba(0,0,0,0); }
+  50% { transform:scale(1.08); box-shadow:0 0 16px var(--glow,transparent); }
+}
+.c-stage-num { font-size:16px; color:rgba(140,130,110,0.40); letter-spacing:3px; }
+.c-stage-tag {
+  font-size:14px; letter-spacing:2px; padding:6px 16px; border-radius:14px;
+  margin-left:auto; flex-shrink:0;
+}
+
+/* ══ 结果 ══ */
+.c-result {
+  font-size:clamp(26px,6.8vw,36px); font-weight:300; letter-spacing:4px;
+  color:#4a4e3a; margin-bottom:4px;
+  animation:rBreath 5s ease-in-out infinite;
+}
+@keyframes rBreath {
+  0%,100% { letter-spacing:5px; color:#4a4e3a; }
+  50% { letter-spacing:9px; color:#5a5e44; text-shadow:0 0 18px rgba(170,155,120,0.10); }
+}
+/* ══ 类型 ══ */
+.c-type {
+  font-size:15px; color:rgba(150,135,110,0.52); letter-spacing:1px; margin-bottom:8px;
+  padding-left:1px;
+}
+/* ══ 分隔 ══ */
+.c-line {
+  width:100%; height:0.5px; margin-bottom:10px;
+  background:linear-gradient(90deg,transparent,rgba(160,145,115,0.10) 15%,rgba(160,145,115,0.10) 85%,transparent);
+}
+/* ══ 文案 ══ */
+.c-insight {
+  font-size:clamp(15px,4vw,19px); color:rgba(74,80,64,0.70); line-height:1.7; letter-spacing:0.5px;
+}
+
+/* ══ 按钮 ══ */
+.btn-wrap { margin-top:5vh; display:flex; flex-direction:column; align-items:center; cursor:pointer; position:relative; }
+.btn-star {
+  width:3px; height:3px; border-radius:50%;
+  background:rgba(200,175,130,0.45); margin-bottom:14px;
+  box-shadow:0 0 8px rgba(200,175,130,0.25);
+  animation:bsStar 3.2s ease-in-out infinite;
+}
+@keyframes bsStar {
+  0%,100% { opacity:0.40; transform:translateY(0) scale(1); }
+  50% { opacity:0.85; transform:translateY(-5px) scale(1.8); box-shadow:0 0 16px rgba(200,175,130,0.40); }
+}
+.btn-ring {
+  position:absolute; top:50%; left:50%; width:140px; height:50px;
+  margin-left:-70px; margin-top:-25px; border-radius:50%; pointer-events:none;
+  border:1px solid transparent;
+  animation:bsRing 3.2s ease-in-out infinite;
+}
+@keyframes bsRing {
+  0%,100% { border-color:rgba(200,170,100,0); box-shadow:0 0 0 rgba(200,170,100,0); }
+  50% { border-color:rgba(200,170,100,0.08); box-shadow:0 0 30px rgba(200,170,100,0.06); }
+}
+.btn-text {
+  font-size:26px; font-weight:300; letter-spacing:10px;
+  color:#c8b080;
+  text-shadow:0 0 18px rgba(200,170,110,0.18),0 0 40px rgba(180,150,80,0.10);
+  animation:bsText 3.2s ease-in-out infinite;
+}
+@keyframes bsText {
+  0%,100% { color:#c8b080; letter-spacing:10px; }
+  50% { color:#e0cc90; letter-spacing:16px; text-shadow:0 0 28px rgba(220,190,120,0.28),0 0 56px rgba(200,160,80,0.14); }
+}
+.btn-line {
+  width:44px; height:1px; margin-top:10px;
+  background:linear-gradient(90deg,transparent,rgba(200,170,100,0.18),rgba(200,170,100,0.35),rgba(200,170,100,0.18),transparent);
+  animation:bsLine 3.2s ease-in-out infinite;
+}
+@keyframes bsLine {
+  0%,100% { width:44px; opacity:0.7; }
+  50% { width:68px; opacity:1; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+<div class="bg"></div>
+<div class="bg-orb o1"></div>
+<div class="bg-orb o2"></div>
+<div class="dust d1"></div><div class="dust d2"></div><div class="dust d3"></div><div class="dust d4"></div>
+<div class="dust d5"></div><div class="dust d6"></div><div class="dust d7"></div><div class="dust d8"></div>
+
+<div class="content">
+
+  <div class="title">你的本次雨境画像</div>
+  <div class="sub">在雨中的这段时间里<br>你的潜意识通过选择展现了内心的一面</div>
+
+  <!-- ① 表情 -->
+  <div class="stage-dot"></div>
+  <div class="card" style="--bar:linear-gradient(90deg,transparent,rgba(150,175,145,0.35),transparent);--glow:rgba(150,175,145,0.22);">
+<div class="card-glow"></div>
+    <div class="c-inner">
+      <div class="c-head">
+        <div class="c-icon" style="background:rgba(150,175,145,0.10);color:#7a9a6e;">①</div>
+        <div class="c-stage-num">第 一 阶 段</div>
+        <div class="c-stage-tag" style="background:rgba(150,170,145,0.10);color:#7a8a6e;">表 情</div>
+      </div>
+      <div class="c-result">皱眉</div>
+      <div class="c-type">负面情绪偏高</div>
+      <div class="c-line"></div>
+      <div class="c-insight">眉间的微表情是内心最诚实的信号。面对烦恼时，你偏向直面情绪本身，这份认真是你力量的来源。</div>
+    </div>
+  </div>
+
+  <!-- ② 关键词 -->
+  <div class="stage-dot"></div>
+  <div class="card" style="--bar:linear-gradient(90deg,transparent,rgba(155,178,148,0.35),transparent);--glow:rgba(155,178,148,0.22);">
+<div class="card-glow"></div>
+    <div class="c-inner">
+      <div class="c-head">
+        <div class="c-icon" style="background:rgba(155,178,148,0.10);color:#7a9e6e;">②</div>
+        <div class="c-stage-num">第 二 阶 段</div>
+        <div class="c-stage-tag" style="background:rgba(155,175,148,0.10);color:#6a8a62;">关键词</div>
+      </div>
+      <div class="c-result">家人、发呆</div>
+      <div class="c-type">倾向与人作伴 · 倾向独自处理情绪</div>
+      <div class="c-line"></div>
+      <div class="c-insight">喧嚣中你最先看到的，是最柔软的牵挂。家人给你安全，放空给你喘息。</div>
+    </div>
+  </div>
+
+  <!-- ③ 庇护所 -->
+  <div class="stage-dot"></div>
+  <div class="card" style="--bar:linear-gradient(90deg,transparent,rgba(185,168,130,0.35),transparent);--glow:rgba(185,168,130,0.22);">
+<div class="card-glow"></div>
+    <div class="c-inner">
+      <div class="c-head">
+        <div class="c-icon" style="background:rgba(185,168,130,0.10);color:#a09062;">③</div>
+        <div class="c-stage-num">第 三 阶 段</div>
+        <div class="c-stage-tag" style="background:rgba(185,165,130,0.10);color:#8a7a55;">庇护所</div>
+      </div>
+      <div class="c-result">选择了伞</div>
+      <div class="c-type">倾向于先解决问题 · 理性倾向者</div>
+      <div class="c-line"></div>
+      <div class="c-insight">面对风雨，你选择亲手撑伞而非躲进亭子——你更愿意成为自己的庇护。</div>
+    </div>
+  </div>
+
+  <!-- ④ 方向 -->
+  <div class="stage-dot"></div>
+  <div class="card" style="--bar:linear-gradient(90deg,transparent,rgba(145,172,165,0.35),transparent);--glow:rgba(145,172,165,0.22);">
+<div class="card-glow"></div>
+    <div class="c-inner">
+      <div class="c-head">
+        <div class="c-icon" style="background:rgba(145,172,165,0.10);color:#6a9a88;">④</div>
+        <div class="c-stage-num">第 四 阶 段</div>
+        <div class="c-stage-tag" style="background:rgba(145,170,165,0.10);color:#5a8a78;">方 向</div>
+      </div>
+      <div class="c-result">望向了中间</div>
+      <div class="c-type">倾向于行动 · 了解前方的路对你而言是重要的</div>
+      <div class="c-line"></div>
+      <div class="c-insight">晴空之下你留在原地。不必急于奔向任何方向，此刻的停留就是最好的答案。</div>
+    </div>
+  </div>
+
+  <!-- 按钮 -->
+  <div class="btn-wrap">
+    <div class="btn-ring"></div>
+    <div class="btn-star"></div>
+    <div class="btn-text">重新体验</div>
+    <div class="btn-line"></div>
+  </div>
+
+</div>
+</div>
+
+</body>
+</html>

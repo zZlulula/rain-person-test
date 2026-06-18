@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>选中态光晕对比 — 皱眉页 vs 后面选项</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0f0a; color:#d5e5d2; font-family:'Noto Serif SC',serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:40px; }
+  h2 { font-weight:300; letter-spacing:3px; color:#8aaa8a; font-size:15px; margin-bottom:20px; }
+  .row { display:flex; gap:48px; align-items:center; }
+  .card { display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .label { font-size:11px; letter-spacing:2px; color:#5a7a5a; }
+  .label .val { color:#c8a860; font-size:14px; }
+
+  .btn-stage { position:relative; width:180px; height:120px; display:flex; align-items:center; justify-content:center; }
+
+  /* 文字 */
+  .btn-text {
+    font-family:'Noto Serif SC',serif; font-weight:400; letter-spacing:5px;
+    color:#f0dea0; position:relative; z-index:2;
+    text-shadow:0 0 18px rgba(240,200,110,0.55),0 0 38px rgba(220,170,70,0.25),0 0 56px rgba(200,150,50,0.1);
+    animation: glowPulse 3.2s ease-in-out infinite;
+  }
+  @keyframes glowPulse {
+    0%,100% { text-shadow:0 0 18px rgba(240,200,110,0.55),0 0 38px rgba(220,170,70,0.25),0 0 56px rgba(200,150,50,0.1); }
+    50%      { text-shadow:0 0 26px rgba(240,200,110,0.72),0 0 48px rgba(220,170,70,0.35),0 0 68px rgba(200,150,50,0.16); }
+  }
+
+  canvas { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
+
+  .verdict { font-size:12px; letter-spacing:1px; padding:4px 12px; border-radius:10px; }
+  .verdict.weak { color:#8a7a5a; background:rgba(138,122,90,0.1); }
+  .verdict.good { color:#a0c8a0; background:rgba(160,200,160,0.1); }
+  .verdict.best { color:#c8a860; background:rgba(200,168,96,0.12); }
+</style>
+</head>
+<body>
+
+<h2>选中态「皱眉」光晕尺寸对比</h2>
+
+<div class="row">
+  <!-- page_three 当前 (fontSize ~26) -->
+  <div class="card">
+    <div class="label">page_three 当前<br><span class="val">fontSize ~26px</span></div>
+    <div class="btn-stage">
+      <canvas id="c26" width="180" height="120"></canvas>
+      <span class="btn-text" style="font-size:28px">皱眉</span>
+    </div>
+    <div class="verdict weak">光晕 130×75px — 偏淡</div>
+  </div>
+
+  <!-- page_five 参考 (fontSize 28) -->
+  <div class="card">
+    <div class="label">page_five 参考<br><span class="val">fontSize 28px</span></div>
+    <div class="btn-stage">
+      <canvas id="c28" width="180" height="120"></canvas>
+      <span class="btn-text" style="font-size:30px">伞</span>
+    </div>
+    <div class="verdict good">光晕 140×81px — 正常</div>
+  </div>
+
+  <!-- 修复后 (fontSize 30) -->
+  <div class="card">
+    <div class="label">page_three 修复后<br><span class="val">fontSize 30px</span></div>
+    <div class="btn-stage">
+      <canvas id="c30" width="180" height="120"></canvas>
+      <span class="btn-text" style="font-size:32px">皱眉</span>
+    </div>
+    <div class="verdict best">光晕 150×87px — 饱满</div>
+  </div>
+</div>
+
+<script>
+function drawAura(canvasId, auraW, auraH) {
+  const c = document.getElementById(canvasId);
+  const ctx = c.getContext('2d');
+  const cx = 90, cy = 60;
+  let t = 0;
+
+  function frame() {
+    t += 0.016;
+    const breathe = Math.sin(t * 1.963) * 0.5 + 0.5; // 3.2s cycle
+    const auraScale = 0.85 + breathe * 0.27;
+    const ringScale = 0.88 + breathe * 0.20;
+    const sw = auraW * auraScale;
+    const sh = auraH * auraScale;
+    const rw = (auraW * 1.08) * ringScale;
+    const rh = (auraH * 1.12) * ringScale;
+
+    ctx.clearRect(0, 0, 180, 120);
+
+    // Outer ring
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(ringScale, ringScale);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, auraW*0.54, auraH*0.56, 0, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(255,215,140,${0.1+breathe*0.25})`;
+    ctx.lineWidth = 0.4;
+    ctx.stroke();
+    ctx.restore();
+
+    // Aura — outer
+    const g0 = ctx.createRadialGradient(cx, cy, sw*0.1, cx, cy, sw*0.5);
+    g0.addColorStop(0, `rgba(248,220,148,${(0.4+breathe*0.6)*0.18})`);
+    g0.addColorStop(1, 'rgba(248,220,148,0)');
+    ctx.fillStyle = g0;
+    ctx.beginPath(); ctx.ellipse(cx, cy, sw*0.5, sh*0.5, 0, 0, Math.PI*2); ctx.fill();
+
+    // Aura — mid
+    const g1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, sw*0.35);
+    g1.addColorStop(0, `rgba(230,190,108,${(0.4+breathe*0.6)*0.07})`);
+    g1.addColorStop(1, 'rgba(230,190,108,0)');
+    ctx.fillStyle = g1;
+    ctx.beginPath(); ctx.ellipse(cx, cy, sw*0.35, sh*0.35, 0, 0, Math.PI*2); ctx.fill();
+
+    // Stars
+    const stars = [
+      {x:cx-auraW*0.14, y:cy-auraH*0.24, s:5.0, ph:0.0, big:true},
+      {x:cx+auraW*0.165, y:cy-auraH*0.22, s:4.5, ph:0.6, big:true},
+      {x:cx+auraW*0.065, y:cy+auraH*0.21, s:4.0, ph:1.2, big:true},
+      {x:cx+auraW*0.21, y:cy-auraH*0.10, s:2.5, ph:0.3, big:false},
+      {x:cx-auraW*0.21, y:cy+auraH*0.08, s:2.0, ph:0.9, big:false},
+      {x:cx+auraW*0.23, y:cy+auraH*0.04, s:2.2, ph:1.5, big:false},
+      {x:cx-auraW*0.21, y:cy-auraH*0.05, s:1.8, ph:0.5, big:false},
+    ];
+
+    for (const s of stars) {
+      const ratio = s.big ? 1.143 : 1.455;
+      const raw = Math.sin((breathe * ratio + s.ph) * Math.PI * 2);
+      const st = (raw + 1) / 2;
+      let op, sc;
+      if (s.big) { op = 0.25 + st*0.75; sc = 0.65 + st*0.50; }
+      else       { op = 0.12 + st*0.58; sc = 0.50 + st*0.55; }
+      if (op < 0.01) continue;
+
+      // Glow
+      const gs = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.s*sc*(s.big?2.5:1.8));
+      gs.addColorStop(0, `rgba(255,238,187,${op*0.3})`);
+      gs.addColorStop(1, 'rgba(255,238,187,0)');
+      ctx.fillStyle = gs;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.s*sc*(s.big?2.5:1.8), 0, Math.PI*2); ctx.fill();
+
+      // Core
+      ctx.fillStyle = `rgba(255,238,187,${op*0.7})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.s*sc*0.5, 0, Math.PI*2); ctx.fill();
+    }
+
+    // Underline
+    const lw = 90 + breathe * 24;
+    const ly = cy + auraH * 0.45;
+    const lg = ctx.createLinearGradient(cx-lw/2, ly, cx+lw/2, ly);
+    const lo = (0.2+breathe*0.45);
+    lg.addColorStop(0, `rgba(245,205,125,${lo*0.03})`);
+    lg.addColorStop(0.15, `rgba(245,205,125,${lo*0.55})`);
+    lg.addColorStop(0.85, `rgba(245,205,125,${lo*0.55})`);
+    lg.addColorStop(1, `rgba(245,205,125,${lo*0.03})`);
+    ctx.strokeStyle = lg;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx-lw/2, ly); ctx.lineTo(cx+lw/2, ly); ctx.stroke();
+
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+drawAura('c26', 130, 75);
+drawAura('c28', 140, 81);
+drawAura('c30', 150, 87);
+</script>
+</body>
+</html>
